@@ -1,7 +1,14 @@
 {% extends "admin/change_form.html" %}
 {% block submit_buttons_bottom %}
-{{ block.super }}
-<div style="border: solid #417690 5px;">
-<img src="https://activebrainatlas.ucsd.edu/images/urey-hall-7th.floor.png">
-</div>
+    {{ block.super }}
+    <div  class="form-row" style="border: solid #417690 1px;">
+        <p>The symptom screening process must be completed each day prior to reporting to your campus worksite.</p>
+        <p><a href="https://ucsd.co1.qualtrics.com/jfe/form/SV_eD4laN720xygAIJ">Complete the COVID-19 symptom screening
+            registration form</a></p>
+        <p><a href="https://ucsd.co1.qualtrics.com/jfe/form/SV_ehMZDIojZELuynb">Complete the COVID-19 symptom checker
+            form</a></p>
+    </div>
+    <div class="form-row">
+        <img src="https://activebrainatlas.ucsd.edu/images/urey-hall-7th.floor.png">
+    </div>
 {% endblock %}

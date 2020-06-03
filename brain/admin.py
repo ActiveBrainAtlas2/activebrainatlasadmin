@@ -20,7 +20,8 @@ class ExportCsvMixin:
     def export_as_csv(self, request, queryset):
 
         meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
+        excludes = ['histogram',  'image_tag']
+        field_names = [field.name for field in meta.fields if field.name not in excludes]
 
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
@@ -201,14 +202,32 @@ def set_section_good(modeladmin, request, queryset):
 set_section_good.short_description = "Mark sections good"
 
 
-class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
+class ExportSections:
+    def export_sections(self, request, queryset):
+        meta = self.model._meta
+        headers = ['Section number', 'File name']
+        fields = ['section_number', 'destination_file']
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
+        writer = csv.writer(response)
+
+        writer.writerow(headers)
+        for obj in queryset:
+            row = writer.writerow([getattr(obj, field) for field in fields])
+
+        return response
+
+    export_sections.short_description = "Export Selected"
+
+
+class SectionAdmin(AtlasAdminModel, ExportSections):
     #change_list_template = "admin/section/qc.html"
     list_display = ('slide', 'section_number', 'destination_file', 'file_status', 'histogram',  'image_tag')
-    search_fields = ['prep_id']
     list_filter = ['channel']
     ordering = ['prep_id', 'section_number', 'channel']
-    search_fields = ['prep__prep_id']
-    actions = [set_section_good, set_section_unusable, "export_as_csv"]
+    search_fields = ['prep__prep_id', 'destination_file']
+    actions = [set_section_good, set_section_unusable, "export_sections"]
     list_per_page = 25
     class Media:
         css = {
