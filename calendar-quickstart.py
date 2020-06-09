@@ -54,15 +54,16 @@ def main():
     page_token = None
     while True:
         calendar_list = service.calendarList().list(pageToken=page_token).execute()
+        print(calendar_list)
         for calendar_list_entry in calendar_list['items']:
-            print(calendar_list_entry)
+            print('Calendar ID',calendar_list_entry['summary'])
         page_token = calendar_list.get('nextPageToken')
         if not page_token:
             break
 
     new_event = create_event()
-    #event = service.events().insert(calendarId='***REMOVED***', body=new_event).execute()
-    #print('Event created: %s' % (event.get('htmlLink')))
+    event = service.events().insert(calendarId='***REMOVED***', body=new_event).execute()
+    print('Event created: %s' % (event.get('htmlLink')))
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     print('Getting the upcoming 10 events')
