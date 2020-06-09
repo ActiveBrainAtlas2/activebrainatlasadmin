@@ -244,14 +244,6 @@ class SectionAdmin(AtlasAdminModel, ExportSections):
     section_number = 1
 
 
-
-    def changelist_viewXXX(self, request, extra_context=None):
-        extra_context = {'title': 'Section Quality Control'}
-        extra_context['current_slide'] = self.get_slides(request)
-        extra_context['current_section'] = self.current_section
-        extra_context['prep_id'] = self.prep_id
-        return super(SectionAdmin, self).changelist_view(request, extra_context=extra_context)
-
     def slide(self, instance):
         return instance.tif.slide
 
@@ -293,27 +285,25 @@ class SectionAdmin(AtlasAdminModel, ExportSections):
 
     def process_section(self, request, prep_id, *args, **kwargs):
         histology = Histology.objects.get(prep_id=prep_id)
-        section_order = 'section_number'
         orderby = histology.side_sectioned_first
         with connection.cursor() as cursor:
             cursor.callproc('create_sections', [prep_id, orderby])
         cursor.close()
 
         if orderby == 'DESC':
-            sections =  Section.objects.filter(prep_id__exact=prep_id)\
+            sections =  Section.objects.filter(prep_id__exact=prep_id).filter(active=1)\
                 .order_by('-slide_physical_id', '-scene_number')
             raw_sections = RawSection.objects.filter(prep_id__exact=prep_id)\
-                .order_by('-slide_physical_id', '-scene_number', 'channel')
+                .order_by('-section_number', 'channel')
         else:
-            sections = Section.objects.filter(prep_id__exact=prep_id)\
+            sections = Section.objects.filter(prep_id__exact=prep_id).filter(active=1)\
                 .order_by('slide_physical_id', 'scene_number')
             raw_sections = RawSection.objects.filter(prep_id__exact=prep_id)\
-                .order_by('slide_physical_id', 'scene_number', 'channel')
+                .order_by('section_number', 'channel')
 
         # fix section number in raw_sections to increment every 3
         channels = raw_sections.aggregate(Max('channel'))
         channels = channels['channel__max']
-
 
         if channels > 0:
             new_section_number = 0
@@ -322,6 +312,7 @@ class SectionAdmin(AtlasAdminModel, ExportSections):
                     new_section_number += 1
                 rsection.section_number = new_section_number
                 rsection.save()
+
 
         context = self.admin_site.each_context(request)
         context['opts'] = self.model._meta
