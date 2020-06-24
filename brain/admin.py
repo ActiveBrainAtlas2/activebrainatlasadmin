@@ -302,13 +302,12 @@ class SectionAdmin(AtlasAdminModel, ExportSections):
                 .order_by('section_number', 'channel')
 
         # fix section number in raw_sections to increment every 3
-        channels = raw_sections.aggregate(Max('channel'))
-        channels = channels['channel__max']
+        channels = RawSection.objects.filter(prep_id__exact=prep_id).values('channel').distinct().count()
 
         if channels > 0:
             new_section_number = 0
             for i, rsection in enumerate(raw_sections):
-                if i % channels == 0:
+                if i % channels == 0 and i != 0:
                     new_section_number += 1
                 rsection.section_number = new_section_number
                 rsection.save()

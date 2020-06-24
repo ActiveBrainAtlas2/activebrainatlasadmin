@@ -67,7 +67,6 @@ class TaskView(models.Model):
 class ProgressLookup(models.Model):
     ordinal = models.IntegerField(unique=True)
     description = models.TextField()
-    original_step = models.CharField(max_length=50, blank=True, null=True)
     category = models.CharField(max_length=200)
     script = models.CharField(max_length=200, blank=True, null=True)
     active = models.IntegerField(default = 1, editable = False)

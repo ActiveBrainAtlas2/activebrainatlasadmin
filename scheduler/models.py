@@ -64,6 +64,9 @@ class Schedule(SchedulerModel):
             raise ValidationError("End time is required.")
         if not self.has_location:
             raise ValidationError("Room is required.")
+        duration = (self.end_time - self.start_time).total_seconds()
+        if duration < 0:
+            raise ValidationError("End time must be after start time.")
 
 
         occupied = []
