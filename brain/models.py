@@ -197,6 +197,10 @@ class ScanRun(AtlasModel):
     ch_2_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
     ch_3_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
     ch_4_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
+
+    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)])
+    height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)])
+
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
     def __str__(self):
