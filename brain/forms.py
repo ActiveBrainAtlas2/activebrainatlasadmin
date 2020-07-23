@@ -14,10 +14,14 @@ class AnimalForm(forms.Form):
         fields = ('prep_id',)
 
 
+class AnimalChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return obj.prep_id
+
+
 # helper methods for the slide admin form
 
 def repeat_scene(slide_id, inserts, scene_number):
-    print(slide_id, inserts, scene_number)
     tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
         .filter(scene_number=scene_number)
 
@@ -26,6 +30,15 @@ def repeat_scene(slide_id, inserts, scene_number):
 
     for insert in range(inserts):
         create_scene(tifs, scene_number)
+
+
+def remove_scene(slide_id, inserts, scene_number):
+    tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
+        .filter(scene_number=scene_number)
+
+    for insert in range(inserts):
+        for tif in tifs:
+            tif.delete()
 
 
 def create_scene(tifs, scene_number):
@@ -38,18 +51,14 @@ def create_scene(tifs, scene_number):
 
 
 def find_closest_neighbor(slide_id, scene_number):
-    channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).aggregate(Max('channel'))
-    channels = channels['channel__max']
-    tifs = None
+    channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).values('channel').distinct().count()
     below = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
                 .filter(scene_number__lt=scene_number).order_by('-scene_number')[:channels]
-
-    above = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
-                .filter(scene_number__gt=scene_number).order_by('scene_number')[:channels]
     if below.exists():
         tifs = below
     else:
-        tifs = above
+        tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
+                .filter(scene_number__gt=scene_number).order_by('scene_number')[:channels]
 
     return tifs
 
@@ -70,9 +79,8 @@ def set_end(slide_id, scene_number):
 
 def scene_reorder(slide_id):
     # now get the order of scenes correct
-    scenes_tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=1).order_by('scene_number')
-    channels = scenes_tifs.aggregate(Max('channel'))
-    channels = channels['channel__max']
+    scenes_tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).order_by('scene_number')
+    channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).values('channel').distinct().count()
     len_tifs = len(scenes_tifs) + 1
     flattened = [item for sublist in [[i] * channels for i in range(1, len_tifs)] for item in sublist]
 
@@ -80,17 +88,6 @@ def scene_reorder(slide_id):
         tif.scene_number = new_scene
         tif.save()
 
-def scene_reorder(slide_id):
-    # now get the order of scenes correct
-    scenes_tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=1).order_by('scene_number')
-    channels = scenes_tifs.aggregate(Max('channel'))
-    channels = channels['channel__max']
-    len_tifs = len(scenes_tifs) + 1
-    flattened = [item for sublist in [[i] * channels for i in range(1, len_tifs)] for item in sublist]
-
-    for new_scene, tif in zip(flattened, scenes_tifs):  # iterate over the scenes
-        tif.scene_number = new_scene
-        tif.save()
 
 def save_slide_model(self, request, obj, form, change):
     scene_numbers = [1, 2, 3, 4, 5, 6]
@@ -100,6 +97,8 @@ def save_slide_model(self, request, obj, form, change):
     qc_4 = form.cleaned_data.get('scene_qc_4')
     qc_5 = form.cleaned_data.get('scene_qc_5')
     qc_6 = form.cleaned_data.get('scene_qc_6')
+
+
     # do the QC fields
     OUTOFFOCUS = 1
     BADTISSUE = 2
@@ -108,7 +107,8 @@ def save_slide_model(self, request, obj, form, change):
     current_qcs = Slide.objects.values_list('scene_qc_1', 'scene_qc_2', 'scene_qc_3',
                                             'scene_qc_4', 'scene_qc_5',
                                             'scene_qc_6').get(pk=obj.id)
-
+    # this top loop needs to be run before the 2nd loop to make sure the required
+    # tifs get set to inactive before finding a nearest neighbour
     for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
         if qc_value in [OUTOFFOCUS, BADTISSUE] and qc_value != current_qc:
             set_scene_inactive(obj.id, scene_number)
@@ -126,7 +126,7 @@ def save_slide_model(self, request, obj, form, change):
                   'insert_between_three_four', 'insert_between_four_five', 'insert_between_five_six']
     insert_values = [form.cleaned_data.get(name) for name in form_names]
 
-    moves = sum([value for value in insert_values])
+    moves = sum([value for value in insert_values if value is not None])
     # scene_count = obj.scenes
     # scenes = range(1, scene_count + 1)
     ## do the inserts
@@ -136,11 +136,29 @@ def save_slide_model(self, request, obj, form, change):
                                                    'insert_between_three_four', 'insert_between_four_five',
                                                    'insert_between_five_six').get(pk=obj.id)
 
-        scene_numbers = [1, 2, 3, 4, 5, 6]
         for new, current, scene_number in zip(insert_values, current_values, scene_numbers):
-            if current != new:
-                repeat_scene(obj.id, new, scene_number)
+            if new is not None and new > current:
+                difference = new - current
+                repeat_scene(obj.id, difference, scene_number)
+
         scene_reorder(obj.id)
 
-    obj.scenes = SlideCziToTif.objects.filter(slide_id=obj.id).filter(channel_index=0).filter(active=1).count()
-    obj.save()
+
+    obj.scenes = SlideCziToTif.objects.filter(slide_id=obj.id).filter(channel=1).filter(active=True).count()
+
+class TifInlineFormset(forms.models.BaseInlineFormSet):
+
+    def save_existing(self, form, instance, commit=True):
+        """
+        This is called when updating an instance.
+        """
+        obj = super(TifInlineFormset, self).save_existing(form, instance, commit=False)
+        ch23s = SlideCziToTif.objects.filter(slide_id=obj.slide_id).filter(scene_number=obj.scene_number).filter(scene_index=obj.scene_index)
+        for ch23 in ch23s:
+            ch23.active = False
+            ch23.save()
+        scene_reorder(obj.slide_id)
+        if commit:
+            obj.save()
+        return obj
+

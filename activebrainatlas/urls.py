@@ -21,10 +21,12 @@ from workflow.gantt_view import gantt
 
 from rest_framework import routers
 from scheduler import views
+from neuroglancer import views as neuroviews
 router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'locations', views.LocationViewSet)
 router.register(r'schedules', views.ScheduleViewSet)
+router.register(r'neuroglancer', neuroviews.UrlViewSet)
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 #from .settings import DEBUG, MEDIA_URL, MEDIA_ROOT
 

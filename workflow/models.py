@@ -1,6 +1,8 @@
 import os
 from django.db import models
+from brain.models import AtlasModel
 from brain.models import Animal
+
 
 
 
@@ -29,15 +31,13 @@ class Resource(models.Model):
         return u'{} {}'.format(self.first_name, self.last_name)
 
 
-class Task(models.Model):
+class Task(AtlasModel):
     lookup = models.ForeignKey('ProgressLookup', models.DO_NOTHING)
     prep = models.ForeignKey(Animal, models.CASCADE)
     completed = models.BooleanField()
     resources = models.ManyToManyField('Resource', blank=True)
-    active = models.IntegerField(default = 1, editable = False)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
@@ -49,10 +49,40 @@ class Task(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.lookup.description)
 
+class Log(AtlasModel):
+    prep = models.ForeignKey(Animal, models.CASCADE)
+    logger = models.CharField(max_length=100, blank=False, verbose_name='Log Source')
+    level = models.CharField(max_length=25)
+    msg = models.CharField(max_length=255, blank=False, verbose_name='Message')
+
+    class Meta:
+        managed = False
+        db_table = 'logs'
+        verbose_name = 'Log'
+        verbose_name_plural = 'Logs'
+
+    def __str__(self):
+        return u'{} {}'.format(self.prep.prep_id, self.msg)
+
+class Journal(AtlasModel):
+    prep = models.ForeignKey(Animal, models.DO_NOTHING, null=True)
+    entry = models.TextField(blank=False, verbose_name='Journal Entry')
+    completed = models.BooleanField(default = False)
+
+    class Meta:
+        managed = False
+        db_table = 'journals'
+        verbose_name = 'Journal'
+        verbose_name_plural = 'Journals'
+
+    def __str__(self):
+        return u'{} {}'.format(self.prep.prep_id, self.entry[0:50])
+
 class TaskView(models.Model):
     prep_id = models.CharField(primary_key=True, max_length=20)
     percent_complete = models.DecimalField(max_digits=6, decimal_places=2)
     complete = models.IntegerField()
+    created = models.CharField(max_length=20)
 
     class Meta:
         managed = False
@@ -64,13 +94,9 @@ class TaskView(models.Model):
         return u'{}'.format(self.prep_id)
 
 
-class ProgressLookup(models.Model):
-    ordinal = models.IntegerField(unique=True)
+class ProgressLookup(AtlasModel):
     description = models.TextField()
-    category = models.CharField(max_length=200)
     script = models.CharField(max_length=200, blank=True, null=True)
-    active = models.IntegerField(default = 1, editable = False)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
@@ -83,13 +109,10 @@ class ProgressLookup(models.Model):
 
 
 
-class WorkQueue(models.Model):
+class WorkQueue(AtlasModel):
     prep = models.ForeignKey(Animal, models.CASCADE)
-    ordinal = models.IntegerField(unique=True)
     description = models.TextField()
     completed = models.BooleanField(default = False)
-    active = models.IntegerField(default = 1, editable = False)
-    created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         managed = True
