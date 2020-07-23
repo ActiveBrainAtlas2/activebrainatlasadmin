@@ -198,8 +198,8 @@ class ScanRun(AtlasModel):
     ch_3_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
     ch_4_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
 
-    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)])
-    height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)])
+    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
+    height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
 
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
@@ -214,11 +214,11 @@ class ScanRun(AtlasModel):
 class Slide(AtlasModel):
     scan_run = models.ForeignKey(ScanRun, models.DO_NOTHING)
     slide_physical_id = models.IntegerField()
-    rescan_number = models.CharField(max_length=1)
+    rescan_number = EnumField(choices=['1','2','3'], blank=False, null=False, default='1')
     slide_status = EnumField(choices=['Bad','Good'], blank=False, null=False)
     scenes = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(6)])
     insert_before_one = models.IntegerField(blank=False, null=False, default=0,
-                                            verbose_name='Insert before S1',
+                                            verbose_name='Replicate S1',
                                             validators=[MinValueValidator(0),MaxValueValidator(5)])
     OUTOFFOCUS = 1
     BADTISSUE = 2
@@ -230,27 +230,27 @@ class Slide(AtlasModel):
         (END, 'End'),
         (OK, 'OK'),
     )
-    scene_qc_1 = models.IntegerField(choices=QC_CHOICES, default=0)
+    scene_qc_1 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 1 QC')
     insert_between_one_two = models.IntegerField(blank=False, null=False, default=0,
-                                                 verbose_name='Insert before S2',
-                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])
-    scene_qc_2 = models.IntegerField(choices=QC_CHOICES, default=0)
+                                                 verbose_name='Replicate S2',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_qc_2 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 2 QC')
     insert_between_two_three = models.IntegerField(blank=False, null=False, default=0,
-                                                   verbose_name='Insert before S3',
-                                                   validators=[MinValueValidator(0),MaxValueValidator(3)])
-    scene_qc_3 = models.IntegerField(choices=QC_CHOICES, default=0)
+                                                   verbose_name='Replicate S3',
+                                                   validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_qc_3 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 3 QC')
     insert_between_three_four = models.IntegerField(blank=False, null=False, default=0,
-                                                    verbose_name='Insert before S4',
-                                                    validators=[MinValueValidator(0),MaxValueValidator(2)])
-    scene_qc_4 = models.IntegerField(choices=QC_CHOICES, default=0)
+                                                    verbose_name='Replicate S4',
+                                                    validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_qc_4 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 4 QC')
     insert_between_four_five = models.IntegerField(blank=False, null=False, default=0,
-                                                   verbose_name='Insert before S5',
-                                                   validators=[MinValueValidator(0),MaxValueValidator(1)])
-    scene_qc_5 = models.IntegerField(choices=QC_CHOICES, default=0)
+                                                   verbose_name='Replicate S5',
+                                                   validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_qc_5 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 5 QC')
     insert_between_five_six = models.IntegerField(blank=False, null=False, default=0,
-                                                  verbose_name='Insert before S6',
-                                                  validators=[MinValueValidator(0),MaxValueValidator(1)])
-    scene_qc_6 = models.IntegerField(choices=QC_CHOICES, default=0)
+                                                  verbose_name='Replicate S6',
+                                                  validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_qc_6 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 6 QC')
     file_name = models.CharField(max_length=200)
     comments = models.TextField(max_length=2001, blank=True, null=True)
     file_size = models.FloatField(verbose_name='File size (bytes)')
@@ -267,17 +267,18 @@ class Slide(AtlasModel):
 
 class SlideCziToTif(AtlasModel):
     slide = models.ForeignKey(Slide, models.DO_NOTHING, related_name='slideczis')
-    file_name = models.CharField(max_length=200)
-    #section_number = models.IntegerField()
+    file_name = models.CharField(max_length=200, null=False)
+    scene_number = models.IntegerField(blank=False, null=False, default=1,
+                                                    verbose_name='Scene',
+                                                    validators=[MinValueValidator(1),MaxValueValidator(6)])
     scene_index = models.IntegerField()
-    scene_number = models.IntegerField(validators=[MinValueValidator(1),MaxValueValidator(6)])
     channel = models.IntegerField()
-    channel_index = models.IntegerField()
-    width = models.IntegerField()
-    height = models.IntegerField()
+    width = models.IntegerField(verbose_name='Width (pixels)')
+    height = models.IntegerField(verbose_name='Height (pixels)')
     comments = models.TextField(max_length=2000, blank=True, null=True)
     file_size = models.FloatField(verbose_name='File size (bytes)')
     processing_duration = models.FloatField(verbose_name="Processing time (seconds)")
+
 
 
     def max_scene(self):
@@ -288,50 +289,45 @@ class SlideCziToTif(AtlasModel):
         db_table = 'slide_czi_to_tif'
         verbose_name = 'Slide CZI to TIF'
         verbose_name_plural = 'Slides CZI to TIF'
-        ordering = ['file_name', 'scene_number']
+        ordering = ['scene_number', 'channel']
 
     def __str__(self):
-        return "{}".format(self.file_name)
-
-    def file_size_mb(self):
-        if self.file_size > 0:
-            return self.file_size // 1E6
-        else:
-            return self.file_size
+        return "{}".format(self.slide.file_name)
 
 
-class RawSection(AtlasModel):
-    prep = models.ForeignKey(Animal, models.DO_NOTHING)
-    tif = models.ForeignKey(SlideCziToTif, models.DO_NOTHING, related_name='sections')
-    section_number = models.IntegerField(verbose_name='Section #')
-    slide_physical_id = models.IntegerField()
-    scene_number = models.IntegerField()
-    channel = models.IntegerField()
-    source_file = models.CharField(max_length=200)
-    destination_file = models.CharField(max_length=200, verbose_name='Section File')
-    file_status = EnumField(choices=['unusable', 'blurry', 'good'], blank=False, null=False, default='good',
-                            verbose_name='Status')
+
+class Section(AtlasModel):
+    prep_id = models.CharField(max_length=20)
+    czi_file = models.CharField(max_length=200)
+    slide_physical_id = models.IntegerField(null=False, verbose_name='Slide')
+    file_name = models.CharField(max_length=200)
+    tif = models.ForeignKey(SlideCziToTif, models.DO_NOTHING, db_column='tif_id')
+    scene_number = models.IntegerField(null=False, verbose_name='Scene')
+    channel = models.IntegerField(null=False)
+
+    def tif(self):
+        return self.file_name
+
+    def slide(self):
+        return self.slide_physical_id
+
+    def scene(self):
+        return self.scene_number
 
     class Meta:
-        managed = True
-        db_table = 'raw_section'
+        managed = False
+        db_table = 'sections'
         verbose_name = 'Section'
         verbose_name_plural = 'Sections'
 
     def __str__(self):
-        return self.tif.slide.file_name
-
-
-    def thumbnail_name(self):
-        return self.destination_file.replace('tif','png')
-
+        return self.file_name
 
     def histogram(self):
-        png = self.destination_file.replace('tif','png')
-        prep_id = self.prep.prep_id
-        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/histogram/{}".format(prep_id, png)
+        png = self.file_name.replace('tif','png')
+        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/histogram/{}".format(self.prep_id, png)
         if os.path.isfile(testfile):
-            histogram = "/data/{}/histogram/{}".format(prep_id, png)
+            histogram = "/data/{}/histogram/{}".format(self.prep_id, png)
             return mark_safe(
             '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(histogram) )
         else:
@@ -339,37 +335,17 @@ class RawSection(AtlasModel):
     histogram.short_description = 'Histogram'
 
     def image_tag(self):
-        png = self.destination_file.replace('tif','png')
-        prep_id = self.prep_id
+        png = self.file_name.replace('tif', 'png')
         # http://localhost:8000/data/DK39/thumbnail/DK39_ID_0002_slide058_S1_C2.png
-        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/thumbnail/{}".format(prep_id, png)
+        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/www/{}".format(self.prep_id, png)
         if os.path.isfile(testfile):
-            thumbnail = "/data/{}/thumbnail/{}".format(prep_id, png)
+            thumbnail = "/data/{}/www/{}".format(self.prep_id, png)
             return mark_safe(
-            '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(thumbnail) )
+                '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(thumbnail))
         else:
             return mark_safe('<div>Not available</div>')
+
     image_tag.short_description = 'Image'
-
-class Section(AtlasModel):
-    prep = models.ForeignKey(Animal, models.DO_NOTHING)
-    slide = models.ForeignKey(Slide, models.DO_NOTHING)
-    file_name = models.CharField(max_length=200)
-    #section_number = models.IntegerField()
-    slide_physical_id = models.IntegerField()
-    scene_number = models.IntegerField()
-    section_qc = EnumField(choices=['OK','Replaced'], blank=False, null=False)
-    ch_1_path = models.CharField(max_length=200)
-    ch_2_path = models.CharField(max_length=200)
-    ch_3_path = models.CharField(max_length=200)
-    ch_4_path = models.CharField(max_length=200)
-
-    class Meta:
-        managed = True
-        db_table = 'section'
-        verbose_name = 'Section'
-        verbose_name_plural = 'Sections'
-
 
 class Virus(AtlasModel):
     virus_name = models.CharField(max_length=50)

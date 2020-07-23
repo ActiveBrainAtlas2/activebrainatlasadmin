@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from brain.models import Animal, ScanRun, Slide, RawSection
+from brain.models import Animal, Section
 from brain.forms import AnimalForm
 
 # from url initial page
@@ -11,7 +11,7 @@ def image_list(request):
     title = 'Select an animal from the dropdown menu.'
     if prep_id:
         title = 'Thumbnail images for: {}'.format(prep_id)
-        sections = RawSection.objects.filter(prep_id=prep_id).order_by('destination_file')
+        sections = Section.objects.filter(prep_id=prep_id).order_by('file_name')
 
 
 

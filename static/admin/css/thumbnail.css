@@ -11,7 +11,7 @@
 }
 
 .profile-pic-wrapper:hover img {
-  position: absolute;
-  width: 360px;
+  position: relative;
+  width: 460px;
   z-index: 1;
 }
