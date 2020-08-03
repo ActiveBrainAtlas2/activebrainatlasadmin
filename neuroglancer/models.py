@@ -6,12 +6,12 @@ class UrlModel(models.Model):
     url = models.TextField()
     active = models.BooleanField(default = True)
     created = models.DateTimeField(auto_now_add=True)
+    user_date = models.CharField(max_length=25)
+    comments = models.CharField(max_length=255)
 
     @property
     def short_description(self):
         return truncatechars(self.url, 50)
-
-
 
     class Meta:
         managed = True

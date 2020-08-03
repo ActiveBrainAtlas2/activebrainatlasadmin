@@ -5,7 +5,7 @@ from neuroglancer.models import UrlModel
 
 @admin.register(UrlModel)
 class SlideCziToTifAdmin(admin.ModelAdmin):
-    list_display = ('short_description', 'active', 'created')
+    list_display = ('short_description', 'comments', 'active', 'created')
     ordering = ['url', 'active', 'created']
     list_filter = ['created']
 
