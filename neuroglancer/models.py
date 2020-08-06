@@ -1,10 +1,11 @@
 from django.db import models
+import re
 from django.template.defaultfilters import truncatechars
 
 
 class UrlModel(models.Model):
     url = models.TextField()
-    active = models.BooleanField(default = True)
+    public = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
     user_date = models.CharField(max_length=25)
     comments = models.CharField(max_length=255)
@@ -12,6 +13,19 @@ class UrlModel(models.Model):
     @property
     def short_description(self):
         return truncatechars(self.url, 50)
+
+    @property
+    def animal(self):
+        """
+        find the animal within the url between data/ and /neuroglancer_data:
+        data/MD589/neuroglancer_data/C1
+        return: the first match if found, otherwise NA
+        """
+        animal = "NA"
+        match = re.search('data/(.+?)/neuroglancer_data', self.url)
+        if match is not None and match.group(1) is not None:
+            animal = match.group(1)
+        return animal
 
     class Meta:
         managed = True

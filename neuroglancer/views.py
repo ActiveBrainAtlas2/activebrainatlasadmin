@@ -10,6 +10,7 @@ class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = UrlModel.objects.all().order_by('-created')
+    queryset = UrlModel.objects.filter(public=True).order_by('-created')
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
+
