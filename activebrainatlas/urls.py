@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
+
+from activebrainatlas.views import SessionVarView
 from brain import views as brain_views
 from workflow.gantt_view import gantt
 
@@ -40,6 +42,7 @@ urlpatterns = [
     path(r'api-token-auth/', obtain_jwt_token),
     path(r'api-token-refresh/', refresh_jwt_token),
     path(r'oauth/', include('social_django.urls', namespace='social')),
+    path(r'session', SessionVarView.as_view(), name='session-var'),
 ]
 #if DEBUG:
 #    from django.conf.urls.static import static
