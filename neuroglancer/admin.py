@@ -12,10 +12,10 @@ from neuroglancer.models import UrlModel
 
 @admin.register(UrlModel)
 class UrlModel(admin.ModelAdmin):
-    list_display = ('animal', 'comments', 'open_neuroglancer', 'public', 'created')
+    list_display = ('animal', 'comments', 'open_neuroglancer','vetted','person', 'public', 'created')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date']
-    list_filter = ['created', 'public']
+    list_filter = ['created', 'public', 'vetted']
     search_fields = ['url', 'comments']
 
 
