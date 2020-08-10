@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.views.generic import TemplateView
 
 
@@ -7,4 +7,5 @@ class SessionVarView(TemplateView):
         result = "not"
         if request.user.is_authenticated:
             result = request.user.username
-        return HttpResponse(result)
+        data = {'status':result}
+        return JsonResponse(data)

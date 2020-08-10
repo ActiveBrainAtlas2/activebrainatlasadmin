@@ -1,11 +1,15 @@
 from django.db import models
+from django.conf import settings
 import re
 from django.template.defaultfilters import truncatechars
 
 
 class UrlModel(models.Model):
     url = models.TextField()
+    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False, db_column="person_id",
+                               verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
+    vetted = models.BooleanField(default = False)
     created = models.DateTimeField(auto_now_add=True)
     user_date = models.CharField(max_length=25)
     comments = models.CharField(max_length=255)
