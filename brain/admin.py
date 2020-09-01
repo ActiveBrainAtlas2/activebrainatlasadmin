@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.urls import path
 from django.template.response import TemplateResponse
 from django.contrib.admin.widgets import AdminDateWidget
+from django.utils.html import format_html
 
 from brain.forms import save_slide_model, TifInlineFormset
 from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
@@ -58,10 +59,19 @@ class AtlasAdminModel(admin.ModelAdmin):
 
 @admin.register(Animal)
 class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
-    list_display = ('prep_id', 'performance_center', 'comments', 'created')
+    list_display = ('prep_id', 'comments', 'histogram', 'created')
     search_fields = ('prep_id',)
     ordering = ['prep_id']
     exclude = ('created',)
+
+
+    def histogram(self, obj):
+        return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/data/{}/brains_info/histogram.html">Open</a>',
+                           (obj.prep_id))
+
+    histogram.short_description = 'Histogram'
+    #histogram.allow_tags = True
+
 
 @admin.register(Histology)
 class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):

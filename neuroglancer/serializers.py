@@ -1,25 +1,37 @@
 from rest_framework import serializers
+import logging
 from neuroglancer.models import UrlModel
+from django.contrib.auth.models import User
 
+logger = logging.getLogger('URLMODEL SERIALIZER LOGGING')
 
 class UrlSerializer(serializers.HyperlinkedModelSerializer):
+    person_id = serializers.IntegerField()
 
     class Meta:
         model = UrlModel
-        fields = ['animal', 'url', 'user_date', 'comments']
+        fields = ['animal', 'url', 'user_date', 'comments', 'person_id']
         ordering = ['-created']
 
 
     def create(self, validated_data):
-        user = None
-        request = self.context.get("request")
-        if request and hasattr(request, "user"):
-            user = request.user
+        logger.info('Creating url')
         urlModel = UrlModel(
             url=validated_data['url'],
             user_date=validated_data['user_date'],
             comments=validated_data['comments'],
-            person=user
+            public = False,
+            vetted = False,
         )
-        urlModel.save()
-        return urlModel
+        if 'person_id' in validated_data:
+            try:
+                authUser = User.objects.get(pk=validated_data['person_id'])
+                urlModel.person = authUser
+            except:
+                logger.error('Person was not in validated data')
+
+        try:
+            urlModel.save()
+        except:
+            logger.error('Could not save url model')
+        return UrlModel()
