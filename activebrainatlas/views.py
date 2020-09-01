@@ -4,8 +4,8 @@ from django.views.generic import TemplateView
 
 class SessionVarView(TemplateView):
     def get(self, request, *args, **kwargs):
-        result = "not"
+        result = 0
         if request.user.is_authenticated:
-            result = request.user.username
-        data = {'status':result}
+            result = request.user.id
+        data = {'person_id':result}
         return JsonResponse(data)
