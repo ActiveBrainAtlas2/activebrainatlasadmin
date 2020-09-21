@@ -1,18 +1,25 @@
 from django.contrib import admin
+from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
-from neuroglancer.models import UrlModel
+from neuroglancer.models import UrlModel, Structure
 import plotly.express as px
 from plotly.offline import plot
 import plotly.graph_objects as go
+from django.db import models
+
 
 # Register your models here.
 
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'open_neuroglancer','show_points','person', 'created')
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size':'100'})},
+    }
+
+    list_display = ('animal', 'open_neuroglancer','vetted','person','show_points', 'created')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date']
     list_filter = ['created', 'vetted']
@@ -20,8 +27,8 @@ class UrlModelAdmin(admin.ModelAdmin):
 
 
     def open_neuroglancer(self, obj):
-        return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/ng/#!{}">{}</a>',
-                           escape(obj.url), escape(obj.comments))
+        return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/ng/?id={}&amp;#!{}">{}</a>',
+                           obj.id, escape(obj.url), escape(obj.comments))
 
     def show_points(self, obj):
         return format_html(
@@ -63,6 +70,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         df = urlModel.points
         plot_div = "No points available"
         if df is not None and len(df) > 0:
+            df = df.sort_values(by=['Section', 'X', 'Y'])
             fig = go.Figure(data=[go.Table(
                 header=dict(values=list(df.columns),
                             fill_color='paleturquoise',
@@ -85,3 +93,18 @@ class UrlModelAdmin(admin.ModelAdmin):
 
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
+
+
+@admin.register(Structure)
+class StructureAdmin(admin.ModelAdmin):
+    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','paired','created')
+    ordering = ['abbreviation']
+    readonly_fields = ['created']
+    list_filter = ['created', 'active']
+    search_fields = ['abbreviation', 'description']
+
+
+    def show_hexadecimal(self, obj):
+        return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
+
+    show_hexadecimal.short_description = 'Hexadecimal'

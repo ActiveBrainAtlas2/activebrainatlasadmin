@@ -10,7 +10,8 @@ class UrlSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = UrlModel
-        fields = ['animal', 'url', 'user_date', 'comments', 'person_id']
+        #fields = ['id', 'animal', 'url', 'user_date', 'comments', 'person_id']
+        fields = '__all__'
         ordering = ['-created']
 
 
