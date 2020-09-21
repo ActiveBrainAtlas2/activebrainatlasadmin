@@ -4,9 +4,10 @@ import re
 import json
 import pandas as pd
 from django.template.defaultfilters import truncatechars
-
+from brain.models import AtlasModel
 
 class UrlModel(models.Model):
+    id = models.BigAutoField(primary_key=True)
     url = models.TextField()
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
@@ -65,4 +66,23 @@ class UrlModel(models.Model):
 
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
+
+
+class Structure(AtlasModel):
+    abbreviation = models.CharField(max_length=200)
+    description = models.TextField(max_length=2001, blank=False, null=False)
+    color = models.PositiveIntegerField()
+    hexadecimal = models.CharField(max_length=7)
+    paired = models.BooleanField(default=False)
+
+    class Meta:
+        managed = True
+        db_table = 'structure'
+        verbose_name = 'Structure'
+        verbose_name_plural = 'Structures'
+
+    def __str__(self):
+        return u'{}'.format(self.description)
+
+
 

@@ -1,0 +1,28 @@
+python libraries
+rules
+furl
+django-rq
+django-compressor
+django-cacheops
+django-sendfile
+dj-pagination
+django-revproxy
+django-filter
+drf-yasg
+django-rest-auth[with_social]
+python-logstash
+scipy
+shapely
+av
+pyunpack
+GitPython
+PyYAML
+lxml
+tensorflow
+
+
+
+
+settings.py
+added'dj_pagination.middleware.PaginationMiddleware', to middleware
+commented out STATICFILES_DIRS
