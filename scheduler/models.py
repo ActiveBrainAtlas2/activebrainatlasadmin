@@ -24,7 +24,7 @@ class Location(SchedulerModel):
     primary_people = models.ManyToManyField(settings.AUTH_USER_MODEL)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'location'
         verbose_name = 'Location'
         verbose_name_plural = 'Locations'
@@ -46,7 +46,7 @@ class Schedule(SchedulerModel):
     location = models.ForeignKey(Location, models.CASCADE, null=False, blank=False)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'schedule'
         verbose_name = 'Schedule'
         verbose_name_plural = 'Schedules'

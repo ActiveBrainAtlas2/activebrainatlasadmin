@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 logger = logging.getLogger('URLMODEL SERIALIZER LOGGING')
 
-class UrlSerializer(serializers.HyperlinkedModelSerializer):
+class UrlSerializer(serializers.ModelSerializer):
     person_id = serializers.IntegerField()
 
     class Meta:
@@ -35,4 +35,25 @@ class UrlSerializer(serializers.HyperlinkedModelSerializer):
             urlModel.save()
         except:
             logger.error('Could not save url model')
-        return UrlModel()
+        urlModel.url = None
+        return urlModel
+
+    def updateXXXX(self, instance, validated_data):
+        pass
+        instance.url = validated_data['url'],
+        instance.user_date = validated_data['user_date'],
+        instance.comments = validated_data['comments'],
+        if 'person_id' in validated_data:
+            try:
+                authUser = User.objects.get(pk=validated_data['person_id'])
+                instance.person = authUser
+            except:
+                logger.error('Person was not in validated data')
+
+        try:
+            instance.save()
+        except:
+            logger.error('Could not save url model')
+        instance.url = None
+
+        return instance

@@ -52,7 +52,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         plot_div = "No points available"
         if df is not None and len(df) > 0:
             fig = px.scatter_3d(df, x='X', y='Y', z='Section',
-                                color='Section', opacity=0.7)
+                                color='Layer', opacity=0.7)
             fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
 
             plot_div = plot(fig, output_type='div', include_plotlyjs=False)
@@ -70,12 +70,12 @@ class UrlModelAdmin(admin.ModelAdmin):
         df = urlModel.points
         plot_div = "No points available"
         if df is not None and len(df) > 0:
-            df = df.sort_values(by=['Section', 'X', 'Y'])
+            df = df.sort_values(by=['Layer','Section', 'X', 'Y'])
             fig = go.Figure(data=[go.Table(
                 header=dict(values=list(df.columns),
                             fill_color='paleturquoise',
                             align='left'),
-                cells=dict(values=[df.X, df.Y, df.Section],
+                cells=dict(values=[df.Layer, df.X, df.Y, df.Section],
                            fill_color='lavender',
                            align='left'))
             ])

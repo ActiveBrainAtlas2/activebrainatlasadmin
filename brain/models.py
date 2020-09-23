@@ -42,7 +42,7 @@ class Animal(AtlasModel):
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'animal'
         verbose_name = 'Animal'
         verbose_name_plural = 'Animals'
@@ -60,7 +60,7 @@ class FileOperation(AtlasModel):
     active = models.IntegerField()
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'file_operation'
         verbose_name = 'File Operation'
         verbose_name_plural = 'File Operations'
@@ -91,7 +91,7 @@ class Histology(AtlasModel):
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'histology'
         verbose_name = 'Histology'
         verbose_name_plural = 'Histologies'
@@ -125,7 +125,7 @@ class Injection(AtlasModel):
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'injection'
         verbose_name = 'Injection'
         verbose_name_plural = 'Injections'
@@ -140,7 +140,7 @@ class InjectionVirus(AtlasModel):
     virus = models.ForeignKey('Virus', models.DO_NOTHING)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'injection_virus'
         verbose_name = 'Injection Virus'
         verbose_name_plural = 'Injection Viruses'
@@ -165,7 +165,7 @@ class OrganicLabel(AtlasModel):
     comments = models.TextField(max_length=2000, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'organic_label'
         verbose_name = 'Organic Label'
         verbose_name_plural = 'Organic Labels'
@@ -173,13 +173,6 @@ class OrganicLabel(AtlasModel):
     def __str__(self):
         return "{} {}".format(self.label_id, self.label_type)
 
-
-class RowSequence(models.Model):
-    counter = models.BigIntegerField()
-
-    class Meta:
-        managed = True
-        db_table = 'row_sequence'
 
 
 class ScanRun(AtlasModel):
@@ -207,7 +200,7 @@ class ScanRun(AtlasModel):
         return "{} Scan ID: {}".format(self.prep.prep_id, self.id)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'scan_run'
 
 
@@ -261,7 +254,7 @@ class Slide(AtlasModel):
         return "{}".format(self.file_name)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'slide'
 
 
@@ -285,7 +278,7 @@ class SlideCziToTif(AtlasModel):
         return self.slide.scenes
 
     class Meta():
-        managed = True
+        managed = False
         db_table = 'slide_czi_to_tif'
         verbose_name = 'Slide CZI to TIF'
         verbose_name_plural = 'Slides CZI to TIF'
@@ -368,7 +361,7 @@ class Virus(AtlasModel):
     comments = models.TextField(max_length=2000, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'virus'
         verbose_name = 'Virus'
         verbose_name_plural = 'Viruses'
