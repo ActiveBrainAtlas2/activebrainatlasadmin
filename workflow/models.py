@@ -12,7 +12,7 @@ class Roles(models.Model):
         return u'{}'.format(self.name)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'task_roles'
         verbose_name = 'Role'
         verbose_name_plural = 'Roles'
@@ -25,7 +25,7 @@ class Resource(models.Model):
     role = models.ForeignKey('Roles', null=True, blank=True, on_delete=models.DO_NOTHING)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'resource'
     def __str__(self):
         return u'{} {}'.format(self.first_name, self.last_name)
@@ -40,7 +40,7 @@ class Task(AtlasModel):
     end_date = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'task'
         unique_together = (('prep', 'lookup'),)
         verbose_name = 'Task'
@@ -99,7 +99,7 @@ class ProgressLookup(AtlasModel):
     script = models.CharField(max_length=200, blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'progress_lookup'
         verbose_name = 'Pipeline lookup'
         verbose_name_plural = 'Pipeline lookups'
@@ -115,7 +115,7 @@ class WorkQueue(AtlasModel):
     completed = models.BooleanField(default = False)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'work_queue'
         verbose_name = 'Work Queue'
         verbose_name_plural = 'Work Queues'

@@ -35,7 +35,7 @@ class UrlModel(models.Model):
         return animal
 
     @property
-    def points(self):
+    def point_frame(self):
         df = None
         if self.url is not None:
             point_data = self.find_values('annotations', self.url)
@@ -45,8 +45,34 @@ class UrlModel(models.Model):
                 df = df.round(decimals=0)
         return df
 
+    @property
+    def points(self):
+        result = None
+        dfs = []
+        if self.url is not None:
+            json_txt = json.loads(self.url)
+            layers = json_txt['layers']
+            for l in layers:
+                if 'annotations' in l:
+                    name = l['name']
+                    annotation = l['annotations']
+                    d = [row['point'] for row in annotation]
+                    df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
+                    df = df.round(decimals=0)
+                    df['Layer'] = name
+                    df = df[['Layer', 'X', 'Y', 'Section']]
+                    dfs.append(df)
+            if len(dfs) == 0:
+                result = None
+            elif len(dfs) == 1:
+                result = dfs[0]
+            else:
+                result = pd.concat(dfs)
+
+        return result
+
     class Meta:
-        managed = True
+        managed = False
         verbose_name = "Url"
         verbose_name_plural = "Urls"
         db_table = 'neuroglancer_urls'
@@ -76,7 +102,7 @@ class Structure(AtlasModel):
     paired = models.BooleanField(default=False)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'structure'
         verbose_name = 'Structure'
         verbose_name_plural = 'Structures'
