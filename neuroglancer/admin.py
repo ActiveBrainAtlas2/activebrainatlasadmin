@@ -19,9 +19,9 @@ class UrlModelAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size':'100'})},
     }
 
-    list_display = ('animal', 'open_neuroglancer','vetted','person','show_points', 'created')
+    list_display = ('animal', 'open_neuroglancer','person','show_points', 'created', 'updated')
     ordering = ['-created']
-    readonly_fields = ['url', 'created', 'user_date']
+    readonly_fields = ['url', 'created', 'user_date', 'updated']
     list_filter = ['created', 'vetted']
     search_fields = ['url', 'comments']
 
@@ -37,6 +37,7 @@ class UrlModelAdmin(admin.ModelAdmin):
             reverse('admin:points-data', args=[obj.pk])
         )
 
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -46,11 +47,14 @@ class UrlModelAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
+
+
     def view_points_graph(self, request, id, *args, **kwargs):
         urlModel = UrlModel.objects.get(pk=id)
         df = urlModel.points
         plot_div = "No points available"
         if df is not None and len(df) > 0:
+            self.display_point_links = True
             fig = px.scatter_3d(df, x='X', y='Y', z='Section',
                                 color='Layer', opacity=0.7)
             fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
