@@ -109,19 +109,4 @@ class ProgressLookup(AtlasModel):
 
 
 
-class WorkQueue(AtlasModel):
-    prep = models.ForeignKey(Animal, models.CASCADE)
-    description = models.TextField()
-    completed = models.BooleanField(default = False)
-
-    class Meta:
-        managed = False
-        db_table = 'work_queue'
-        verbose_name = 'Work Queue'
-        verbose_name_plural = 'Work Queues'
-
-    def __str__(self):
-        return u'{}'.format(self.description)
-
-
 

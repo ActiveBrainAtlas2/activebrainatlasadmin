@@ -14,6 +14,7 @@ class UrlModel(models.Model):
     public = models.BooleanField(default = True, db_column='active')
     vetted = models.BooleanField(default = False)
     created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
     user_date = models.CharField(max_length=25)
     comments = models.CharField(max_length=255)
 
@@ -79,6 +80,16 @@ class UrlModel(models.Model):
 
     def __str__(self):
         return u'{}'.format(self.comments)
+
+    @property
+    def point_count(self):
+        result = False
+        if self.url is not None:
+            point_data = self.find_values('annotations', self.url)
+            if len(point_data) > 0:
+                result = True
+        return result
+
 
     def find_values(self, id, json_repr):
         results = []
