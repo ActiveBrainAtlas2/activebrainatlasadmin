@@ -17,7 +17,8 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 from django.apps import apps
-
+from django.conf import settings
+from django.views.generic import RedirectView
 
 from activebrainatlas.views import SessionVarView
 from brain import views as brain_views
@@ -25,6 +26,7 @@ from workflow.gantt_view import gantt
 
 from rest_framework import routers
 from neuroglancer.views import UrlViewSet
+
 #router = routers.DefaultRouter()
 #router.register(r'users', views.UserViewSet)
 #router.register(r'locations', views.LocationViewSet)
@@ -49,17 +51,30 @@ urlpatterns = [
     #path('', include('cvat.apps.engine.urls')),
 ]
 
+# drf-yasg component doesn't handle correctly URL_FORMAT_OVERRIDE and
+# send requests with ?format=openapi suffix instead of ?scheme=openapi.
+# We map the required paramater explicitly and add it into query arguments
+# on the server side.
+def wrap_swagger(view):
+    @login_required
+    def _map_format_to_schema(request, scheme=None):
+        if 'format' in request.GET:
+            request.GET = request.GET.copy()
+            format_alias = settings.REST_FRAMEWORK['URL_FORMAT_OVERRIDE']
+            request.GET[format_alias] = request.GET['format']
+
+        return view(request, format=scheme)
+
+    return _map_format_to_schema
+
+
 if apps.is_installed('cvat.apps.engine'):
-    import cvat
+    from cvat.apps.authentication.decorators import login_required
     from cvat.apps.engine import views as eviews
     from rest_framework import permissions
     from drf_yasg.views import get_schema_view
     from drf_yasg import openapi
     from cvat.apps.restrictions.views import RestrictionsViewSet
-
-    urlpatterns.append(path('django-rq/', include('django_rq.urls'))),
-    urlpatterns.append(path('auth/', include('cvat.apps.authentication.urls'))),
-    urlpatterns.append(path('documentation/', include('cvat.apps.documentation.urls'))),
 
     schema_view = get_schema_view(
        openapi.Info(
@@ -79,53 +94,24 @@ if apps.is_installed('cvat.apps.engine'):
     router.register('jobs', eviews.JobViewSet)
     router.register('users', eviews.UserViewSet)
     router.register('server', eviews.ServerViewSet, basename='server')
-    router.register('plugins', eviews.PluginViewSet)
     router.register('restrictions', RestrictionsViewSet, basename='restrictions')
-
     urlpatterns += [
         # Entry point for a client
-        path('', include(router.urls)),
-        #path('', eviews.dispatch_request),
-        path('dashboard/', eviews.dispatch_request),
+        path('', RedirectView.as_view(url=settings.UI_URL, permanent=True,
+                                      query_string=True)),
 
         # documentation for API
-        path('api/swagger<str:scheme>', eviews.wrap_swagger(
-           schema_view.without_ui(cache_timeout=0)), name='schema-json'),
-        path('api/swagger/', eviews.wrap_swagger(
-           schema_view.with_ui('swagger', cache_timeout=0)), name='schema-swagger-ui'),
-        path('api/docs/', eviews.wrap_swagger(
-           schema_view.with_ui('redoc', cache_timeout=0)), name='schema-redoc'),
+        path('api/swagger<str:scheme>', wrap_swagger(
+            schema_view.without_ui(cache_timeout=0)), name='schema-json'),
+        path('api/swagger/', wrap_swagger(
+            schema_view.with_ui('swagger', cache_timeout=0)), name='schema-swagger-ui'),
+        path('api/docs/', wrap_swagger(
+            schema_view.with_ui('redoc', cache_timeout=0)), name='schema-redoc'),
 
         # entry point for API
-        path('api/v1/auth/', include('cvat.apps.authentication.api_urls')),
+        path('api/v1/auth/', include('cvat.apps.authentication.urls')),
         path('api/v1/', include((router.urls, 'cvat'), namespace='v1'))
     ]
-
-
-if apps.is_installed('cvat.apps.tf_annotation'):
-    urlpatterns.append(path('tensorflow/annotation/', include('cvat.apps.tf_annotation.urls')))
-
-if apps.is_installed('cvat.apps.git'):
-    urlpatterns.append(path('git/repository/', include('cvat.apps.git.urls')))
-
-if apps.is_installed('cvat.apps.reid'):
-    urlpatterns.append(path('reid/', include('cvat.apps.reid.urls')))
-
-if apps.is_installed('cvat.apps.auto_annotation'):
-    urlpatterns.append(path('auto_annotation/', include('cvat.apps.auto_annotation.urls')))
-
-if apps.is_installed('cvat.apps.dextr_segmentation'):
-    urlpatterns.append(path('dextr/', include('cvat.apps.dextr_segmentation.urls')))
-
-if apps.is_installed('cvat.apps.log_viewer'):
-    urlpatterns.append(path('analytics/', include('cvat.apps.log_viewer.urls')))
-
-if apps.is_installed('silk'):
-    urlpatterns.append(path('profiler/', include('silk.urls')))
-
-# new feature by Mohammad
-if apps.is_installed('cvat.apps.auto_segmentation'):
-    urlpatterns.append(path('tensorflow/segmentation/', include('cvat.apps.auto_segmentation.urls')))
 
 #if DEBUG:
 #    from django.conf.urls.static import static

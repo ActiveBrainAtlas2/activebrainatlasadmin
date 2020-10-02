@@ -104,6 +104,13 @@ class UrlModel(models.Model):
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
 
+class Points(UrlModel):
+
+    class Meta:
+        managed = False
+        proxy = True
+        verbose_name = 'Points'
+        verbose_name_plural = 'Points'
 
 class Structure(AtlasModel):
     abbreviation = models.CharField(max_length=200)

@@ -3,8 +3,6 @@ from django.forms import TextInput, Textarea, DateInput, NumberInput
 from django.db import models
 import csv
 from django.http import HttpResponse
-from django.urls import path
-from django.template.response import TemplateResponse
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.html import format_html
 
