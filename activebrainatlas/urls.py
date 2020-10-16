@@ -68,7 +68,7 @@ def wrap_swagger(view):
     return _map_format_to_schema
 
 
-if apps.is_installed('cvat.apps.engine'):
+if apps.is_installed('cvat.apps.authentication'):
     from cvat.apps.authentication.decorators import login_required
     from cvat.apps.engine import views as eviews
     from rest_framework import permissions

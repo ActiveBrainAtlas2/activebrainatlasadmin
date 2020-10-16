@@ -1,3 +1,6 @@
+import math
+from typing import List
+
 from django.db import models
 from django.conf import settings
 import re
@@ -59,7 +62,8 @@ class UrlModel(models.Model):
                     annotation = l['annotations']
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
-                    df = df.round(decimals=0)
+                    trunc = lambda x: math.trunc(x)
+                    df = df.applymap(trunc)
                     df['Layer'] = name
                     df = df[['Layer', 'X', 'Y', 'Section']]
                     dfs.append(df)
@@ -129,4 +133,23 @@ class Structure(AtlasModel):
         return u'{}'.format(self.description)
 
 
+class LayerData(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
+                               verbose_name="Url")
+    layer = models.CharField(max_length=255)
+    x = models.FloatField()
+    y = models.FloatField()
+    section = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'Layer Data'
+        verbose_name_plural = 'Layer Data'
+
+    def __str__(self):
+        return u'{}'.format(self.layer)
 
