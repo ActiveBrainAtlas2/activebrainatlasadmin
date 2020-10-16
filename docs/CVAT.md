@@ -1,11 +1,57 @@
-### CVAT install into existing django project
+### CVAT migration from Postgres into existing Django Mysql project
 #### Libraries
 1. pip install git+https://github.com/openvinotoolkit/datumaro@v0.1.0
 1. diskcache
 1. logstash
-#### Database
+#### Mysql database modifications
 1. alter table auth_user modify column first_name varchar(150)
 1. drop table engine_plugin
 1. drop table engine_pluginoption
 1. alter table engine_data add column storage_method varchar(15)
 
+### Postgres to Mysql in Docker
+# alter FKs on active_atlas_development
+`alter table auth_group_permissions drop foreign key auth_group_permissions_group_id_b120cbf9_fk_auth_group_id;
+ALTER TABLE auth_group_permissions ADD CONSTRAINT FK__AGP_group_id FOREIGN KEY (group_id) REFERENCES auth_group(id) ON UPDATE CASCADE;
+
+
+alter table auth_user_groups drop foreign key auth_user_groups_group_id_97559544_fk_auth_group_id;
+ALTER TABLE auth_user_groups ADD CONSTRAINT FK__AUG_group_id FOREIGN KEY (group_id) REFERENCES auth_group(id) ON UPDATE CASCADE;`
+1. Update tables
+`update auth_group set id = 7 where id = 1;
+update auth_group set id = 1 where id = 2;
+update auth_group set id = 2 where id = 3;
+update auth_group set id = 3 where id = 4;
+update auth_group set id = 4 where id = 5;
+-- kui
+insert into auth_user_groups (user_id, group_id) values (23,1);
+
+select * from auth_group
+order by id;
+
+select AU.id, AU.username, AG.id as group_id, AG.name
+from auth_group AG
+inner join auth_user_groups AUG on AG.id = AUG.group_id
+inner join auth_user AU on AUG.user_id = AU.id;`
+
+1. Enter the cvat container `docker exec -u 0 -it cvat bash` and:
+    1. apt-get update
+    1. apt install libmysqlclient-dev vim
+    1. pip3 install -U pip
+    1. pip3 install django-mysql mysqlclient
+    1. edit supervisor.conf and change postgres port to mysql and remove migrate
+        1. change 5432 to 3306
+        1. remove the migration at line 62
+    1. vi cvat/settings/production.py and add mysql settings
+    1. remove migrations:
+    `find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+    find . -path "*/migrations/*.pyc"  -delete`
+    1. test with `python3 manage.py check`
+1. exit cvat container 
+1. get container ID with `docker ps`
+1. commit `docker commit container_id cvat_myqsl:latest`
+1. edit docker.compose.yml and remove cvat_db service and all references to it.
+1. change container_name and image_name from cvat to cvat_mysql
+1. changes references of CVAT_POSTGRES_HOST to point to db.dk.ucsd.edu
+1. turn down docker: `docker-compose down --remove-orphans`
+1. run `docker-compose up -d`

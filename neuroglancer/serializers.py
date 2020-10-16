@@ -1,6 +1,9 @@
+import json
+from typing import List
+
 from rest_framework import serializers
 import logging
-from neuroglancer.models import UrlModel
+from neuroglancer.models import UrlModel, LayerData
 from django.contrib.auth.models import User
 
 logger = logging.getLogger('URLMODEL SERIALIZER LOGGING')
@@ -35,6 +38,10 @@ class UrlSerializer(serializers.ModelSerializer):
             urlModel.save()
         except:
             logger.error('Could not save url model')
+
+        #if 'annotations' in urlModel.url and 'point' in urlModel:
+        #    structure_upsert(urlModel.id, urlModel.url)
+
         urlModel.url = None
         return urlModel
 
@@ -57,3 +64,20 @@ class UrlSerializer(serializers.ModelSerializer):
         instance.url = None
 
         return instance
+
+def structure_upsert(id, urldata):
+    if urldata is not None:
+        json_txt = json.loads(urldata)
+        layers = json_txt['layers']
+        for l in layers:
+            if 'annotations' in l:
+                name = l['name']
+                annotation = l['annotations']
+                rows = [row['point'] for row in annotation]
+                #df = pd.DataFrame(rows, columns=['X', 'Y', 'Section'])
+                #trunc = lambda x: math.trunc(x)
+                #df = df.applymap(trunc)
+                #df['Layer'] = name
+
+            for row in rows:
+                LayerData.objects.update_or_create(id=id, url_id=url)
