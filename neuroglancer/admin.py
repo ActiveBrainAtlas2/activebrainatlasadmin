@@ -3,7 +3,7 @@ from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
-from neuroglancer.models import UrlModel, Structure, Points
+from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
@@ -66,8 +66,11 @@ class PointsAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-
-
+    """
+    xaxis for both brains need to be the same scale (suggest 20k to 60K)
+    yaxis for both brains need to be the same scale (suggest 10k to 30 k)
+    Section axis for both brains need to be the same scale (suggest 100 to 350)
+    """
     def view_points_graph(self, request, id, *args, **kwargs):
         urlModel = UrlModel.objects.get(pk=id)
         df = urlModel.points
@@ -76,7 +79,18 @@ class PointsAdmin(admin.ModelAdmin):
             self.display_point_links = True
             fig = px.scatter_3d(df, x='X', y='Y', z='Section',
                                 color='Layer', opacity=0.7)
-            fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+            fig.update_layout(
+                scene=dict(
+                    xaxis=dict(nticks=4, range=[20000, 60000], ),
+                    yaxis=dict(nticks=4, range=[10000, 30000], ),
+                    zaxis=dict(nticks=4, range=[100, 350], ), ),
+                width=1200,
+                margin=dict(r=0, l=0, b=0, t=0))
+            fig.update_traces(marker=dict(size=2),
+                              selector=dict(mode='markers'))
+            #fig.update_xaxes(range=[20000, 60000])
+            #fig.update_yaxes(range=[10000, 30000])
+            #fig.update_zaxes(range=[100, 350])
 
             plot_div = plot(fig, output_type='div', include_plotlyjs=False)
 
@@ -128,3 +142,13 @@ class StructureAdmin(admin.ModelAdmin):
         return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
 
     show_hexadecimal.short_description = 'Hexadecimal'
+
+
+@admin.register(CenterOfMass)
+class StructureAdmin(admin.ModelAdmin):
+    list_display = ('animal', 'structure','side','x','y', 'section', 'active','created')
+    ordering = ['animal', 'structure', 'side']
+    readonly_fields = ['created']
+    list_filter = ['created', 'active']
+    search_fields = ['animal', 'structure']
+
