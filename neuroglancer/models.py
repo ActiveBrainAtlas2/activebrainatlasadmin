@@ -7,7 +7,10 @@ import re
 import json
 import pandas as pd
 from django.template.defaultfilters import truncatechars
-from brain.models import AtlasModel
+from django_mysql.models import EnumField
+
+from brain.models import AtlasModel, Animal
+
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -62,8 +65,9 @@ class UrlModel(models.Model):
                     annotation = l['annotations']
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
-                    trunc = lambda x: math.trunc(x)
-                    df = df.applymap(trunc)
+                    df['X'] = df['X'].astype(int)
+                    df['Y'] = df['Y'].astype(int)
+                    df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
                     df = df[['Layer', 'X', 'Y', 'Section']]
                     dfs.append(df)
@@ -152,4 +156,29 @@ class LayerData(models.Model):
 
     def __str__(self):
         return u'{}'.format(self.layer)
+
+class CenterOfMass(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    structure = models.ForeignKey(Structure, models.CASCADE, null=False, db_column="structure_id",
+                               verbose_name="Structure")
+    animal = models.ForeignKey(Animal, models.CASCADE, null=False, db_column="prep_id",
+                               verbose_name="Animal")
+
+    x = models.FloatField()
+    y = models.FloatField()
+    section = models.IntegerField()
+    side = EnumField(choices=['S','L','R'], blank=False, null=False)
+
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'center_of_mass'
+        verbose_name = 'Center Of Mass'
+        verbose_name_plural = 'Center of Mass'
+
+    def __str__(self):
+        return u'{}'.format(self.structure.abbreviation)
 
