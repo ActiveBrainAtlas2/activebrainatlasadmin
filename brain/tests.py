@@ -23,11 +23,9 @@ from brain.admin import SlideAdmin
 class MockRequest:
     pass
 
-
 class MockSuperUser:
     def has_perm(self, perm):
         return True
-
 
 request = MockRequest()
 request.user = MockSuperUser()

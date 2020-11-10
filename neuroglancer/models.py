@@ -121,11 +121,11 @@ class Points(UrlModel):
         verbose_name_plural = 'Points'
 
 class Structure(AtlasModel):
+    id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
     color = models.PositiveIntegerField()
     hexadecimal = models.CharField(max_length=7)
-    paired = models.BooleanField(default=False)
 
     class Meta:
         managed = False
@@ -158,16 +158,18 @@ class LayerData(models.Model):
         return u'{}'.format(self.layer)
 
 class CenterOfMass(models.Model):
+    """
+    I set both structure and prep to be nullable. This is just to make it easier
+    for the serializers. The database will ensure they are not null.
+    """
     id = models.BigAutoField(primary_key=True)
-    structure = models.ForeignKey(Structure, models.CASCADE, null=False, db_column="structure_id",
+    structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
                                verbose_name="Structure")
-    animal = models.ForeignKey(Animal, models.CASCADE, null=False, db_column="prep_id",
-                               verbose_name="Animal")
+    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
 
     x = models.FloatField()
     y = models.FloatField()
-    section = models.IntegerField()
-    side = EnumField(choices=['S','L','R'], blank=False, null=False)
+    section = models.FloatField()
 
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)

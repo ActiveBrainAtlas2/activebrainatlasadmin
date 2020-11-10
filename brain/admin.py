@@ -74,22 +74,16 @@ class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
 @admin.register(Histology)
 class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'label', 'performance_center')
-    search_fields = ('prep_id',)
+    search_fields = ('prep__prep_id',)
     autocomplete_fields = ['prep_id']
     ordering = ['prep_id', 'label']
     exclude = ('created',)
 
-    def prep_id(self, instance):
-        return instance.prep.prep_id
-
 @admin.register(Injection)
 class InjectionAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'performance_center', 'anesthesia', 'comments', 'created')
-    search_fields = ('prep_id',)
+    search_fields = ('prep__prep_id',)
     ordering = ['created']
-
-    def prep_id(self, instance):
-        return instance.prep.prep_id
 
 @admin.register(Virus)
 class VirusAdmin(AtlasAdminModel, ExportCsvMixin):
@@ -101,9 +95,8 @@ class VirusAdmin(AtlasAdminModel, ExportCsvMixin):
 class InjectionVirusAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'injection_comments', 'virus_name', 'created')
     fields = ['injection', 'virus']
-    search_fields = ('prep_id',)
+    search_fields = ('injection__prep__prep_id',)
     ordering = ['created']
-
 
     def prep_id(self, instance):
         return instance.injection.prep.prep_id
@@ -123,11 +116,8 @@ class OrganicLabelAdmin(AtlasAdminModel, ExportCsvMixin):
 @admin.register(ScanRun)
 class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'performance_center', 'machine','comments', 'created')
-    search_fields = ('prep_id',)
+    search_fields = ('prep__prep_id',)
     ordering = ['prep_id', 'performance_center', 'machine','comments', 'created']
-
-    def prep_id(self, instance):
-        return instance.prep.prep_id
 
 
 class TifInline(admin.TabularInline):
