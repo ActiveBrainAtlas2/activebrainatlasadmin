@@ -25,16 +25,15 @@ from brain import views as brain_views
 from workflow.gantt_view import gantt
 
 from rest_framework import routers
-from neuroglancer.views import UrlViewSet
+from neuroglancer.views import UrlViewSet, CenterOfMassViewSet, AlignAtlasView
 
 #router = routers.DefaultRouter()
 #router.register(r'users', views.UserViewSet)
 #router.register(r'locations', views.LocationViewSet)
 #router.register(r'schedules', views.ScheduleViewSet)
 router = routers.DefaultRouter(trailing_slash=False)
-router.register(r'neuroglancer', UrlViewSet)
-
-
+router.register(r'neuroglancer', UrlViewSet, basename='neuroglancer')
+router.register(r'center', CenterOfMassViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,6 +46,7 @@ urlpatterns = [
     #path(r'api-token-refresh/', refresh_jwt_token),
     #path(r'oauth/', include('social_django.urls', namespace='social')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
+    path(r'alignatlas', AlignAtlasView.as_view(), name='align-atlas')
     # cvat stuff
     #path('', include('cvat.apps.engine.urls')),
 ]

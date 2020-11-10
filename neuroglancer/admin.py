@@ -26,6 +26,7 @@ class UrlModelAdmin(admin.ModelAdmin):
 
 
     def open_neuroglancer(self, obj):
+
         return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/ng/?id={}&amp;#!{}">{}</a>',
                            obj.id, escape(obj.url), escape(obj.comments))
 
@@ -51,8 +52,8 @@ class PointsAdmin(admin.ModelAdmin):
 
     def show_points(self, obj):
         return format_html(
-            '<a href="{}">Graph</a>&nbsp; <a href="{}">Data</a>',
-            reverse('admin:points-graph', args=[obj.pk]),
+            '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a>',
+            reverse('admin:points-3D-graph', args=[obj.pk]),
             reverse('admin:points-data', args=[obj.pk])
         )
 
@@ -61,17 +62,22 @@ class PointsAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             # path('<prep_id>', self.admin_site.admin_view(self.process_section),  name='account-deposit',
-            path('points-graph/<id>', self.view_points_graph, name='points-graph'),
+            path('points-3D-graph/<id>', self.view_points_3Dgraph, name='points-3D-graph'),
             path('points-data/<id>', self.view_points_data, name='points-data'),
         ]
         return custom_urls + urls
 
-    """
-    xaxis for both brains need to be the same scale (suggest 20k to 60K)
-    yaxis for both brains need to be the same scale (suggest 10k to 30 k)
-    Section axis for both brains need to be the same scale (suggest 100 to 350)
-    """
-    def view_points_graph(self, request, id, *args, **kwargs):
+
+
+    def view_points_3Dgraph(self, request, id, *args, **kwargs):
+        """
+        3d graph
+        :param request: http request
+        :param id:  id of url
+        :param args:
+        :param kwargs:
+        :return: 3dGraph in a django template
+        """
         urlModel = UrlModel.objects.get(pk=id)
         df = urlModel.points
         plot_div = "No points available"
@@ -88,9 +94,6 @@ class PointsAdmin(admin.ModelAdmin):
                 margin=dict(r=0, l=0, b=0, t=0))
             fig.update_traces(marker=dict(size=2),
                               selector=dict(mode='markers'))
-            #fig.update_xaxes(range=[20000, 60000])
-            #fig.update_yaxes(range=[10000, 30000])
-            #fig.update_zaxes(range=[100, 350])
 
             plot_div = plot(fig, output_type='div', include_plotlyjs=False)
 
@@ -131,7 +134,7 @@ class PointsAdmin(admin.ModelAdmin):
 
 @admin.register(Structure)
 class StructureAdmin(admin.ModelAdmin):
-    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','paired','created')
+    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created')
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
@@ -145,10 +148,9 @@ class StructureAdmin(admin.ModelAdmin):
 
 
 @admin.register(CenterOfMass)
-class StructureAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'structure','side','x','y', 'section', 'active','created')
-    ordering = ['animal', 'structure', 'side']
+class CenterOfMassAdmin(admin.ModelAdmin):
+    list_display = ('prep_id', 'structure','x','y', 'section', 'active','created')
+    ordering = ['prep_id', 'structure']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
-    search_fields = ['animal', 'structure']
-
+    search_fields = ('prep__prep_id',)
