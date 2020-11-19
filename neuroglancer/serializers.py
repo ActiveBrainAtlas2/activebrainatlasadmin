@@ -32,27 +32,29 @@ def update_center_of_mass(urlModel):
                         y = com['point'][1]
                         z = com['point'][2]
                         if 'description' in com:
-                            abbreviation = com['description']
-                            structure = Structure.objects.get(abbreviation=abbreviation)
-                            prep = Animal.objects.get(pk=urlModel.animal)
-                            CenterOfMass.objects.update_or_create(
-                                prep=prep, structure=structure,
-                                defaults={
-                                    "x": x,
-                                    "y": y,
-                                    "section": z,
-                                    "active": True,
-                                    "created": datetime.now()
-                                }
-                            )
-                            """
+                            abbreviation = str(com['description']).replace('\n','').strip()
                             try:
-                                centerOfMass = CenterOfMass.objects.get(prep=prep, structure=structure)
-                            except CenterOfMass.DoesNotExist:
-                                centerOfMass = CenterOfMass(prep=prep, structure=structure, x=x, y=y, section=z,
-                                                            active=True, created=datetime.now())
-                                centerOfMass.save()
-                            """
+                                structure = Structure.objects.get(abbreviation=abbreviation)
+                            except Structure.DoesNotExist:
+                                logger.error("Structure does not exist")
+
+                            try:
+                                prep = Animal.objects.get(pk=urlModel.animal)
+                            except Animal.DoesNotExist:
+                                logger.error("Animal does not exist")
+
+                            if structure is not None and prep is not None:
+                                CenterOfMass.objects.update_or_create(
+                                    prep=prep, structure=structure,
+                                    defaults={
+                                        "x": x,
+                                        "y": y,
+                                        "section": z,
+                                        "active": True,
+                                        "created": datetime.now()
+                                    }
+                                )
+
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url can't be in the UrlModel when it is returned

@@ -1,0 +1,29 @@
+ #FF8E6B;">	#FF8E6B			oculomotor nucleus			3N			1			120s		
+ #C6FF6B;">	#C6FF6B			trochlear nucleus			4N			2			120s		
+ #FFDA45;">	#FFDA45			trigeminal motor nucleus			5N			3			205s		
+ #0CFF95;">	#0CFF95			abducens nucleus			6N			4			113s		
+ #5E80FF;">	#5E80FF			area postrema			AP			5			128s		
+ #7633FF;">	#7633FF			facial nucleus			7N			6			92s		
+ #FF1B09;">	#FF1B09			facial nerve			7n			7			92s		
+ #0CFF95;">	#0CFF95			dorsal nuc of vagus			10N			8			120s		
+ #FF3578;">	#FF3578			hypoglossal nucleus			12N			9			120s		
+ #4EFF45;">	#4EFF45			nucleus ambiguus			Amb			10			205s		
+										11					
+ #2FD5FF;">	#2FD5FF			dorsal cochlear nucl			DC			12			252s		
+ #FF0BE5;">	#FF0BE5			lateral retic nucleus			LRt			13			92s		
+ #6C96FF;">	#6C96FF			locus coeruleus			LC			14			92s		
+ #F66EFF;">	#F66EFF			inferior colliculus			IC			15			120s		
+ #FF417B;">	#FF417B			ventral cochlear nucleus anterior			VCA			16			252s		
+ #B6FF58;">	#B6FF58			ventral cochlear nucleus posterior			VCP			17			252s		
+ #A144FF;">	#A144FF			ventral lateral lemniscus			VLL			18			50s		
+ #1EFF29;">	#1EFF29			parabigeminal nucleus			PBG			19			226s		
+ #FFE031;">	#FFE031			pontine grey			Pn			20			92s		
+ #FF8E6B;">	#FF8E6B			Red Nucleus			R or RMC			21			174s		
+ #9BFF0B;">	#9BFF0B			Reticulotegmental nucleus			RtTg			22			128s		
+ #22D8FF;">	#22D8FF			Superior Colliculus			SC			23			120s		
+ #2FD5FF;">	#2FD5FF			Spinal Trigeminal Caudalis			Sp5C			24			92s		
+ #42E2FF;">	#42E2FF			Spinal Trigeminal Interpolaris			Sp5I			25			50s		
+ #F369FF;">	#F369FF			Spinal Trigeminal Oralis			Sp5O			26			50s		
+ #7490EF;">	#7490EF			Substantia Nigra- pars reticulata			SNR			27			92s		
+ #32FF32;">	#32FF32			Substantia Nigra- pars compacta			SNC			28			92s		
+ #78FFCB;">	#78FFCB			Nucleus of trapezoid body			Tz			29			120s		

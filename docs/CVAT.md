@@ -33,6 +33,10 @@ select AU.id, AU.username, AG.id as group_id, AG.name
 from auth_group AG
 inner join auth_user_groups AUG on AG.id = AUG.group_id
 inner join auth_user AU on AUG.user_id = AU.id;`
+### Save existing docker containers from muralis
+1. docker save -o cvat_ui.tar cvat_cvat_ui:latest
+### Load muralis docker image
+1. docker load -i cvat_ui.tar
 
 1. Enter the cvat container `docker exec -u 0 -it cvat bash` and:
     1. apt-get update
@@ -43,6 +47,19 @@ inner join auth_user AU on AUG.user_id = AU.id;`
         1. change 5432 to 3306
         1. remove the migration at line 62
     1. vi cvat/settings/production.py and add mysql settings
+`
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'active_atlas_development',                      # Or path to database file if using sqlite3.
+        'USER': 'dklab',                      # Not used with sqlite3.
+        'PASSWORD': '$pw4dklabdb',                  # Not used with sqlite3.
+        'HOST': '192.168.1.12',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '3306',    # Set to empty string for default. Not used with sqlite3.
+        'OPTIONS': {'sql_mode': 'traditional'},
+    }
+}
+`
     1. remove migrations:
     `find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
     find . -path "*/migrations/*.pyc"  -delete`
@@ -53,5 +70,11 @@ inner join auth_user AU on AUG.user_id = AU.id;`
 1. edit docker.compose.yml and remove cvat_db service and all references to it.
 1. change container_name and image_name from cvat to cvat_mysql
 1. changes references of CVAT_POSTGRES_HOST to point to db.dk.ucsd.edu
-1. turn down docker: `docker-compose down --remove-orphans`
+1. turn down docker: `docker-compose down`
 1. run `docker-compose up -d`
+## Problems
+1. Bad Gateway, make sure table django_site points to same name as host in docker-compose.override.yml
+1. Keeps building cvat_ui - make sure container and image for cvat_ui are the same as in `docker container ls`
+### Upgrading
+1. save existing images as v1: `docker commit a7c40625961  cvat_mysql:v1`
+1. To run with that v1 image, edit docker-compose.yml and add the ':v1' tag to the image

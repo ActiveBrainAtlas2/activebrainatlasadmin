@@ -57,19 +57,24 @@ class UrlModel(models.Model):
         result = None
         dfs = []
         if self.url is not None:
+            description = None
             json_txt = json.loads(self.url)
             layers = json_txt['layers']
-            for l in layers:
-                if 'annotations' in l:
-                    name = l['name']
-                    annotation = l['annotations']
+            for layer in layers:
+                if 'annotations' in layer:
+                    name = layer['name']
+                    annotation = layer['annotations']
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
                     df['X'] = df['X'].astype(int)
                     df['Y'] = df['Y'].astype(int)
                     df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
-                    df = df[['Layer', 'X', 'Y', 'Section']]
+                    structures = [row['description'] for row in annotation if 'description' in row]
+                    if len(structures) != len(df):
+                        structures = ['' for row in annotation]
+                    df['Description'] = structures
+                    df = df[['Layer', 'Description', 'X', 'Y', 'Section']]
                     dfs.append(df)
             if len(dfs) == 0:
                 result = None
