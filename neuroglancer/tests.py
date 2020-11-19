@@ -21,7 +21,7 @@ class TestUrlModel(TransactionTestCase):
         super_user = User.objects.create_superuser(username='super', email='super@email.org',
                                                    password='pass')
         # ids 168, 188,210,211,209,200
-        id = 211
+        id = 164
         self.urlModel = UrlModel.objects.get(pk=id)
 
         self.serializer_data = {

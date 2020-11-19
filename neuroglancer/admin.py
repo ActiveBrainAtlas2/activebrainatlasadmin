@@ -1,12 +1,18 @@
+import json
+
 from django.contrib import admin
-from django.forms import TextInput
+from django.forms import TextInput, ChoiceField
+from django.http import HttpResponseRedirect
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
+from django import forms
+
 from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
+from neuroglancer.graphs import create_2Dgraph
 
 
 # Register your models here.
@@ -18,8 +24,8 @@ class UrlModelAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size':'100'})},
     }
 
-    list_display = ('animal', 'open_neuroglancer','person', 'created', 'updated')
-    ordering = ['-created']
+    list_display = ('animal', 'open_neuroglancer','person', 'updated', 'vetted')
+    ordering = ['-vetted', '-updated']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     list_filter = ['created', 'vetted']
     search_fields = ['url', 'comments']
@@ -52,7 +58,10 @@ class PointsAdmin(admin.ModelAdmin):
 
     def show_points(self, obj):
         return format_html(
-            '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a>',
+            '<a href="{}">2D Graph</a>&nbsp; '
+            '<a href="{}">3D Graph</a>&nbsp; '
+            '<a href="{}">Data</a>',
+            reverse('admin:points-2D-graph', args=[obj.pk]),
             reverse('admin:points-3D-graph', args=[obj.pk]),
             reverse('admin:points-data', args=[obj.pk])
         )
@@ -61,13 +70,44 @@ class PointsAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            # path('<prep_id>', self.admin_site.admin_view(self.process_section),  name='account-deposit',
+            path('points-2D-graph/<id>', self.view_points_2Dgraph, name='points-2D-graph'),
             path('points-3D-graph/<id>', self.view_points_3Dgraph, name='points-3D-graph'),
             path('points-data/<id>', self.view_points_data, name='points-data'),
         ]
         return custom_urls + urls
 
+    def view_points_2Dgraph(self, request, id, *args, **kwargs):
+        """
+        3d graph
+        :param request: http request
+        :param id:  id of url
+        :param args:
+        :param kwargs:
+        :return: 2dGraph in a django template
+        """
+        urlModel = UrlModel.objects.get(pk=id)
+        df = urlModel.points
+        animal = urlModel.animal
 
+
+
+        section = df['Section'].min()
+
+        fig = create_2Dgraph(animal, section)
+
+        #manager_state = json.dumps(data['manager_state'])
+        #widget_views = [json.dumps(view) for view in data['view_specs']]
+        title = f'{urlModel.comments} Section {section}'
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+
+        context = dict(
+            self.admin_site.each_context(request),
+            title=title,
+            #manager_state=None,
+            #controls = widget_views[0],
+            chart = plot_div
+        )
+        return TemplateResponse(request, "points_2dgraph.html", context)
 
     def view_points_3Dgraph(self, request, id, *args, **kwargs):
         """
@@ -138,6 +178,7 @@ class StructureAdmin(admin.ModelAdmin):
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
+    #list_filter = (VettedFilter,)
     search_fields = ['abbreviation', 'description']
 
 
@@ -154,3 +195,5 @@ class CenterOfMassAdmin(admin.ModelAdmin):
     readonly_fields = ['created']
     list_filter = ['created', 'active']
     search_fields = ('prep__prep_id',)
+
+

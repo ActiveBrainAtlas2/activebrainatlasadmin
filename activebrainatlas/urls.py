@@ -26,6 +26,8 @@ from workflow.gantt_view import gantt
 
 from rest_framework import routers
 from neuroglancer.views import UrlViewSet, CenterOfMassViewSet, AlignAtlasView
+from neuroglancer.dash_view import dash_example_1_view, session_state_view
+import neuroglancer.dash_apps
 
 #router = routers.DefaultRouter()
 #router.register(r'users', views.UserViewSet)
@@ -46,7 +48,9 @@ urlpatterns = [
     #path(r'api-token-refresh/', refresh_jwt_token),
     #path(r'oauth/', include('social_django.urls', namespace='social')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
-    path(r'alignatlas', AlignAtlasView.as_view(), name='align-atlas')
+    path(r'alignatlas', AlignAtlasView.as_view(), name='align-atlas'),
+    path(r'scatter/<pk>', dash_example_1_view, name="scatter"),
+    path('django_plotly_dash/', include('django_plotly_dash.urls')),
     # cvat stuff
     #path('', include('cvat.apps.engine.urls')),
 ]

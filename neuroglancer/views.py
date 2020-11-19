@@ -111,13 +111,13 @@ def align_atlas(animal):
         src_point_set = np.diag(atlas_box_scales) @ src_point_set
         dst_point_set = np.array([reference_centers[s] for s in structures]).T
         dst_point_set = np.diag(reference_scales) @ dst_point_set
-        r, t = align_point_sets(src_point_set, dst_point_set)
+        R, t = align_point_sets(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T
 
     else:
-        r = np.eye(3)
+        R = np.eye(3)
         t = np.zeros(3)
-    return r, t
+    return R, t
 
 def get_atlas_centers(
         atlas_box_size=(1000, 1000, 300),

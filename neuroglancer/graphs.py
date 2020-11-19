@@ -1,10 +1,9 @@
 from ipywidgets import widgets
 import plotly.graph_objects as go
-
+from ipywidgets.embed import embed_data
 from neuroglancer.models import UrlModel
 
-
-def create_2Dgraph():
+def create_2DgraphXXX():
 
 
     img_width = 65000
@@ -17,7 +16,8 @@ def create_2Dgraph():
     df['ID'] = df.index
     cols = ['ID', 'Layer', 'X', 'Y', 'Section']
 
-    section = 209
+    section = df['Section'].min()
+
     fig = go.FigureWidget([go.Scatter(y=df['Y'], x=df['X'], mode='markers')])
     fig.add_layout_image(
         dict(
@@ -31,6 +31,7 @@ def create_2Dgraph():
             opacity=0.5,
             layer="below",
             name="showme",
+            source=f"https://activebrainatlas.ucsd.edu/data/DK52/www/{section}.png",
             sizing="contain")
     )
 
@@ -79,14 +80,6 @@ def create_2Dgraph():
     section_selector.observe(response, names="value")
     layer_selector.observe(response, names="value")
 
-    tablecols = ['Layer', 'X', 'Y', 'Section']
-    tX = go.FigureWidget([go.Table(
-        header=dict(values=cols,
-                    fill=dict(color='#C2D4FF'),
-                    align=['left'] * 5),
-        cells=dict(values=[df[col] for col in cols],
-                   fill=dict(color='#F5F8FF'),
-                   align=['left'] * 5))])
     t = go.FigureWidget([go.Table(header=dict(), cells=dict())])
 
 
@@ -98,5 +91,43 @@ def create_2Dgraph():
 
     selection_container = widgets.HBox([section_selector, layer_selector])
     figure_container = widgets.VBox([fig, t])
-    # Put everything together
-    widgets.VBox([selection_container, figure_container])
+    return embed_data(views=[figure_container])
+
+def create_2Dgraph(animal, section):
+
+
+    img_width = 65000
+    img_height = 36000
+
+    id = 200
+    urlModel = UrlModel.objects.get(pk=id)
+    df = urlModel.points
+    df.reset_index(inplace=True)
+    df['ID'] = df.index
+
+    df = df.loc[ df['Section'] == section]
+    section = str(section).zfill(3)
+
+    fig = go.FigureWidget([go.Scatter(y=df['Y'], x=df['X'], mode='markers')])
+    fig.add_layout_image(
+        dict(
+            x=0,
+            sizex=img_width,
+            y=0,
+            sizey=img_height,
+            xref="x",
+            yref="y",
+            yanchor="top",
+            opacity=0.5,
+            layer="below",
+            name="showme",
+            source=f"https://activebrainatlas.ucsd.edu/data/{animal}/www/{section}.png",
+            sizing="contain")
+    )
+
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+    fig.update_xaxes(range=[0, img_width])
+    fig.update_yaxes(range=[0, img_height], scaleanchor="x")
+    fig.update_layout(template="plotly_white")
+    fig['layout']['yaxis']['autorange'] = "reversed"
+    return fig
