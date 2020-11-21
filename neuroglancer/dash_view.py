@@ -2,20 +2,22 @@ from django.shortcuts import render
 
 #pylint: disable=unused-argument
 
-def dash_example_1_view(request, template_name="points_2dgraph.html", **kwargs):
+def dash_scatter_view(request, template_name="points_2dgraph.html", **kwargs):
     'Example view that inserts content into the dash context passed to the dash application'
 
     context = {}
     pk = kwargs['pk']
-    #context['pk'] = pk
-    print('request get',kwargs['pk'])
-
-    # create some context to send over to Dash:
     dash_context = request.session.get("django_plotly_dash", dict())
-    dash_context['django_to_dash_context'] = "Hey you, I am Dash receiving context from Django"
     dash_context['pk'] = pk
     request.session['django_plotly_dash'] = dash_context
+    return render(request, template_name=template_name, context=context)
 
+def dash_scatter_viewXXX(request, template_name="points_test.html", **kwargs):
+    context = {}
+    pk = kwargs['pk']
+    dash_context = request.session.get("django_plotly_dash", dict())
+    dash_context['pk'] = pk
+    request.session['django_plotly_dash'] = dash_context
     return render(request, template_name=template_name, context=context)
 
 def session_state_view(request, template_name, **kwargs):

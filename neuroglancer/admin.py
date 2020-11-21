@@ -7,13 +7,14 @@ from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
 from django import forms
+import neuroglancer.dash_apps
 
 from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
 from neuroglancer.graphs import create_2Dgraph
-
+from neuroglancer.dash_view import dash_scatter_view
 
 # Register your models here.
 
@@ -54,60 +55,27 @@ class PointsAdmin(admin.ModelAdmin):
         return points
 
 
-
-
     def show_points(self, obj):
+        display_2dgraph = obj.point_count
+
         return format_html(
-            '<a href="{}">2D Graph</a>&nbsp; '
-            '<a href="{}">3D Graph</a>&nbsp; '
-            '<a href="{}">Data</a>',
-            reverse('admin:points-2D-graph', args=[obj.pk]),
+            '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a> <a href="{}" style="{}";>2D Graph</a>&nbsp; ',
             reverse('admin:points-3D-graph', args=[obj.pk]),
-            reverse('admin:points-data', args=[obj.pk])
+            reverse('admin:points-data', args=[obj.pk]),
+            reverse('admin:points-2D-graph', args=[obj.pk]),
+            display_2dgraph
         )
 
 
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('points-2D-graph/<id>', self.view_points_2Dgraph, name='points-2D-graph'),
+            path(r'scatter/<pk>', dash_scatter_view, name="points-2D-graph"),
             path('points-3D-graph/<id>', self.view_points_3Dgraph, name='points-3D-graph'),
             path('points-data/<id>', self.view_points_data, name='points-data'),
         ]
         return custom_urls + urls
 
-    def view_points_2Dgraph(self, request, id, *args, **kwargs):
-        """
-        3d graph
-        :param request: http request
-        :param id:  id of url
-        :param args:
-        :param kwargs:
-        :return: 2dGraph in a django template
-        """
-        urlModel = UrlModel.objects.get(pk=id)
-        df = urlModel.points
-        animal = urlModel.animal
-
-
-
-        section = df['Section'].min()
-
-        fig = create_2Dgraph(animal, section)
-
-        #manager_state = json.dumps(data['manager_state'])
-        #widget_views = [json.dumps(view) for view in data['view_specs']]
-        title = f'{urlModel.comments} Section {section}'
-        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-
-        context = dict(
-            self.admin_site.each_context(request),
-            title=title,
-            #manager_state=None,
-            #controls = widget_views[0],
-            chart = plot_div
-        )
-        return TemplateResponse(request, "points_2dgraph.html", context)
 
     def view_points_3Dgraph(self, request, id, *args, **kwargs):
         """

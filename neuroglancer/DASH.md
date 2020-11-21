@@ -12,5 +12,6 @@
 1. do manage.py migrate django_plotly_dash
 1. install bootstrap
     1. pip install django-bootstrap4
+    1. pip install dash_bootstrap_components
     1. add boostrap4 to installed apps in settings.py
     1. setup an alias to static in apache 
