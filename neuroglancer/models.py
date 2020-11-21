@@ -67,6 +67,10 @@ class UrlModel(models.Model):
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
                     df['X'] = df['X'].astype(int)
+                    # test to see if the points were inputted at the wrong scale
+                    if df['X'].mean() < 2000:
+                        df['X'] = df['X'] * 32
+                        df['Y'] = df['Y'] * 32
                     df['Y'] = df['Y'].astype(int)
                     df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
@@ -96,11 +100,12 @@ class UrlModel(models.Model):
 
     @property
     def point_count(self):
-        result = False
-        if self.url is not None:
-            point_data = self.find_values('annotations', self.url)
-            if len(point_data) > 0:
-                result = True
+        result = "display:none;"
+        if self.points is not None:
+            df = self.points
+            df = df[(df.Layer == 'PM nucleus') | (df.Layer == 'premotor')]
+            if len(df) > 0:
+                result = "display:inline;"
         return result
 
 
