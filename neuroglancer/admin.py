@@ -1,19 +1,17 @@
 import json
 
 from django.contrib import admin
-from django.forms import TextInput, ChoiceField
-from django.http import HttpResponseRedirect
+from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
-from django import forms
 import neuroglancer.dash_apps
+import neuroglancer.dash_point_table
 
 from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
-from neuroglancer.graphs import create_2Dgraph
 from neuroglancer.dash_view import dash_scatter_view
 
 # Register your models here.

@@ -117,6 +117,7 @@ def align_atlas(animal):
     else:
         R = np.eye(3)
         t = np.zeros(3)
+        t = t.reshape(3,1)
     return R, t
 
 def get_atlas_centers(
