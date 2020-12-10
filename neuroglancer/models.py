@@ -144,7 +144,7 @@ class Structure(AtlasModel):
         verbose_name_plural = 'Structures'
 
     def __str__(self):
-        return u'{}'.format(self.description)
+        return f'{self.description} {self.abbreviation}'
 
 
 class LayerData(models.Model):

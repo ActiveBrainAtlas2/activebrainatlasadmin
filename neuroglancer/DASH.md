@@ -1,8 +1,6 @@
 ### Install instructions for django-plotly-dash
 #### Libraries
-1. pip install django_plotly_dash
-1. pip install channels daphne redis django-redis channels-redis
-1. pip install dpd-static-support
+1. pip install django_plotly_dash channels daphne redis django-redis channels-redis dpd-static-support
 1. install redis on server
 1. Modify settings.py
     1. add 'django_plotly_dash.apps.DjangoPlotlyDashConfig', to installed_apps

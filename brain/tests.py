@@ -1,40 +1,20 @@
-import datetime
+import datetime, random
 from django import forms
-from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
-from django.contrib.admin.options import (
-    HORIZONTAL, VERTICAL, ModelAdmin, TabularInline,
-    get_content_type_for_model,
-)
+from django.contrib.admin.options import ModelAdmin
 from django.contrib.admin.sites import AdminSite
-from django.contrib.admin.widgets import (
-    AdminDateWidget, AdminRadioSelect, AutocompleteSelect,
-    AutocompleteSelectMultiple,
-)
 from django.contrib.auth.models import User
-from django.db import models
-from django.forms.widgets import Select
-from django.test import SimpleTestCase, TestCase
-from django.test.utils import isolate_apps
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 from brain.models import Animal, ScanRun, Slide, SlideCziToTif
 from brain.forms import save_slide_model
 from brain.admin import SlideAdmin
+from unittest import mock
 
 
-class MockRequest:
-    pass
-
-class MockSuperUser:
-    def has_perm(self, perm):
-        return True
-
-request = MockRequest()
-request.user = MockSuperUser()
-
-
-class TestSlideForms(TestCase):
+class TestSlideForms(TransactionTestCase):
 
     def setUp(self):
-        self.prep = Animal.objects.create(prep_id='DKXX')
+        animal = 'DK' + str(random.randint(100,999))
+        self.prep = Animal.objects.create(prep_id=animal)
 
         self.scan_run = ScanRun.objects.create(prep=self.prep, resolution=0.325, number_of_slides=1)
 
@@ -104,6 +84,7 @@ class TestSlideForms(TestCase):
         ma = SlideAdmin(Slide, self.site)
         super_user = User.objects.create_superuser(username='super', email='super@email.org',
                                                    password='pass')
+
         request.user = super_user
         form = ma.get_form(self, request, change=None)
         """
