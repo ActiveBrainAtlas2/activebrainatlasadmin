@@ -71,10 +71,8 @@ class Schedule(SchedulerModel):
 
         occupied = []
         date_from = datetime.now() - timedelta(days=1)
-        date_to = datetime.now() + timedelta(days=1)
 
-        schedules = Schedule.objects.filter(start_time__lte=date_to).filter(start_time__gte=date_from)\
-            .order_by('start_time')
+        schedules = Schedule.objects.filter(start_time__gte=date_from).order_by('start_time')
         for schedule in schedules:
             start = isScheduleInTimePeriod(schedule.start_time, schedule.end_time, self.start_time)
             end = isScheduleInTimePeriod(schedule.start_time, schedule.end_time, self.end_time)
@@ -82,8 +80,8 @@ class Schedule(SchedulerModel):
                 occupied.append(schedule)
 
         if len(occupied) >= self.location.people_allowed:
-            schedule = occupied[0]
-            raise ValidationError("That room is occupied. {} is in room: {} from {} to {}".format(
-                schedule.person.username,
-                schedule.location.room,
-                schedule.start_time.strftime('%b/%d/%Y %H:%M'), schedule.end_time.strftime('%b/%d/%Y %H:%M')))
+            #schedule = occupied[0]
+            errors = "That room is occupied."
+            for schedule in occupied:
+                errors += f" {schedule.person.username} is in room: {schedule.location.room} from {schedule.start_time.strftime('%b/%d/%Y %H:%M')} to {schedule.end_time.strftime('%b/%d/%Y %H:%M')}"
+            raise ValidationError(errors)

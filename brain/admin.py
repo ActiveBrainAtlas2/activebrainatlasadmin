@@ -1,10 +1,14 @@
+import os
+
 from django.contrib import admin
-from django.forms import TextInput, Textarea, DateInput, NumberInput
+#from django.contrib.admin.models import  LogEntry
+from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
 import csv
 from django.http import HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from brain.forms import save_slide_model, TifInlineFormset
 from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
@@ -33,6 +37,7 @@ class ExportCsvMixin:
 
 class AtlasAdminModel(admin.ModelAdmin):
     formfield_overrides = {
+        models.CharField: {'widget': Select(attrs={'size':'250'})},
         models.CharField: {'widget': TextInput(attrs={'size':'20'})},
         models.DateTimeField: {'widget': DateInput(attrs={'size':'20'})},
         # models.DateField: {'widget': DateTimeInput(attrs={'size':'20','type':'date'})},
@@ -44,14 +49,22 @@ class AtlasAdminModel(admin.ModelAdmin):
     def is_active(self, instance):
         return instance.active == 1
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        kwargs["widget"] = Select(attrs={
+            'style': 'width: 250px;'
+        })
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
     is_active.boolean = True
 
     list_filter = ('created', )
     fields = []
     actions = ["export_as_csv"]
+
     class Media:
         css = {
-            'all': ('css/admin.css',)
+            'all': ('admin/css/thumbnail.css',)
         }
 
 
@@ -122,12 +135,44 @@ class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
 
 class TifInline(admin.TabularInline):
     model = SlideCziToTif
-    fields = ('scene_number', 'scene_index', 'channel', 'active')
-    readonly_fields = ['scene_number', 'channel', 'scene_index']
+    fields = ('file_name','scene_number', 'scene_index', 'channel', 'scene_image', 'section_image')
+    readonly_fields = ['file_name', 'scene_number', 'channel', 'scene_index', 'scene_image', 'section_image']
     ordering = ['-active', 'scene_number', 'scene_index']
     extra = 0
     can_delete = False
     formset = TifInlineFormset
+    template = 'tabular_tifs.html'
+
+    def scene_image(self, obj):
+        animal = obj.slide.scan_run.prep_id
+        tif_file = obj.file_name
+        png = tif_file.replace('tif', 'png')
+        # DK55_slide112_2020_09_21_9205_S1_C1.png
+        testfile = f"/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/www/scene/{png}"
+        if os.path.isfile(testfile):
+            thumbnail = f"https://activebrainatlas.ucsd.edu/data/{animal}/www/scene/{png}"
+            return mark_safe(
+                '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(thumbnail))
+        else:
+            return mark_safe('<div>Not available</div>')
+
+    scene_image.short_description = 'Pre Image'
+
+    def section_image(self, obj):
+        animal = obj.slide.scan_run.prep_id
+        tif_file = obj.file_name
+        png = tif_file.replace('tif', 'png')
+        # DK55_slide112_2020_09_21_9205_S1_C1.png
+        testfile = f"/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/www/{png}"
+        if os.path.isfile(testfile):
+            thumbnail = f"https://activebrainatlas.ucsd.edu/data/{animal}/www/{png}"
+            return mark_safe(
+                '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(thumbnail))
+        else:
+            return mark_safe('<div>Not available</div>')
+
+    section_image.short_description = 'Post Image'
+
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super(TifInline, self).get_formset(request, obj, **kwargs)
@@ -137,6 +182,7 @@ class TifInline(admin.TabularInline):
     def get_queryset(self, request):
         qs = super(TifInline, self).get_queryset(request)
         return qs.filter(active=1).filter(channel=1)
+        #return qs.filter(active=1)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -176,9 +222,6 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         return fields
 
     inlines = [TifInline, ]
-
-    class Media:
-        css = {"all": ("css/admin.css",)}
 
     def scene_count(self, obj):
         count = SlideCziToTif.objects.filter(slide_id=obj.id).filter(channel=1).filter(active=True).count()
@@ -240,7 +283,7 @@ class ExportSections:
 class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
     #change_list_template = "admin/section/qc.html"
     indexCounter = -1
-    list_display = ('tif','section_number', 'slide','scene', 'histogram', 'image_tag')
+    list_display = ('tif','section_number', 'slide','scene', 'scene_index', 'histogram', 'image_tag')
     ordering = ['prep_id', 'channel']
     list_filter = []
     list_display_links = None
@@ -284,6 +327,25 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+@admin.register(admin.models.LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    # to have a date-based drilldown navigation in the admin page
+    date_hierarchy = 'action_time'
+
+    # to filter the resultes by users, content types and action flags
+    list_filter = ['action_time','action_flag']
+    # when searching the user will be able to search in both object_repr and change_message
+    search_fields = ['object_repr','change_message']
+    list_display = ['action_time','user','content_type','action_flag',]
+    def has_add_permission(self, request):
+        return False
+    def has_change_permission(self, request, obj=None):
+        return False
+    def has_delete_permission(self, request, obj=None):
+        return False
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_superuser
 
 admin.site.site_header = 'Active Brain Atlas Admin'
 admin.site.site_title = "Active Brain Atlas"

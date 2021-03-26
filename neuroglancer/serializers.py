@@ -15,6 +15,18 @@ logger = logging.getLogger(__name__)
 
 
 def update_center_of_mass(urlModel):
+    """
+    This method takes the center of mass from a neuroglancer
+    annotation and updates/inserts it into the database.
+    It does lots of checks to make sure it is in the correct format,
+    including:
+    layer must be named COM
+    structure name just be in the description field
+    structures must exactly match the structure names in the database,
+    though this script does strip line breaks, white space off.
+    :param urlModel: the long url from neuroglancer
+    :return: nothing
+    """
     try:
         json_txt = json.loads(urlModel.url)
     except ValueError as e:
@@ -24,8 +36,8 @@ def update_center_of_mass(urlModel):
         layers = json_txt['layers']
         for layer in layers:
             if 'annotations' in layer:
-                lname = layer['name']
-                if 'com' in lname.lower():
+                lname = str(layer['name']).upper().strip()
+                if lname == 'COM':
                     annotation = layer['annotations']
                     for com in annotation:
                         x = com['point'][0]
@@ -39,21 +51,26 @@ def update_center_of_mass(urlModel):
                                 logger.error("Structure does not exist")
 
                             try:
+                                person = User.objects.get(pk=urlModel.person.id)
+                            except User.DoesNotExist:
+                                logger.error("User does not exist")
+
+                            try:
                                 prep = Animal.objects.get(pk=urlModel.animal)
                             except Animal.DoesNotExist:
                                 logger.error("Animal does not exist")
 
                             if structure is not None and prep is not None:
                                 CenterOfMass.objects.update_or_create(
-                                    prep=prep, structure=structure,
-                                    defaults={
-                                        "x": x,
-                                        "y": y,
-                                        "section": z,
-                                        "active": True,
-                                        "created": datetime.now()
-                                    }
-                                )
+                                        prep=prep, structure=structure, 
+                                        active=True, person=person, input_type='manual',
+                                        defaults={
+                                            "x": int(x),
+                                            "y": int(y),
+                                            "section": int(z),
+                                        }
+                                    )
+                                        
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.

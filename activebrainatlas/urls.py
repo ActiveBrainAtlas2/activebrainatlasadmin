@@ -17,22 +17,17 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import TemplateView
 from django.apps import apps
-from django.conf import settings
 from django.views.generic import RedirectView
+from django.conf import settings
+from django.conf.urls.static import static
 
 from activebrainatlas.views import SessionVarView
 from brain import views as brain_views
+from neuroglancer import views as neuroglancer_views
 from workflow.gantt_view import gantt
 
 from rest_framework import routers
-from neuroglancer.views import UrlViewSet, CenterOfMassViewSet, AlignAtlasView
-#from neuroglancer.dash_view import dash_scatter_view
-#import neuroglancer.dash_apps
-
-#router = routers.DefaultRouter()
-#router.register(r'users', views.UserViewSet)
-#router.register(r'locations', views.LocationViewSet)
-#router.register(r'schedules', views.ScheduleViewSet)
+from neuroglancer.views import UrlViewSet, CenterOfMassViewSet, AlignAtlasView, UrlDataView
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'neuroglancer', UrlViewSet, basename='neuroglancer')
 router.register(r'center', CenterOfMassViewSet)
@@ -42,16 +37,11 @@ urlpatterns = [
     path(r'image-listing', brain_views.image_list),
     path(r'graph', gantt),
     path(r'gantt', TemplateView.as_view(template_name='gantt.html')),
-    #path('', include(router.urls)),
-    #path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    #path(r'api-token-auth/', obtain_jwt_token),
-    #path(r'api-token-refresh/', refresh_jwt_token),
-    #path(r'oauth/', include('social_django.urls', namespace='social')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
     path(r'alignatlas', AlignAtlasView.as_view(), name='align-atlas'),
+    path(r'urldata', UrlDataView.as_view(), name='get-data'),
+    path(r'public', neuroglancer_views.public_list, name='align-atlas'),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
-    # cvat stuff
-    #path('', include('cvat.apps.engine.urls')),
 ]
 
 # drf-yasg component doesn't handle correctly URL_FORMAT_OVERRIDE and
@@ -121,3 +111,4 @@ if apps.is_installed('cvat.apps.authentication'):
 #    urlpatterns = urlpatterns + static(MEDIA_URL, document_root=MEDIA_ROOT)
 
 urlpatterns += [ path('', include(router.urls)),]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

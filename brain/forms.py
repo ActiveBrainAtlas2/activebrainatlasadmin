@@ -32,13 +32,16 @@ def repeat_scene(slide_id, inserts, scene_number):
         create_scene(tifs, scene_number)
 
 
-def remove_scene(slide_id, inserts, scene_number):
+def remove_scene(slide_id, deletes, scene_number):
+    channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).values('channel').distinct().count()
     tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
         .filter(scene_number=scene_number)
+    scene_index = tifs[0].scene_index
+    tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
+        .filter(scene_index=scene_index).order_by('scene_number')[:deletes*channels]
 
-    for insert in range(inserts):
-        for tif in tifs:
-            tif.delete()
+    for tif in tifs:
+        tif.delete()
 
 
 def create_scene(tifs, scene_number):
@@ -51,6 +54,12 @@ def create_scene(tifs, scene_number):
 
 
 def find_closest_neighbor(slide_id, scene_number):
+    """
+    Get the nearest scene. Look first at the preceding tifs, if nothing is there, go for the one just after
+    :param slide_id:  primary key of the slide
+    :param scene_number: scene number. 1 per set of 3 channels
+    :return:  set of tifs
+    """
     channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).values('channel').distinct().count()
     below = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True) \
                 .filter(scene_number__lt=scene_number).order_by('-scene_number')[:channels]
@@ -62,6 +71,19 @@ def find_closest_neighbor(slide_id, scene_number):
 
     return tifs
 
+
+def set_scene_active(slide_id, scene_number):
+    channels = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).values('channel').distinct().count()
+    active_tifs = SlideCziToTif.objects.filter(slide_id=slide_id)\
+        .filter(active=True).filter(scene_number=scene_number).order_by('scene_number')[:channels]
+    inactive_tifs = SlideCziToTif.objects.filter(slide_id=slide_id)\
+        .filter(active=False).filter(scene_number=scene_number).order_by('scene_number')[:channels]
+    for tif in active_tifs:
+        tif.active = False
+        tif.save()
+    for tif in inactive_tifs:
+        tif.active = True
+        tif.save()
 
 def set_scene_inactive(slide_id, scene_number):
     tifs = SlideCziToTif.objects.filter(slide_id=slide_id).filter(active=True).filter(scene_number=scene_number)
@@ -103,6 +125,7 @@ def save_slide_model(self, request, obj, form, change):
     OUTOFFOCUS = 1
     BADTISSUE = 2
     END = 3
+    OK = 0
     qc_values = [qc_1, qc_2, qc_3, qc_4, qc_5, qc_6]
     current_qcs = Slide.objects.values_list('scene_qc_1', 'scene_qc_2', 'scene_qc_3',
                                             'scene_qc_4', 'scene_qc_5',
@@ -112,6 +135,10 @@ def save_slide_model(self, request, obj, form, change):
     for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
         if qc_value in [OUTOFFOCUS, BADTISSUE] and qc_value != current_qc:
             set_scene_inactive(obj.id, scene_number)
+    # tifs get set to active to back out a mistake
+    for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
+        if qc_value == OK and qc_value != current_qc:
+            set_scene_active(obj.id, scene_number)
 
     for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
         if qc_value in [OUTOFFOCUS, BADTISSUE] and qc_value != current_qc:
@@ -130,18 +157,20 @@ def save_slide_model(self, request, obj, form, change):
     # scene_count = obj.scenes
     # scenes = range(1, scene_count + 1)
     ## do the inserts
-    if moves > 0:
-        current_values = Slide.objects.values_list('insert_before_one', 'insert_between_one_two',
-                                                   'insert_between_two_three',
-                                                   'insert_between_three_four', 'insert_between_four_five',
-                                                   'insert_between_five_six').get(pk=obj.id)
+    current_values = Slide.objects.values_list('insert_before_one', 'insert_between_one_two',
+                                               'insert_between_two_three',
+                                               'insert_between_three_four', 'insert_between_four_five',
+                                               'insert_between_five_six').get(pk=obj.id)
 
-        for new, current, scene_number in zip(insert_values, current_values, scene_numbers):
-            if new is not None and new > current:
-                difference = new - current
-                repeat_scene(obj.id, difference, scene_number)
+    for new, current, scene_number in zip(insert_values, current_values, scene_numbers):
+        if new is not None and new > current:
+            difference = new - current
+            repeat_scene(obj.id, difference, scene_number)
+        if new is not None and new < current:
+            difference = current - new
+            remove_scene(obj.id, difference, scene_number)
 
-        scene_reorder(obj.id)
+    scene_reorder(obj.id)
 
 
     obj.scenes = SlideCziToTif.objects.filter(slide_id=obj.id).filter(channel=1).filter(active=True).count()

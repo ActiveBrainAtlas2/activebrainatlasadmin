@@ -1,8 +1,6 @@
-import math
-from typing import List
-
 from django.db import models
 from django.conf import settings
+from django.utils.html import escape
 import re
 import json
 import pandas as pd
@@ -11,6 +9,14 @@ from django_mysql.models import EnumField
 
 from brain.models import AtlasModel, Animal
 
+
+COL_LENGTH = 1000
+ROW_LENGTH = 1000
+Z_LENGTH = 300
+ATLAS_X_BOX_SCALE = 10
+ATLAS_Y_BOX_SCALE = 10
+ATLAS_Z_BOX_SCALE = 20
+ATLAS_RAW_SCALE = 10
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -27,6 +33,10 @@ class UrlModel(models.Model):
     @property
     def short_description(self):
         return truncatechars(self.url, 50)
+
+    @property
+    def escape_url(self):
+        return escape(self.url)
 
     @property
     def animal(self):
@@ -93,6 +103,7 @@ class UrlModel(models.Model):
         managed = False
         verbose_name = "Url"
         verbose_name_plural = "Urls"
+        ordering = ('comments', 'created')
         db_table = 'neuroglancer_urls'
 
     def __str__(self):
@@ -154,7 +165,7 @@ class LayerData(models.Model):
     layer = models.CharField(max_length=255)
     x = models.FloatField()
     y = models.FloatField()
-    section = models.IntegerField()
+    section = models.FloatField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
 
@@ -176,10 +187,13 @@ class CenterOfMass(models.Model):
     structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
                                verbose_name="Structure")
     prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
+    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
+                               verbose_name="User", blank=False, null=False)
 
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
+    input_type = EnumField(choices=['manual','detected','aligned'], blank=False, null=False, verbose_name='Input')
 
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
@@ -190,6 +204,9 @@ class CenterOfMass(models.Model):
         db_table = 'center_of_mass'
         verbose_name = 'Center Of Mass'
         verbose_name_plural = 'Center of Mass'
+        constraints = [
+        models.UniqueConstraint(fields=['prep', 'structure', 'active', 'person', 'input_type'], name='unique COM')
+    ]
 
     def __str__(self):
         return u'{}'.format(self.structure.abbreviation)
