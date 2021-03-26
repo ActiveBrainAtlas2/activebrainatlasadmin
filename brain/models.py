@@ -34,6 +34,7 @@ class Animal(AtlasModel):
     ship_date = models.DateField(blank=True, null=True)
     shipper = EnumField(choices=['FedEx','UPS'], blank=True, null=True)
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
+    # cshl_send_date = models.DateField(blank=True, null=True, verbose_name='CSHL ship date')
     aliases_1 = models.CharField(max_length=100, blank=True, null=True)
     aliases_2 = models.CharField(max_length=100, blank=True, null=True)
     aliases_3 = models.CharField(max_length=100, blank=True, null=True)
@@ -193,6 +194,8 @@ class ScanRun(AtlasModel):
 
     width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
     height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
+    rotation = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
+    flip = EnumField(choices=['none','flip','flop'], blank=False, null=False, default='none')
 
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
@@ -285,7 +288,7 @@ class SlideCziToTif(AtlasModel):
         ordering = ['scene_number', 'channel']
 
     def __str__(self):
-        return "{}".format(self.slide.file_name)
+        return "{}".format(self.file_name)
 
 
 
@@ -296,6 +299,7 @@ class Section(AtlasModel):
     file_name = models.CharField(max_length=200)
     tif = models.ForeignKey(SlideCziToTif, models.DO_NOTHING, db_column='tif_id')
     scene_number = models.IntegerField(null=False, verbose_name='Scene')
+    scene_index = models.IntegerField(null=False, verbose_name='Scene Index')
     channel = models.IntegerField(null=False)
 
     def tif(self):
@@ -318,9 +322,9 @@ class Section(AtlasModel):
 
     def histogram(self):
         png = self.file_name.replace('tif','png')
-        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/histogram/{}".format(self.prep_id, png)
+        testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/histogram/CH1/{}".format(self.prep_id, png)
         if os.path.isfile(testfile):
-            histogram = "/data/{}/histogram/{}".format(self.prep_id, png)
+            histogram = "/data/{}/histogram/CH1/{}".format(self.prep_id, png)
             return mark_safe(
             '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(histogram) )
         else:

@@ -1,5 +1,4 @@
-import json
-
+from django.conf import settings
 from django.contrib import admin
 from django.forms import TextInput
 from django.urls import reverse, path
@@ -8,13 +7,16 @@ from django.template.response import TemplateResponse
 import neuroglancer.dash_apps
 import neuroglancer.dash_point_table
 
-from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass
+from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, COL_LENGTH, ROW_LENGTH, ATLAS_RAW_SCALE, \
+    ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
 from neuroglancer.dash_view import dash_scatter_view
 
-# Register your models here.
+def datetime_format(dtime):
+    return dtime.strftime("%d %b %Y %H:%M")
+
 
 
 @admin.register(UrlModel)
@@ -22,30 +24,66 @@ class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'100'})},
     }
-
-    list_display = ('animal', 'open_neuroglancer','person', 'updated', 'vetted')
+    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'person', 'updated_display')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     list_filter = ['created', 'vetted']
     search_fields = ['url', 'comments']
+    #user_id = None
 
+    #def get_queryset(self, request):
+    #    self.user_id = request.user.id
+    #    return super(UrlModelAdmin, self).get_queryset(request)
+
+    def updated_display(self, obj):
+        return datetime_format(obj.updated)
+    updated_display.short_description = 'Updated'    
+
+
+    def open_oldneuroglancer(self, obj):
+        host = "https://activebrainatlas.ucsd.edu/ng/"
+        return format_html('<a target="_blank" href="{}?id={}&amp;#!{}">Long URL</a>',
+                           host, obj.id, escape(obj.url))
 
     def open_neuroglancer(self, obj):
+        host = "https://activebrainatlas.ucsd.edu/ng_test/"
+        if settings.DEBUG:
+            host = "http://127.0.0.1:8080"
 
-        return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/ng/?id={}&amp;#!{}">{}</a>',
-                           obj.id, escape(obj.url), escape(obj.comments))
+        comments = escape(obj.comments)
+        links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=0">{comments}</a>'
+        return format_html(links)
+
+    def open_multiuser(self, obj):
+        host = "https://activebrainatlas.ucsd.edu/ng_multi"
+
+        comments = escape(obj.comments)
+        links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
+        #links = f'<a target="_blank" href="{host}/{obj.id}/1">{comments}</a>'
+        return format_html(links)
 
 
+    open_oldneuroglancer.short_description = 'Long URL'
+    open_oldneuroglancer.allow_tags = True
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
-
-
+    open_multiuser.short_description = 'Multi-User'
+    open_multiuser.allow_tags = True
+ 
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'comments', 'person','show_points', 'created', 'updated')
+    list_display = ('animal', 'comments', 'person','show_points', 'created_display', 'updated_display')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
+
+    def updated_display(self, obj):
+        return datetime_format(obj.updated)
+    updated_display.short_description = 'Updated'    
+
+    def created_display(self, obj):
+        return datetime_format(obj.created)
+    created_display.short_description = 'Created'    
 
     def get_queryset(self, request):
         points = Points.objects.filter(url__contains='annotations')
@@ -140,13 +178,16 @@ class PointsAdmin(admin.ModelAdmin):
 
 @admin.register(Structure)
 class StructureAdmin(admin.ModelAdmin):
-    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created')
+    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
     #list_filter = (VettedFilter,)
     search_fields = ['abbreviation', 'description']
 
+    def created_display(self, obj):
+        return datetime_format(obj.created)
+    created_display.short_description = 'Created'    
 
     def show_hexadecimal(self, obj):
         return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
@@ -154,12 +195,65 @@ class StructureAdmin(admin.ModelAdmin):
     show_hexadecimal.short_description = 'Hexadecimal'
 
 
+def altas_scale_xy(x):
+    """
+    0.325 is the scale for Neurotrace brains
+    This converts the atlas coordinates to neuroglancer XY coordinates
+    :param x: x or y coordinate
+    :return: an integer that is in neuroglancer scale
+    """
+    atlas_box_center = COL_LENGTH // 2
+    result = (atlas_box_center + x) * (ATLAS_RAW_SCALE / 0.325)
+    return int(round(result))
+
+def altas_scale_section(section):
+    """
+    scales the z (section) to neuroglancer coordinates
+    :param section:
+    :return:
+    """
+    atlas_box_center = Z_LENGTH // 2
+    result = atlas_box_center + section * ATLAS_RAW_SCALE/ATLAS_Z_BOX_SCALE
+    return int(round(result))
+
+def make_inactive(modeladmin, request, queryset):
+    queryset.update(active=False)
+make_inactive.short_description = "Mark selected COMs as inactive"
+
+def make_active(modeladmin, request, queryset):
+    queryset.update(active=True)
+make_active.short_description = "Mark selected COMs as active"
+
 @admin.register(CenterOfMass)
 class CenterOfMassAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'structure','x','y', 'section', 'active','created')
+    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated_display', 'person', 'input_type')
     ordering = ['prep_id', 'structure']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
     search_fields = ('prep__prep_id',)
+    actions = [make_inactive, make_active]
+
+    def x_f(self, obj):
+        number = int(obj.x)
+        if 'atlas' in str(obj.prep_id).lower():
+            number = altas_scale_xy(obj.x)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+    def y_f(self, obj):
+        number = int(obj.y)
+        if 'atlas' in str(obj.prep_id).lower():
+            number = altas_scale_xy(obj.y)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+    def z_f(self, obj):
+        number = int(obj.section)
+        if 'atlas' in str(obj.prep_id).lower():
+            number = altas_scale_section(obj.section)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+
+    x_f.short_description = "X"
+    y_f.short_description = "Y"
+    z_f.short_description = "Z"
 
 
+    def updated_display(self, obj):
+        return datetime_format(obj.updated)
+    updated_display.short_description = 'Updated'    

@@ -2,24 +2,23 @@ import random
 from itertools import zip_longest
 
 from django.contrib import admin
+from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
+from django.db import models
+
 from plotly.offline import plot
 import plotly.graph_objects as go
 
-
-from .models import Task, ProgressLookup, TaskView, Log, Journal
-
-"""
-@admin.register(Resource)
-class ResourceAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name')
-    ordering = ['last_name']
+from neuroglancer.models import UrlModel
+from .models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
 
 
-@admin.register(Roles)
-class RolesAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    ordering = ['name']
-"""
+class WorkflowAdminModel(admin.ModelAdmin):
+    formfield_overrides = {
+        models.CharField: {'widget': TextInput(attrs={'size':'100'})},
+        models.DateTimeField: {'widget': DateInput(attrs={'size':'20'})},
+        models.IntegerField: {'widget': NumberInput(attrs={'size':'20'})},
+        models.TextField: {'widget': Textarea(attrs={'rows':10, 'cols':100})},
+    }
 
 @admin.register(ProgressLookup)
 class ProgressLookupAdmin(admin.ModelAdmin):
@@ -29,10 +28,12 @@ class ProgressLookupAdmin(admin.ModelAdmin):
 
 
 @admin.register(Task)
-class ProgressDataAdmin(admin.ModelAdmin):
+class TaskAdmin(admin.ModelAdmin):
     list_display = ('prep_id', 'task', 'is_complete')
-    search_fields = ('prep',)
+    search_fields = ('prep__prep_id',)
     ordering = ['prep', 'lookup']
+    list_filter = ['created']
+
 
     def is_complete(self, instance):
         return instance.completed == 1
@@ -53,7 +54,6 @@ class TaskViewAdmin(admin.ModelAdmin):
     change_list_template = "admin/task_view.html"
     ordering = ['prep_id']
     readonly_fields = ['prep_id', 'percent_complete']
-
 
     def has_add_permission(self, request):
         return False
@@ -133,12 +133,28 @@ class LogAdmin(admin.ModelAdmin):
 
 
 @admin.register(Journal)
-class JournalAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'entry', 'completed', 'active',  'created')
+class JournalAdmin(WorkflowAdminModel):
+    list_display = ('prep_id', 'issue_tag', 'person', 'problem', 'completed', 'link_tag', 'created')
     ordering = ['prep_id', 'created']
     list_filter = ['created', 'completed']
     search_fields = ['prep__prep_id','entry']
+    fields = ['prep', 'url', 'section','channel', 'entry', 'fix', 'person', 'problem', 'completed', 'active', 'image','issue_link', 'image_tag']
+    readonly_fields = ['image_tag', 'link_tag', 'issue_tag']
 
     def prep_id(self, instance):
         return instance.prep.prep_id
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        kwargs["widget"] = Select(attrs={'style': 'width: 250px;'})
+        if db_field.name == "url":
+            kwargs["queryset"] = UrlModel.objects.order_by('comments')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+@admin.register(Problem)
+class ProblemAdmin(admin.ModelAdmin):
+    list_display = ('problem_category', )
+
+@admin.register(FileLog)
+class FileLogAdmin(admin.ModelAdmin):
+    list_display = ('prep_id', 'filename')

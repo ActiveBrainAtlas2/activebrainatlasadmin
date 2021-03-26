@@ -1,11 +1,14 @@
+from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework import permissions
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.utils.html import escape
 from rest_framework import serializers, views
 import numpy as np
 
 from neuroglancer.serializers import UrlSerializer, CenterOfMassSerializer
-from neuroglancer.models import UrlModel, CenterOfMass
+from neuroglancer.models import UrlModel, CenterOfMass, ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
+    ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import ScanRun
 
 import logging
@@ -36,6 +39,9 @@ class CenterOfMassViewSet(viewsets.ModelViewSet):
 
 class AnimalInputSerializer(serializers.Serializer):
     animal = serializers.CharField()
+
+class IdSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
 
 
 class AlignAtlasView(views.APIView):
@@ -84,7 +90,6 @@ def align_point_sets(src, dst, with_scaling=True):
         r *= c
 
     t = dst_mean - r @ src_mean
-
     return r, t
 
 def align_atlas(animal):
@@ -93,10 +98,10 @@ def align_atlas(animal):
     :param animal: the animal we are aligning to
     :return: a 3x3 matrix and a 1x3 matrix
     """
-    atlas_box_size=(1000, 1000, 300)
-    atlas_box_scales=(10, 10, 20)
-    atlas_raw_scale=10
-    atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, atlas_raw_scale)
+    atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
+    atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
+    atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
+    #####atlas_centers = get_centers_dict('atlas')
     reference_centers = get_centers_dict(animal)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
@@ -105,12 +110,15 @@ def align_atlas(animal):
 
     if len(reference_centers) > 2 and scanRun is not None:
         resolution = scanRun.resolution
-        reference_scales = (resolution, resolution, 20)
+        reference_scales = (resolution, resolution, ATLAS_Z_BOX_SCALE)
         structures = sorted(reference_centers.keys())
-        src_point_set = np.array([atlas_centers[s] for s in structures]).T
-        src_point_set = np.diag(atlas_box_scales) @ src_point_set
-        dst_point_set = np.array([reference_centers[s] for s in structures]).T
-        dst_point_set = np.diag(reference_scales) @ dst_point_set
+        # align animal to atlas
+        common_keys = atlas_centers.keys() & reference_centers.keys()
+        dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
+        dst_point_set = np.diag(atlas_box_scales) @ dst_point_set
+        src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
+        src_point_set = np.diag(reference_scales) @ src_point_set
+
         R, t = align_point_sets(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T
 
@@ -127,7 +135,7 @@ def get_atlas_centers(
     atlas_box_scales = np.array(atlas_box_scales)
     atlas_box_size = np.array(atlas_box_size)
     atlas_box_center = atlas_box_size / 2
-    atlas_centers = get_centers_dict('Atlas')
+    atlas_centers = get_centers_dict('atlas')
 
     for structure, origin in atlas_centers.items():
         # transform into the atlas box coordinates that neuroglancer assumes
@@ -137,12 +145,36 @@ def get_atlas_centers(
     return atlas_centers
 
 def get_centers_dict(prep_id):
-    rows = CenterOfMass.objects.filter(prep__prep_id=prep_id)
+    rows = CenterOfMass.objects.filter(prep__prep_id=prep_id).filter(active=True).order_by('structure', 'updated')
     row_dict = {}
     for row in rows:
         structure = row.structure.abbreviation
         row_dict[structure] = [row.x, row.y, row.section]
 
     return row_dict
+
+
+# from url initial page
+def public_list(request):
+    """
+    Shows a listing of urls made available to the public
+    :param request:
+    :return:
+    """
+    urls = UrlModel.objects.filter(public=True).order_by('comments')
+    return render(request, 'public.html',{'urls': urls})
+
+# from urldata request, take the ID of the URL model and return all data in escaped format
+class UrlDataView(views.APIView):
+    """This will be run when a a ID is sent to https://site.com/activebrainatlas/urldata?id=999
+    Where 999 is the primary key of the url model"""
+
+    def get(self, request, *args, **kwargs):
+        # Validate the incoming input (provided through query parameters)
+        serializer = IdSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        id = serializer.validated_data['id']
+        urlModel = UrlModel.objects.get(pk=id)
+        return HttpResponse(f"#!{escape(urlModel.url)}")
 
 
