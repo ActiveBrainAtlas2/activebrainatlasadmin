@@ -22,9 +22,9 @@ class WorkflowAdminModel(admin.ModelAdmin):
 
 @admin.register(ProgressLookup)
 class ProgressLookupAdmin(admin.ModelAdmin):
-    list_display = ('description', 'script')
+    list_display = ('description', 'script', 'action', 'channel', 'downsample')
     search_fields = ('description',)
-    ordering = ['id']
+    ordering = ['description']
 
 
 @admin.register(Task)
