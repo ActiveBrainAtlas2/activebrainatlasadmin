@@ -13,7 +13,7 @@ class SessionVarView(TemplateView):
         if settings.DEBUG:
             browser = str(request.META['HTTP_USER_AGENT']).lower()
             if 'firefox' in browser:
-                id = 3
+                id = 2
             else:
                 id = 1
             user = User.objects.get(pk=id) 

@@ -6,6 +6,7 @@ from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
 import neuroglancer.dash_apps
 import neuroglancer.dash_point_table
+from brain.admin import ExportCsvMixin
 
 from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, COL_LENGTH, ROW_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
@@ -24,10 +25,10 @@ class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'100'})},
     }
-    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'person', 'updated_display')
+    list_display = ('animal', 'open_multiuser', 'updated')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
-    list_filter = ['created', 'vetted']
+    list_filter = ['updated', 'created', 'vetted']
     search_fields = ['url', 'comments']
     #user_id = None
 
@@ -35,9 +36,6 @@ class UrlModelAdmin(admin.ModelAdmin):
     #    self.user_id = request.user.id
     #    return super(UrlModelAdmin, self).get_queryset(request)
 
-    def updated_display(self, obj):
-        return datetime_format(obj.updated)
-    updated_display.short_description = 'Updated'    
 
 
     def open_oldneuroglancer(self, obj):
@@ -56,6 +54,8 @@ class UrlModelAdmin(admin.ModelAdmin):
 
     def open_multiuser(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng_multi"
+        if settings.DEBUG:
+            host = "http://127.0.0.1:8080"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
@@ -67,19 +67,17 @@ class UrlModelAdmin(admin.ModelAdmin):
     open_oldneuroglancer.allow_tags = True
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
-    open_multiuser.short_description = 'Multi-User'
+    open_multiuser.short_description = 'Neuroglancer'
     open_multiuser.allow_tags = True
  
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'comments', 'person','show_points', 'created_display', 'updated_display')
+    list_display = ('animal', 'comments', 'person','show_points', 'created_display', 'updated')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
+    list_filter = ['created', 'updated']
 
-    def updated_display(self, obj):
-        return datetime_format(obj.updated)
-    updated_display.short_description = 'Updated'    
 
     def created_display(self, obj):
         return datetime_format(obj.created)
@@ -177,7 +175,7 @@ class PointsAdmin(admin.ModelAdmin):
 
 
 @admin.register(Structure)
-class StructureAdmin(admin.ModelAdmin):
+class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']
@@ -225,13 +223,13 @@ def make_active(modeladmin, request, queryset):
 make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(CenterOfMass)
-class CenterOfMassAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated_display', 'person', 'input_type')
+class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
+    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'person', 'input_type')
     ordering = ['prep_id', 'structure']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
     search_fields = ('prep__prep_id',)
-    actions = [make_inactive, make_active]
+    actions = [make_inactive, make_active,  "export_as_csv"]
 
     def x_f(self, obj):
         number = int(obj.x)
@@ -253,7 +251,3 @@ class CenterOfMassAdmin(admin.ModelAdmin):
     y_f.short_description = "Y"
     z_f.short_description = "Z"
 
-
-    def updated_display(self, obj):
-        return datetime_format(obj.updated)
-    updated_display.short_description = 'Updated'    
