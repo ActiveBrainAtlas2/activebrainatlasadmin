@@ -1,12 +1,16 @@
+import json
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
+from rest_framework.response import Response
 from django.utils.html import escape
 from rest_framework import serializers, views
+from django.http import Http404
 import numpy as np
 
-from neuroglancer.serializers import UrlSerializer, CenterOfMassSerializer
+from neuroglancer.serializers import UrlSerializer, CenterOfMassSerializer, \
+    AnimalInputSerializer, IdSerializer, PointSerializer
 from neuroglancer.models import UrlModel, CenterOfMass, ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import ScanRun
@@ -34,14 +38,6 @@ class CenterOfMassViewSet(viewsets.ModelViewSet):
     serializer_class = CenterOfMassSerializer
     permission_classes = [permissions.AllowAny]
     # lookup_field = "id"
-
-
-
-class AnimalInputSerializer(serializers.Serializer):
-    animal = serializers.CharField()
-
-class IdSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
 
 
 class AlignAtlasView(views.APIView):
@@ -178,3 +174,53 @@ class UrlDataView(views.APIView):
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
 
+class PointList(views.APIView):
+    """
+    Fetch UrlModel and return parsed annotation layer.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
+    Where 164 is the primar key of the model and 'COM' is the layer name
+    """
+    def get(self, request, pk, layer_name, format=None):
+        points = []
+        try:
+            urlModel = UrlModel.objects.get(pk=pk)
+            json_txt = json.loads(urlModel.url)
+            layers = {}
+            if 'layers' in json_txt:
+                layers = json_txt['layers']
+                for layer in layers:
+                    if 'annotations' in layer:
+                        annotation = layer['annotations']
+                        if len(annotation) > 0 and layer_name in layer['name']:
+                            points = annotation
+        except UrlModel.DoesNotExist:
+            raise Http404
+
+        return JsonResponse(points, safe=False)
+
+
+class AnnotationList(views.APIView):
+    """
+    Fetch UrlModel and return a list of dictionaries:
+    {'id': 213, 'description': 'DK39 COM Test', 'layer_name': 'COM'}
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
+    """
+    def get(self, request, format=None):
+        layer_keys = []
+        urlModels = UrlModel.objects.all()
+        for urlModel in urlModels:
+            json_txt = json.loads(urlModel.url)
+            if 'layers' in json_txt:
+                layers = json_txt['layers']
+            for layer in layers:
+                if 'annotations' in layer and 'name' in layer:
+                    annotation = layer['annotations']
+                    layer_name = layer['name']
+                    if len(annotation) > 0:
+                        layer_keys.append(
+                            {"id":urlModel.id, 
+                            "description":urlModel.comments, 
+                            "layer_name":layer_name})
+
+
+        return JsonResponse(layer_keys, safe=False)

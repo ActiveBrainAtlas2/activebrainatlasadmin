@@ -25,7 +25,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'100'})},
     }
-    list_display = ('animal', 'open_multiuser', 'updated')
+    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'person', 'updated')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     list_filter = ['updated', 'created', 'vetted']
@@ -37,14 +37,13 @@ class UrlModelAdmin(admin.ModelAdmin):
     #    return super(UrlModelAdmin, self).get_queryset(request)
 
 
-
     def open_oldneuroglancer(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng/"
         return format_html('<a target="_blank" href="{}?id={}&amp;#!{}">Long URL</a>',
                            host, obj.id, escape(obj.url))
 
     def open_neuroglancer(self, obj):
-        host = "https://activebrainatlas.ucsd.edu/ng_test/"
+        host = "https://activebrainatlas.ucsd.edu/ng_multi"
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
@@ -57,7 +56,8 @@ class UrlModelAdmin(admin.ModelAdmin):
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
-        comments = escape(obj.comments)
+        #comments = escape(obj.comments)
+        comments = "Testing"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
         #links = f'<a target="_blank" href="{host}/{obj.id}/1">{comments}</a>'
         return format_html(links)
@@ -67,7 +67,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     open_oldneuroglancer.allow_tags = True
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
-    open_multiuser.short_description = 'Neuroglancer'
+    open_multiuser.short_description = 'Multi-User'
     open_multiuser.allow_tags = True
  
 @admin.register(Points)
@@ -227,7 +227,7 @@ class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'person', 'input_type')
     ordering = ['prep_id', 'structure']
     readonly_fields = ['created']
-    list_filter = ['created', 'active']
+    list_filter = ['created', 'active', 'input_type']
     search_fields = ('prep__prep_id',)
     actions = [make_inactive, make_active,  "export_as_csv"]
 

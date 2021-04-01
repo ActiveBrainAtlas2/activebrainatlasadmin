@@ -14,6 +14,20 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 
+
+class AnimalInputSerializer(serializers.Serializer):
+    animal = serializers.CharField()
+
+class IdSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+
+class PointSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    point = serializers.ListField()
+    type = serializers.CharField()
+    description = serializers.CharField()
+
+
 def update_center_of_mass(urlModel):
     """
     This method takes the center of mass from a neuroglancer
@@ -175,4 +189,3 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
             logger.error(f'Could not save center of mass: {e}')
 
         return com
-
