@@ -22,8 +22,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from activebrainatlas.views import SessionVarView
-from brain import views as brain_views
-from neuroglancer import views as neuroglancer_views
 from workflow.gantt_view import gantt
 
 from rest_framework import routers
@@ -34,14 +32,14 @@ router.register(r'center', CenterOfMassViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(r'image-listing', brain_views.image_list),
     path(r'graph', gantt),
     path(r'gantt', TemplateView.as_view(template_name='gantt.html')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
     path(r'alignatlas', AlignAtlasView.as_view(), name='align-atlas'),
     path(r'urldata', UrlDataView.as_view(), name='get-data'),
-    path(r'public', neuroglancer_views.public_list, name='align-atlas'),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
+    path('', include('brain.urls')),
+    path('', include('neuroglancer.urls')),
 ]
 
 # drf-yasg component doesn't handle correctly URL_FORMAT_OVERRIDE and
