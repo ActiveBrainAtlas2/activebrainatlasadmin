@@ -87,7 +87,7 @@ def align_point_sets(src, dst, with_scaling=True):
     t = dst_mean - r @ src_mean
     return r, t
 
-def align_atlas(animal):
+def align_atlas(animal, input_type=None, person_id=None):
     """
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
@@ -96,8 +96,7 @@ def align_atlas(animal):
     atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
     atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
     atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
-    #####atlas_centers = get_centers_dict('atlas')
-    reference_centers = get_centers_dict(animal)
+    reference_centers = get_centers_dict(animal, input_type=input_type, person_id=person_id)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -139,8 +138,14 @@ def get_atlas_centers(
 
     return atlas_centers
 
-def get_centers_dict(prep_id):
+def get_centers_dict(prep_id, input_type=None, person_id=None):
     rows = CenterOfMass.objects.filter(prep__prep_id=prep_id).filter(active=True).order_by('structure', 'updated')
+    if input_type is not None:
+        rows = rows.filter(input_type=input_type)
+    if person_id is not None:
+        rows = rows.filter(person_id=person_id)
+    
+
     row_dict = {}
     for row in rows:
         structure = row.structure.abbreviation
@@ -218,22 +223,16 @@ class AnnotationList(views.APIView):
                     if len(annotation) > 0:
                         layer_keys.append(
                             {"id":urlModel.id, 
-                            "description":urlModel.comments[0:10], 
+                            "description":urlModel.comments[0:15], 
                             "layer_name":layer_name})
 
 
         return JsonResponse(layer_keys, safe=False)
 
 
-class RotationList(generics.ListAPIView):
+class RotationList(views.APIView):
     """
     Fetch distinct prep_id, input_type, person_id and username:
-    {
-        "input_type": "manual",
-        "person_id": 2,
-        "prep_id": "DK39",
-        "username": "beth"
-    },
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotations
     """
 
@@ -244,6 +243,47 @@ class RotationList(generics.ListAPIView):
         serializer = RotationSerializer(queryset, many=True)
         return Response(serializer.data)
 1        
+class RotationXXX(views.APIView):
+    """
+    Fetch center of mass for the prep_id, input_type and person_id.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/DK39/manual/2
+    Where DK39 is the prep_id, manual is the input_type and 2 is the person_id
+    """
+    def get(self, request, prep_id, input_type, person_id, format=None):
+        try:
+            urlModel = CenterOfMass.objects\
+                .filter(prep_id=prep_id)\
+                .filter(input_type=input_type)\
+                    .filter(person_id=person_id)
+        except UrlModel.DoesNotExist:
+            raise Http404
+
+        return JsonResponse(None, safe=False)
+
+class Rotation(views.APIView):
+    """This will be run when a user clicks the align link/button in Neuroglancer
+    It will return the json rotation and translation matrix
+    Fetch center of mass for the prep_id, input_type and person_id.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/DK39/manual/2
+    Where DK39 is the prep_id, manual is the input_type and 2 is the person_id
+    """
+
+    def get(self, request, prep_id, input_type, person_id, format=None):
+        serializer = RotationSerializer(
+            data={'prep_id':prep_id, 'input_type':input_type, 'person_id':person_id})
+        serializer.is_valid(self)
+
+        print(prep_id, input_type, person_id)
+        data = {}
+        #if request.user.is_authenticated and animal:
+        R, t = align_atlas(prep_id, input_type=input_type, person_id=person_id)
+        data['rotation'] = R.tolist()
+        data['translation'] = t.tolist()
+
+        return JsonResponse(data)
+
+
+
 
 class CenterOfMassList(views.APIView):
     """
