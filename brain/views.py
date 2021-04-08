@@ -1,9 +1,10 @@
+from neuroglancer.models import CenterOfMass
 from django.shortcuts import render
 from brain.models import Animal, Section
 from brain.forms import AnimalForm
 from rest_framework import status
 from django.http import Http404
-from rest_framework.views import APIView
+from rest_framework import views
 from rest_framework.response import Response
 from brain.serializers import AnimalSerializer
 
@@ -26,7 +27,8 @@ def image_list(request):
                                         'prep_id': prep_id,
                                         'title': title})
 
-class AnimalList(APIView):
+
+class AnimalList(views.APIView):
     """
     List all animals. No creation at this time.
     """
@@ -44,7 +46,7 @@ class AnimalList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     """
 
-class AnimalDetail(APIView):
+class AnimalDetail(views.APIView):
     """
     Retrieve only, no update or deletes.
     """

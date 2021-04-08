@@ -104,7 +104,9 @@ if apps.is_installed('cvat.apps.authentication'):
         path('api/v1/', include((router.urls, 'cvat'), namespace='v1'))
     ]
 
-#if DEBUG:
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += path('__debug__/', include(debug_toolbar.urls)),
 #    from django.conf.urls.static import static
 #    urlpatterns = urlpatterns + static(MEDIA_URL, document_root=MEDIA_ROOT)
 

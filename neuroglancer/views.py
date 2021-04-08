@@ -1,15 +1,14 @@
 import json
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, generics, views
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
-from rest_framework import serializers, views
 from django.http import Http404
 import numpy as np
 
-from neuroglancer.serializers import UrlSerializer, CenterOfMassSerializer, \
+from neuroglancer.serializers import RotationSerializer, UrlSerializer, CenterOfMassSerializer, \
     AnimalInputSerializer, IdSerializer, PointSerializer
 from neuroglancer.models import UrlModel, CenterOfMass, ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
@@ -219,8 +218,39 @@ class AnnotationList(views.APIView):
                     if len(annotation) > 0:
                         layer_keys.append(
                             {"id":urlModel.id, 
-                            "description":urlModel.comments, 
+                            "description":urlModel.comments[0:10], 
                             "layer_name":layer_name})
 
 
         return JsonResponse(layer_keys, safe=False)
+
+
+class RotationList(generics.ListAPIView):
+    """
+    Fetch distinct prep_id, input_type, person_id and username:
+    {
+        "input_type": "manual",
+        "person_id": 2,
+        "prep_id": "DK39",
+        "username": "beth"
+    },
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotations
+    """
+
+    def get(self, request, format=None):
+        queryset = CenterOfMass.objects.order_by('prep_id', 'person_id', 'input_type')\
+            .filter(active=True)\
+            .values('prep_id', 'input_type', 'person_id', 'person__username').distinct()
+        serializer = RotationSerializer(queryset, many=True)
+        return Response(serializer.data)
+1        
+
+class CenterOfMassList(views.APIView):
+    """
+    List all animals. No creation at this time.
+    """
+    def get(self, request, format=None):
+        coms = CenterOfMass.objects.filter(active=True).order_by('prep_id')
+        serializer = CenterOfMassSerializer(coms, many=True)
+        return Response(serializer.data)
+
