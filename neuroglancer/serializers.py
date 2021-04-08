@@ -196,12 +196,3 @@ class RotationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CenterOfMass
         fields = ['prep_id', 'input_type', 'person_id', 'username']
-
-class RotationSerializerNoModel(serializers.Serializer):
-    prep_id: serializers.CharField(read_only=True)
-    input_type: serializers.CharField(read_only=True)
-    person_id: serializers.IntegerField(read_only=True)
-    person__username: serializers.CharField(read_only=True)
-
-    class Meta:
-        fields = ['prep_id', 'input_type', 'person_id']
