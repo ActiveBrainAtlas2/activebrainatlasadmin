@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from scheduler.serializers import UserSerializer
 
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
@@ -189,3 +190,18 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
             logger.error(f'Could not save center of mass: {e}')
 
         return com
+
+class RotationSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True, source="person__username")
+    class Meta:
+        model = CenterOfMass
+        fields = ['prep_id', 'input_type', 'person_id', 'username']
+
+class RotationSerializerNoModel(serializers.Serializer):
+    prep_id: serializers.CharField(read_only=True)
+    input_type: serializers.CharField(read_only=True)
+    person_id: serializers.IntegerField(read_only=True)
+    person__username: serializers.CharField(read_only=True)
+
+    class Meta:
+        fields = ['prep_id', 'input_type', 'person_id']
