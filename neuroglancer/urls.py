@@ -8,5 +8,6 @@ urlpatterns = [
     path('rotations', views.RotationList.as_view()),
     path('coms', views.CenterOfMassList.as_view()),
     path('annotation/<int:pk>/<str:layer_name>', views.PointList.as_view()),
+    path('annotation/<str:prep_id>/<int:person_id>', views.ComPointList.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
 ]

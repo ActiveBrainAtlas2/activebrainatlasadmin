@@ -29,7 +29,6 @@ styles = {
 dashboard_name = 'ScatterPoint'
 scatter_points = DjangoDash(name=dashboard_name,
                            serve_locally=True,
-                           app_name=app_name,
                            add_bootstrap_links=True
                           )
 
