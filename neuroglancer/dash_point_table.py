@@ -31,7 +31,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app_name = "ScatterBrain"
 dashboard_name = 'DashPointTable'
 point_table = DjangoDash(name=dashboard_name,
-                         app_name=app_name,
                          external_stylesheets=external_stylesheets
                          )
 

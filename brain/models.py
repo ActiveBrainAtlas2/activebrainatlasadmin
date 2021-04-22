@@ -192,7 +192,7 @@ class ScanRun(AtlasModel):
     ch_3_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
     ch_4_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
 
-    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
+    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(80000)], default=0)
     height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
     rotation = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
     flip = EnumField(choices=['none','flip','flop'], blank=False, null=False, default='none')
