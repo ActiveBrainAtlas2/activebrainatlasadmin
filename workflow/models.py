@@ -3,7 +3,6 @@ from django.conf import settings
 from django.db.models.fields import NullBooleanField
 from django.utils.safestring import mark_safe
 
-from brain.models import AtlasModel
 from brain.models import Animal
 from neuroglancer.models import UrlModel
 
@@ -14,8 +13,17 @@ CHANNELS = (
 )
 
 
+class WorkflowModel(models.Model):
+    id = models.AutoField(primary_key=True)
+    active = models.BooleanField(default = True)
+    created = models.DateTimeField(auto_now_add=True)
 
-class Roles(models.Model):
+    class Meta:
+        abstract = True
+
+
+
+class Roles(WorkflowModel):
     name = models.CharField('Name', max_length=30, blank=True)
     def __str__(self):
         return u'{}'.format(self.name)
@@ -27,7 +35,7 @@ class Roles(models.Model):
         verbose_name_plural = 'Roles'
 
 
-class Resource(models.Model):
+class Resource(WorkflowModel):
     # Fields
     first_name = models.CharField(('first name'), max_length=30, blank=True)
     last_name = models.CharField(('last name'), max_length=30, blank=True)
@@ -40,7 +48,7 @@ class Resource(models.Model):
         return u'{} {}'.format(self.first_name, self.last_name)
 
 
-class Task(AtlasModel):
+class Task(WorkflowModel):
     lookup = models.ForeignKey('ProgressLookup', models.DO_NOTHING)
     prep = models.ForeignKey(Animal, models.CASCADE)
     completed = models.BooleanField()
@@ -58,7 +66,7 @@ class Task(AtlasModel):
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.lookup.description)
 
-class Log(AtlasModel):
+class Log(WorkflowModel):
     prep = models.ForeignKey(Animal, models.CASCADE)
     logger = models.CharField(max_length=100, blank=False, verbose_name='Log Source')
     level = models.CharField(max_length=25)
@@ -73,7 +81,7 @@ class Log(AtlasModel):
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.msg)
 
-class Problem(models.Model):
+class Problem(WorkflowModel):
     # Fields
     problem_category = models.CharField(max_length=255, blank=False,
                                         verbose_name='Problem Category')
@@ -86,7 +94,7 @@ class Problem(models.Model):
     def __str__(self):
         return u'{}'.format(self.problem_category)
 
-class Journal(AtlasModel):
+class Journal(WorkflowModel):
     prep = models.ForeignKey(Animal, models.DO_NOTHING, null=True)
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
                                verbose_name="User", blank=False, null=False)
@@ -145,7 +153,7 @@ class TaskView(models.Model):
         return u'{}'.format(self.prep_id)
 
 
-class ProgressLookup(AtlasModel):
+class ProgressLookup(WorkflowModel):
     description = models.TextField()
     script = models.CharField(max_length=200, blank=True, null=True)
     channel = models.IntegerField(null=False, default=0)
@@ -161,7 +169,7 @@ class ProgressLookup(AtlasModel):
     def __str__(self):
         return u'{}'.format(self.description)
 
-class FileLog(AtlasModel):
+class FileLog(WorkflowModel):
     prep = models.ForeignKey(Animal, models.CASCADE)
     progress = models.ForeignKey(ProgressLookup, models.CASCADE, db_column='progress_id')
     filename = models.CharField(max_length=255)

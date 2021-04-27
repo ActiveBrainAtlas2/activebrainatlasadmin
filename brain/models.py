@@ -54,6 +54,7 @@ class Animal(AtlasModel):
 
 
 class FileOperation(AtlasModel):
+    id = models.AutoField(primary_key=True)
     tif = models.ForeignKey('SlideCziToTif', models.DO_NOTHING)
     operation = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
@@ -68,6 +69,7 @@ class FileOperation(AtlasModel):
 
 
 class Histology(AtlasModel):
+    id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.DO_NOTHING)
     virus = models.ForeignKey('Virus', models.DO_NOTHING, blank=True, null=True)
     label = models.ForeignKey('OrganicLabel', models.DO_NOTHING, blank=True, null=True)
@@ -108,6 +110,7 @@ class Histology(AtlasModel):
 
 
 class Injection(AtlasModel):
+    id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.DO_NOTHING)
     label = models.ForeignKey('OrganicLabel', models.DO_NOTHING, blank=True, null=True)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True)
@@ -137,6 +140,7 @@ class Injection(AtlasModel):
 
 
 class InjectionVirus(AtlasModel):
+    id = models.AutoField(primary_key=True)
     injection = models.ForeignKey(Injection, models.DO_NOTHING)
     virus = models.ForeignKey('Virus', models.DO_NOTHING)
 
@@ -148,6 +152,7 @@ class InjectionVirus(AtlasModel):
 
 
 class OrganicLabel(AtlasModel):
+    id = models.AutoField(primary_key=True)
     label_id = models.CharField(max_length=20)
     label_type = EnumField(choices=['Cascade Blue','Chicago Blue','Alexa405','Alexa488','Alexa647','Cy2','Cy3','Cy5','Cy5.5','Cy7','Fluorescein','Rhodamine B','Rhodamine 6G','Texas Red','TMR'], blank=True, null=True)
     type_lot_number = models.CharField(max_length=20, blank=True, null=True)
@@ -177,6 +182,7 @@ class OrganicLabel(AtlasModel):
 
 
 class ScanRun(AtlasModel):
+    id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.DO_NOTHING)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     machine = EnumField(choices=['Invitrogen','Sigma','Thermo-Fisher'], blank=True, null=True)
@@ -208,6 +214,7 @@ class ScanRun(AtlasModel):
 
 
 class Slide(AtlasModel):
+    id = models.AutoField(primary_key=True)
     scan_run = models.ForeignKey(ScanRun, models.DO_NOTHING)
     slide_physical_id = models.IntegerField()
     rescan_number = EnumField(choices=['1','2','3'], blank=False, null=False, default='1')
@@ -262,6 +269,7 @@ class Slide(AtlasModel):
 
 
 class SlideCziToTif(AtlasModel):
+    id = models.AutoField(primary_key=True)
     slide = models.ForeignKey(Slide, models.DO_NOTHING, related_name='slideczis')
     file_name = models.CharField(max_length=200, null=False)
     scene_number = models.IntegerField(blank=False, null=False, default=1,
@@ -293,6 +301,7 @@ class SlideCziToTif(AtlasModel):
 
 
 class Section(AtlasModel):
+    id = models.AutoField(primary_key=True)
     prep_id = models.CharField(max_length=20)
     czi_file = models.CharField(max_length=200)
     slide_physical_id = models.IntegerField(null=False, verbose_name='Slide')
@@ -345,6 +354,7 @@ class Section(AtlasModel):
     image_tag.short_description = 'Image'
 
 class Virus(AtlasModel):
+    id = models.AutoField(primary_key=True)
     virus_name = models.CharField(max_length=50)
     virus_type = EnumField(choices=['Adenovirus','AAV','CAV','DG rabies','G-pseudo-Lenti','Herpes','Lenti','N2C rabies','Sinbis'], blank=True, null=True)
     virus_active = EnumField(choices=['yes','no'], blank=True, null=True)

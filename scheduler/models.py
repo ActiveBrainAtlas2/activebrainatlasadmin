@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 
 class SchedulerModel(models.Model):
+    id = models.AutoField(primary_key=True)
     active = models.BooleanField(default = True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now_add=True)
