@@ -62,6 +62,14 @@ class AlignAtlasView(views.APIView):
         return JsonResponse(data)
 
 def align_point_sets(src, dst, with_scaling=True):
+    """
+    Analytically computes a transformation that minimizes the squared error between source and destination.
+    ------------------------------------------------------
+    src is the dictionary of the brain we want to align
+    dst is the dictionary of the atlas structures
+    Defaults to scaling true, which means the transformation is rigid and a uniform scale.
+    returns the linear transformation r, and the translation vector t
+    """
     assert src.shape == dst.shape
     assert len(src.shape) == 2
     m, n = src.shape  # dimension, number of points
@@ -92,6 +100,7 @@ def align_point_sets(src, dst, with_scaling=True):
 
 def align_atlas(animal, input_type=None, person_id=None):
     """
+    This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
     :return: a 3x3 matrix and a 1x3 matrix
@@ -117,13 +126,26 @@ def align_atlas(animal, input_type=None, person_id=None):
         src_point_set = np.diag(reference_scales) @ src_point_set
 
         R, t = align_point_sets(src_point_set, dst_point_set)
-        t = t / np.array([reference_scales]).T
+        #t = t / np.array([reference_scales]).T
+        t = t / np.array([atlas_box_scales]).T
 
     else:
         R = np.eye(3)
         t = np.zeros(3)
         t = t.reshape(3,1)
     return R, t
+
+def brain_to_atlas_transform(brain_coord, r, t):
+    """
+    Takes an x,y,z brain coordinates, and a rotation matrix and transform vector.
+    Returns the point in atlas coordinates. 
+    """
+    atlas_coord = []
+    return atlas_coord
+
+def atlas_to_brain_transform(atlas_coord, r, t):
+    pass
+
 
 def get_atlas_centers(
         atlas_box_size=(1000, 1000, 300),
