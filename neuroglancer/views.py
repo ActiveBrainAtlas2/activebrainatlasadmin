@@ -135,17 +135,70 @@ def align_atlas(animal, input_type=None, person_id=None):
         t = t.reshape(3,1)
     return R, t
 
-def brain_to_atlas_transform(brain_coord, r, t):
+def brain_to_atlas_transform(
+    brain_coord, r, t,
+    brain_scale=(0.325, 0.325, 20),
+    atlas_scale=(10, 10, 20)
+):
     """
     Takes an x,y,z brain coordinates, and a rotation matrix and transform vector.
-    Returns the point in atlas coordinates. 
+    Returns the point in atlas coordinates.
+    
+    The provided r, t is the affine transformation from brain to atlas such that:
+        t_phys = atlas_scale @ t
+        atlas_coord_phys = r @ brain_coord_phys + t_phys
+
+    The corresponding reverse transformation is:
+        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
     """
-    atlas_coord = []
-    return atlas_coord
+    brain_scale = np.diag(brain_scale)
+    atlas_scale = np.diag(atlas_scale)
 
-def atlas_to_brain_transform(atlas_coord, r, t):
-    pass
+    # Bring brain coordinates to physical space
+    brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
+    brain_coord_phys = brain_scale @ brain_coord
+    
+    # Apply affine transformation in physical space
+    t_phys = atlas_scale @ t
+    atlas_coord_phys = r @ brain_coord_phys + t_phys
 
+    # Bring atlas coordinates back to atlas space
+    atlas_coord = np.linalg.inv(atlas_scale) @ atlas_coord_phys
+
+    return atlas_coord.T[0] # Convert back to a row vector
+
+def atlas_to_brain_transform(
+    atlas_coord, r, t,
+    brain_scale=(0.325, 0.325, 20),
+    atlas_scale=(10, 10, 20)
+):
+    """
+    Takes an x,y,z atlas coordinates, and a rotation matrix and transform vector.
+    Returns the point in brain coordinates.
+    
+    The provided r, t is the affine transformation from brain to atlas such that:
+        t_phys = atlas_scale @ t
+        atlas_coord_phys = r @ brain_coord_phys + t_phys
+
+    The corresponding reverse transformation is:
+        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
+    """
+    brain_scale = np.diag(brain_scale)
+    atlas_scale = np.diag(atlas_scale)
+
+    # Bring atlas coordinates to physical space
+    atlas_coord = np.array(atlas_coord).reshape(3, 1) # Convert to a column vector
+    atlas_coord_phys = atlas_scale @ atlas_coord
+    
+    # Apply affine transformation in physical space
+    t_phys = atlas_scale @ t
+    r_inv = np.linalg.inv(r)
+    brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
+
+    # Bring brain coordinates back to brain space
+    brain_coord = np.linalg.inv(brain_scale) @ brain_coord_phys
+
+    return brain_coord.T[0] # Convert back to a row vector
 
 def get_atlas_centers(
         atlas_box_size=(1000, 1000, 300),
