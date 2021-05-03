@@ -1,21 +1,19 @@
 import json
+from neuroglancer.atlas import align_atlas
 from django.shortcuts import render
-from rest_framework import viewsets, generics, views
+from rest_framework import viewsets, views
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
-import numpy as np
 import string
 import random
 
 
 from neuroglancer.serializers import RotationSerializer, UrlSerializer, CenterOfMassSerializer, \
-    AnimalInputSerializer, IdSerializer, PointSerializer
-from neuroglancer.models import UrlModel, CenterOfMass, ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
-    ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
-from brain.models import ScanRun
+    AnimalInputSerializer, IdSerializer
+from neuroglancer.models import CenterOfMass, UrlModel
 
 import logging
 logging.basicConfig()
@@ -61,177 +59,6 @@ class AlignAtlasView(views.APIView):
 
         return JsonResponse(data)
 
-def align_point_sets(src, dst, with_scaling=True):
-    """
-    Analytically computes a transformation that minimizes the squared error between source and destination.
-    ------------------------------------------------------
-    src is the dictionary of the brain we want to align
-    dst is the dictionary of the atlas structures
-    Defaults to scaling true, which means the transformation is rigid and a uniform scale.
-    returns the linear transformation r, and the translation vector t
-    """
-    assert src.shape == dst.shape
-    assert len(src.shape) == 2
-    m, n = src.shape  # dimension, number of points
-
-    src_mean = np.mean(src, axis=1).reshape(-1, 1)
-    dst_mean = np.mean(dst, axis=1).reshape(-1, 1)
-
-    src_demean = src - src_mean
-    dst_demean = dst - dst_mean
-
-    u, s, vh = np.linalg.svd(dst_demean @ src_demean.T / n)
-
-    # deal with reflection
-    e = np.ones(m)
-    if np.linalg.det(u) * np.linalg.det(vh) < 0:
-        print('reflection detected')
-        e[-1] = -1
-
-    r = u @ np.diag(e) @ vh
-
-    if with_scaling:
-        src_var = (src_demean ** 2).sum(axis=0).mean()
-        c = sum(s * e) / src_var
-        r *= c
-
-    t = dst_mean - r @ src_mean
-    return r, t
-
-def align_atlas(animal, input_type=None, person_id=None):
-    """
-    This prepares the data for the align_point_sets method.
-    Make sure we have at least 3 points
-    :param animal: the animal we are aligning to
-    :return: a 3x3 matrix and a 1x3 matrix
-    """
-    atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
-    atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
-    atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
-    reference_centers = get_centers_dict(animal, input_type=input_type, person_id=person_id)
-    try:
-        scanRun = ScanRun.objects.get(prep__prep_id=animal)
-    except ScanRun.DoesNotExist:
-        scanRun = None
-
-    if len(reference_centers) > 2 and scanRun is not None:
-        resolution = scanRun.resolution
-        reference_scales = (resolution, resolution, ATLAS_Z_BOX_SCALE)
-        structures = sorted(reference_centers.keys())
-        # align animal to atlas
-        common_keys = atlas_centers.keys() & reference_centers.keys()
-        dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
-        dst_point_set = np.diag(atlas_box_scales) @ dst_point_set
-        src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
-        src_point_set = np.diag(reference_scales) @ src_point_set
-
-        R, t = align_point_sets(src_point_set, dst_point_set)
-        #t = t / np.array([reference_scales]).T
-        t = t / np.array([atlas_box_scales]).T
-
-    else:
-        R = np.eye(3)
-        t = np.zeros(3)
-        t = t.reshape(3,1)
-    return R, t
-
-def brain_to_atlas_transform(
-    brain_coord, r, t,
-    brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)
-):
-    """
-    Takes an x,y,z brain coordinates, and a rotation matrix and transform vector.
-    Returns the point in atlas coordinates.
-    
-    The provided r, t is the affine transformation from brain to atlas such that:
-        t_phys = atlas_scale @ t
-        atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    The corresponding reverse transformation is:
-        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
-    """
-    brain_scale = np.diag(brain_scale)
-    atlas_scale = np.diag(atlas_scale)
-
-    # Bring brain coordinates to physical space
-    brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
-    brain_coord_phys = brain_scale @ brain_coord
-    
-    # Apply affine transformation in physical space
-    t_phys = atlas_scale @ t
-    atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    # Bring atlas coordinates back to atlas space
-    atlas_coord = np.linalg.inv(atlas_scale) @ atlas_coord_phys
-
-    return atlas_coord.T[0] # Convert back to a row vector
-
-def atlas_to_brain_transform(
-    atlas_coord, r, t,
-    brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)
-):
-    """
-    Takes an x,y,z atlas coordinates, and a rotation matrix and transform vector.
-    Returns the point in brain coordinates.
-    
-    The provided r, t is the affine transformation from brain to atlas such that:
-        t_phys = atlas_scale @ t
-        atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    The corresponding reverse transformation is:
-        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
-    """
-    brain_scale = np.diag(brain_scale)
-    atlas_scale = np.diag(atlas_scale)
-
-    # Bring atlas coordinates to physical space
-    atlas_coord = np.array(atlas_coord).reshape(3, 1) # Convert to a column vector
-    atlas_coord_phys = atlas_scale @ atlas_coord
-    
-    # Apply affine transformation in physical space
-    t_phys = atlas_scale @ t
-    r_inv = np.linalg.inv(r)
-    brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
-
-    # Bring brain coordinates back to brain space
-    brain_coord = np.linalg.inv(brain_scale) @ brain_coord_phys
-
-    return brain_coord.T[0] # Convert back to a row vector
-
-def get_atlas_centers(
-        atlas_box_size=(1000, 1000, 300),
-        atlas_box_scales=(10, 10, 20),
-        atlas_raw_scale=10):
-    atlas_box_scales = np.array(atlas_box_scales)
-    atlas_box_size = np.array(atlas_box_size)
-    atlas_box_center = atlas_box_size / 2
-    atlas_centers = get_centers_dict('atlas')
-
-    for structure, origin in atlas_centers.items():
-        # transform into the atlas box coordinates that neuroglancer assumes
-        center = atlas_box_center + np.array(origin) * atlas_raw_scale / atlas_box_scales
-        atlas_centers[structure] = center
-
-    return atlas_centers
-
-def get_centers_dict(prep_id, input_type=None, person_id=None):
-    rows = CenterOfMass.objects.filter(prep__prep_id=prep_id).filter(active=True).order_by('structure', 'updated')
-    if input_type is not None:
-        rows = rows.filter(input_type=input_type)
-    if person_id is not None:
-        rows = rows.filter(person_id=person_id)
-    
-
-    row_dict = {}
-    for row in rows:
-        structure = row.structure.abbreviation
-        row_dict[structure] = [row.x, row.y, row.section]
-
-    return row_dict
-
-
 # from url initial page
 def public_list(request):
     """
@@ -256,8 +83,32 @@ class UrlDataView(views.APIView):
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
 
+class PointListJSON(views.APIView):
+    """
+    Fetch UrlModel and return parsed annotation layer.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
+    Where 164 is the primary key of the model and 'COM' is the layer name
+    """
+    def get(self, request, pk, layer_name, format=None):
+        points = []
+        try:
+            urlModel = UrlModel.objects.filter(pk=pk).filter(url__has_key='layers')[0]
+            json_txt = urlModel.url
+            layers = json_txt['layers']
+            for layer in layers:
+                if 'annotations' in layer:
+                    annotation = layer['annotations']
+                    if len(annotation) > 0 and layer_name in layer['name']:
+                        points = annotation
+        except UrlModel.DoesNotExist:
+            raise Http404
+
+        return JsonResponse(points, safe=False)
+
+
 class PointList(views.APIView):
     """
+    This is the non JSON version!
     Fetch UrlModel and return parsed annotation layer.
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
     Where 164 is the primary key of the model and 'COM' is the layer name
@@ -330,6 +181,29 @@ class AnnotationList(views.APIView):
 
         return layer_keys
 
+    def getJSON(self, request, format=None):
+        """
+        new version with JSON column
+        """
+        layer_keys = []
+        urlModels = UrlModel.objects.filter(vetted=True)\
+            .filter(url__has_key='layers')
+        for urlModel in urlModels:
+            json_txt = urlModel.url
+            layers = json_txt['layers']
+            for layer in layers:
+                if 'annotations' in layer and 'name' in layer:
+                    annotation = layer['annotations']
+                    layer_name = layer['name']
+                    if len(annotation) > 0:
+                        layer_keys.append(
+                            {"id":urlModel.id, 
+                            "description":urlModel.comments[0:15], 
+                            "layer_name":layer_name})
+        all_layers = self.get_aligned_centers(layer_keys)
+
+        return JsonResponse(all_layers, safe=False)
+
     def get(self, request, format=None):
         layer_keys = []
         urlModels = UrlModel.objects.filter(vetted=True)
@@ -349,7 +223,7 @@ class AnnotationList(views.APIView):
         all_layers = self.get_aligned_centers(layer_keys)
 
         return JsonResponse(all_layers, safe=False)
-
+    
 
 class RotationList(views.APIView):
     """
@@ -387,8 +261,6 @@ class Rotation(views.APIView):
         return JsonResponse(data)
 
 
-
-
 class CenterOfMassList(views.APIView):
     """
     List all animals. No creation at this time.
@@ -397,4 +269,5 @@ class CenterOfMassList(views.APIView):
         coms = CenterOfMass.objects.filter(active=True).order_by('prep_id')
         serializer = CenterOfMassSerializer(coms, many=True)
         return Response(serializer.data)
+
 

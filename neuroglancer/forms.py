@@ -1,6 +1,4 @@
 from django import forms
-from django.forms import ModelChoiceField
-
 
 
 class AnimalChoiceField(forms.ModelChoiceField):

@@ -20,6 +20,7 @@ ATLAS_RAW_SCALE = 10
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
+    #url = models.JSONField()
     url = models.TextField()
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
@@ -46,7 +47,7 @@ class UrlModel(models.Model):
         return: the first match if found, otherwise NA
         """
         animal = "NA"
-        match = re.search('data/(.+?)/neuroglancer_data', self.url)
+        match = re.search('data/(.+?)/neuroglancer_data', str(self.url))
         if match is not None and match.group(1) is not None:
             animal = match.group(1)
         return animal
@@ -67,7 +68,7 @@ class UrlModel(models.Model):
         result = None
         dfs = []
         if self.url is not None:
-            description = None
+            #json_txt = self.url
             json_txt = json.loads(self.url)
             layers = json_txt['layers']
             for layer in layers:
