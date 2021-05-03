@@ -1,8 +1,14 @@
-from django.urls import path
-from rest_framework.urlpatterns import format_suffix_patterns
+from django.urls import path, include
 from neuroglancer import views
+from rest_framework import routers
+
+
+router = routers.DefaultRouter(trailing_slash=False)
+router.register(r'neuroglancer', views.UrlViewSet, basename='neuroglancer')
+router.register(r'center', views.CenterOfMassViewSet)
 
 urlpatterns = [
+    path('', include(router.urls)),
     path(r'public', views.public_list, name='public'),
     path('annotations', views.AnnotationList.as_view()),
     path('rotations', views.RotationList.as_view()),

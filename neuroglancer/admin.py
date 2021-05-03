@@ -8,7 +8,7 @@ import neuroglancer.dash_apps
 import neuroglancer.dash_point_table
 from brain.admin import ExportCsvMixin
 
-from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, COL_LENGTH, ROW_LENGTH, ATLAS_RAW_SCALE, \
+from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
@@ -86,6 +86,7 @@ class PointsAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         points = Points.objects.filter(url__contains='annotations')
         points = points.filter(url__contains='point')
+        #points = Points.objects.filter(url__layers__contains={'type':'annotation'})
         return points
 
 
@@ -193,7 +194,7 @@ class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
     show_hexadecimal.short_description = 'Hexadecimal'
 
 
-def altas_scale_xy(x):
+def atlas_scale_xy(x):
     """
     0.325 is the scale for Neurotrace brains
     This converts the atlas coordinates to neuroglancer XY coordinates
@@ -204,7 +205,7 @@ def altas_scale_xy(x):
     result = (atlas_box_center + x) * (ATLAS_RAW_SCALE / 0.325)
     return int(round(result))
 
-def altas_scale_section(section):
+def atlas_scale_section(section):
     """
     scales the z (section) to neuroglancer coordinates
     :param section:
@@ -234,17 +235,17 @@ class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
     def x_f(self, obj):
         number = int(obj.x)
         if 'atlas' in str(obj.prep_id).lower():
-            number = altas_scale_xy(obj.x)
+            number = atlas_scale_xy(obj.x)
         return format_html(f"<div style='text-align:right;'>{number}</div>")
     def y_f(self, obj):
         number = int(obj.y)
         if 'atlas' in str(obj.prep_id).lower():
-            number = altas_scale_xy(obj.y)
+            number = atlas_scale_xy(obj.y)
         return format_html(f"<div style='text-align:right;'>{number}</div>")
     def z_f(self, obj):
         number = int(obj.section)
         if 'atlas' in str(obj.prep_id).lower():
-            number = altas_scale_section(obj.section)
+            number = atlas_scale_section(obj.section)
         return format_html(f"<div style='text-align:right;'>{number}</div>")
 
     x_f.short_description = "X"
