@@ -153,7 +153,7 @@ class JournalAdmin(WorkflowAdminModel):
 
 @admin.register(Problem)
 class ProblemAdmin(admin.ModelAdmin):
-    list_display = ('problem_category', )
+    list_display = ('problem_category', 'active', 'created')
 
 @admin.register(FileLog)
 class FileLogAdmin(admin.ModelAdmin):

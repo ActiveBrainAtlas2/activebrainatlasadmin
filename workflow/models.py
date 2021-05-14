@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.db.models.fields import NullBooleanField
 from django.utils.safestring import mark_safe
 
 from brain.models import Animal

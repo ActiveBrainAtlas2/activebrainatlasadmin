@@ -1,5 +1,5 @@
 import json
-from neuroglancer.atlas import align_atlas
+from neuroglancer.atlas import align_atlas, brain_to_atlas_transform
 from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
@@ -14,6 +14,7 @@ import random
 from neuroglancer.serializers import RotationSerializer, UrlSerializer, CenterOfMassSerializer, \
     AnimalInputSerializer, IdSerializer
 from neuroglancer.models import CenterOfMass, UrlModel
+from brain.models import ScanRun
 
 import logging
 logging.basicConfig()
@@ -50,7 +51,7 @@ class AlignAtlasView(views.APIView):
         serializer.is_valid(raise_exception=True)
         animal = serializer.validated_data['animal']
         data = {}
-        #if request.user.is_authenticated and animal:
+        # if request.user.is_authenticated and animal:
         R, t = align_atlas(animal)
         rl = R.tolist()
         tl = t.tolist()
@@ -60,6 +61,8 @@ class AlignAtlasView(views.APIView):
         return JsonResponse(data)
 
 # from url initial page
+
+
 def public_list(request):
     """
     Shows a listing of urls made available to the public
@@ -67,9 +70,11 @@ def public_list(request):
     :return:
     """
     urls = UrlModel.objects.filter(public=True).order_by('comments')
-    return render(request, 'public.html',{'urls': urls})
+    return render(request, 'public.html', {'urls': urls})
 
 # from urldata request, take the ID of the URL model and return all data in escaped format
+
+
 class UrlDataView(views.APIView):
     """This will be run when a a ID is sent to https://site.com/activebrainatlas/urldata?id=999
     Where 999 is the primary key of the url model"""
@@ -83,16 +88,18 @@ class UrlDataView(views.APIView):
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
 
-class PointListJSON(views.APIView):
+class PointList(views.APIView):
     """
     Fetch UrlModel and return parsed annotation layer.
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
     Where 164 is the primary key of the model and 'COM' is the layer name
     """
+
     def get(self, request, pk, layer_name, format=None):
         points = []
         try:
-            urlModel = UrlModel.objects.filter(pk=pk).filter(url__has_key='layers')[0]
+            urlModel = UrlModel.objects.filter(
+                pk=pk).filter(url__has_key='layers')[0]
             json_txt = urlModel.url
             layers = json_txt['layers']
             for layer in layers:
@@ -106,31 +113,6 @@ class PointListJSON(views.APIView):
         return JsonResponse(points, safe=False)
 
 
-class PointList(views.APIView):
-    """
-    This is the non JSON version!
-    Fetch UrlModel and return parsed annotation layer.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
-    Where 164 is the primary key of the model and 'COM' is the layer name
-    """
-    def get(self, request, pk, layer_name, format=None):
-        points = []
-        try:
-            urlModel = UrlModel.objects.get(pk=pk)
-            json_txt = json.loads(urlModel.url)
-            layers = {}
-            if 'layers' in json_txt:
-                layers = json_txt['layers']
-                for layer in layers:
-                    if 'annotations' in layer:
-                        annotation = layer['annotations']
-                        if len(annotation) > 0 and layer_name in layer['name']:
-                            points = annotation
-        except UrlModel.DoesNotExist:
-            raise Http404
-
-        return JsonResponse(points, safe=False)
-
 class ComPointList(views.APIView):
     """
     Fetch UrlModel and return parsed annotation layer.
@@ -139,23 +121,30 @@ class ComPointList(views.APIView):
     """
 
     def get(self, request, prep_id, person_id, format=None):
+        
         def random_string():
-            return ''.join(random.choices(string.ascii_lowercase + string.digits, k = 40))
+            return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
 
         points = []
+        
         try:
             coms = CenterOfMass.objects.filter(prep_id=prep_id)\
-                .filter(input_type='aligned')\
+                .filter(transformation__active=True)\
                 .filter(person_id=person_id).all()
-            for com in coms:
-                point_dict = {}
-                point_dict['point'] = [com.x, com.y, com.section]
-                point_dict['type'] = "point"
-                point_dict['id'] = random_string()
-                point_dict['description'] = com.structure.abbreviation
-                points.append(point_dict)
         except CenterOfMass.DoesNotExist:
             raise Http404
+
+        R, t = align_atlas(prep_id, input_type='manual', person_id=person_id)
+
+        for com in coms:
+            point_dict = {}
+            coords = (com.x, com.y, com.section)
+            x,y,z = brain_to_atlas_transform(coords, R, t) 
+            point_dict['point'] = [x, y, z]
+            point_dict['type'] = "point"
+            point_dict['id'] = random_string()
+            point_dict['description'] = com.structure.abbreviation
+            points.append(point_dict)
 
         return JsonResponse(points, safe=False)
 
@@ -166,22 +155,22 @@ class AnnotationList(views.APIView):
     {'id': 213, 'description': 'DK39 COM Test', 'layer_name': 'COM'}
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """
+
     def get_aligned_centers(self, layer_keys):
-        DESC = 'aligned'
         coms = CenterOfMass.objects.order_by('prep_id', 'person_id', 'input_type')\
             .filter(active=True)\
-            .filter(input_type=DESC)\
+            .filter(transformation__active=True)\
             .values('prep_id', 'input_type', 'person_id', 'person__username').distinct()
 
         for com in coms:
             layer_keys.append(
-                {"id":com['prep_id'], 
-                "description": f"{com['prep_id']} COM {com['person__username']}", 
-                "layer_name":com['person_id']})
+                {"id": com['prep_id'],
+                 "description": f"{com['prep_id']} COM {com['person__username']}",
+                 "layer_name": com['person_id']})
 
         return layer_keys
 
-    def getJSON(self, request, format=None):
+    def get(self, request, format=None):
         """
         new version with JSON column
         """
@@ -197,33 +186,13 @@ class AnnotationList(views.APIView):
                     layer_name = layer['name']
                     if len(annotation) > 0:
                         layer_keys.append(
-                            {"id":urlModel.id, 
-                            "description":urlModel.comments[0:15], 
-                            "layer_name":layer_name})
+                            {"id": urlModel.id,
+                            "description": urlModel.comments[0:15],
+                             "layer_name": layer_name})
         all_layers = self.get_aligned_centers(layer_keys)
 
         return JsonResponse(all_layers, safe=False)
 
-    def get(self, request, format=None):
-        layer_keys = []
-        urlModels = UrlModel.objects.filter(vetted=True)
-        for urlModel in urlModels:
-            json_txt = json.loads(urlModel.url)
-            if 'layers' in json_txt:
-                layers = json_txt['layers']
-            for layer in layers:
-                if 'annotations' in layer and 'name' in layer:
-                    annotation = layer['annotations']
-                    layer_name = layer['name']
-                    if len(annotation) > 0:
-                        layer_keys.append(
-                            {"id":urlModel.id, 
-                            "description":urlModel.comments[0:15], 
-                            "layer_name":layer_name})
-        all_layers = self.get_aligned_centers(layer_keys)
-
-        return JsonResponse(all_layers, safe=False)
-    
 
 class RotationList(views.APIView):
     """
@@ -233,11 +202,11 @@ class RotationList(views.APIView):
 
     def get(self, request, format=None):
         queryset = CenterOfMass.objects.order_by('prep_id', 'person_id', 'input_type')\
-            .filter(active=True)\
+            .filter(active=True).filter(input_type__in=['detected', 'manual'])\
             .values('prep_id', 'input_type', 'person_id', 'person__username').distinct()
         serializer = RotationSerializer(queryset, many=True)
         return Response(serializer.data)
-        
+
 
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
@@ -249,11 +218,11 @@ class Rotation(views.APIView):
 
     def get(self, request, prep_id, input_type, person_id, format=None):
         serializer = RotationSerializer(
-            data={'prep_id':prep_id, 'input_type':input_type, 'person_id':person_id})
+            data={'prep_id': prep_id, 'input_type': input_type, 'person_id':person_id})
         serializer.is_valid(self)
 
         data = {}
-        #if request.user.is_authenticated and animal:
+        # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id, input_type=input_type, person_id=person_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
@@ -263,11 +232,10 @@ class Rotation(views.APIView):
 
 class CenterOfMassList(views.APIView):
     """
-    List all animals. No creation at this time.
+    List all COM. No creation at this time.
     """
+
     def get(self, request, format=None):
         coms = CenterOfMass.objects.filter(active=True).order_by('prep_id')
         serializer = CenterOfMassSerializer(coms, many=True)
         return Response(serializer.data)
-
-

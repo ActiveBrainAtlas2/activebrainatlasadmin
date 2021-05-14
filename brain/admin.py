@@ -76,14 +76,6 @@ class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
     exclude = ('created',)
 
 
-    def histogram(self, obj):
-        return format_html('<a target="_blank" href="https://activebrainatlas.ucsd.edu/data/{}/brains_info/histogram.html">Open</a>',
-                           (obj.prep_id))
-
-    histogram.short_description = 'Histogram'
-    #histogram.allow_tags = True
-
-
 @admin.register(Histology)
 class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'label', 'performance_center')

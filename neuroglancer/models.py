@@ -20,8 +20,8 @@ ATLAS_RAW_SCALE = 10
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
-    #url = models.JSONField()
-    url = models.TextField()
+    url = models.JSONField()
+    #url = models.TextField()
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
@@ -68,8 +68,8 @@ class UrlModel(models.Model):
         result = None
         dfs = []
         if self.url is not None:
-            #json_txt = self.url
-            json_txt = json.loads(self.url)
+            json_txt = self.url
+            #json_txt = json.loads(self.url)
             layers = json_txt['layers']
             for layer in layers:
                 if 'annotations' in layer:
@@ -77,12 +77,9 @@ class UrlModel(models.Model):
                     annotation = layer['annotations']
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
-                    df['X'] = df['X'].astype(int)
-                    # test to see if the points were inputted at the wrong scale
-                    if df['X'].mean() < 2000:
-                        df['X'] = df['X'] * 32
-                        df['Y'] = df['Y'] * 32
-                    df['Y'] = df['Y'].astype(int)
+                    #df['X'] = df['X'].astype(int)
+                    #df['Y'] = df['Y'].astype(int)
+                    #df['Section'] = df['Section'].round(decimals=0).astype(int)
                     df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
                     structures = [row['description'] for row in annotation if 'description' in row]
@@ -179,6 +176,28 @@ class LayerData(models.Model):
     def __str__(self):
         return u'{}'.format(self.layer)
 
+
+class Transformation(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
+    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
+                               verbose_name="User", blank=False, null=False)
+    input_type = EnumField(choices=['manual','detected','aligned'], blank=False, null=False, verbose_name='Input')
+    com_name = models.CharField(max_length=50, null=False, blank=False, verbose_name="Name")
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'transformation'
+        verbose_name = 'Transformation'
+        verbose_name_plural = 'Transformations'
+
+    def __str__(self):
+        return u'{} {}'.format(self.prep.prep_id, self.com_name)
+
+
 class CenterOfMass(models.Model):
     """
     I set both structure and prep to be nullable. This is just to make it easier
@@ -190,6 +209,8 @@ class CenterOfMass(models.Model):
     prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
                                verbose_name="User", blank=False, null=False)
+    transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
+                               verbose_name="Transformation", blank=True, null=True)
 
     x = models.FloatField()
     y = models.FloatField()
