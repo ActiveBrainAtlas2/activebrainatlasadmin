@@ -1,0 +1,37 @@
+{% include 'header.html' with title='DK Lab Active Brain Atlas' %}
+<script src="static/celery_progress/celery_progress.js"></script>
+<script>
+// vanilla JS version
+$(function () {
+  var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+  CeleryProgressBar.initProgressBar(progressUrl)
+});
+var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+
+function customResult(resultElement, result) {
+  $( resultElement ).append(
+    $('<p>').text('Sum of all seconds is ' + result)
+  );
+}
+
+$(function () {
+  CeleryProgressBar.initProgressBar(progressUrl, {
+    onResult: customResult,
+  })
+});
+</script>
+
+<div class="jumbotron" style="text-align: center; background:#417690; margin:10px; ">
+    <h2>Active Brain Atlas</h2>
+    <p>Progress</p>
+</div>
+
+<div class='progress-wrapper'>
+    <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
+  </div>
+  <div id="progress-bar-message">Initializing program ...</div>
+
+
+  <div id="celery-result"></div> 
+
+{% include 'footer.html' %}

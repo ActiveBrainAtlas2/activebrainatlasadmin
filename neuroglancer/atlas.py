@@ -187,7 +187,7 @@ def update_center_of_mass(urlModel):
     """
     This method checks if there is center of mass data. If there is,
     then it first find the center of mass rows for that person/input_type/animal/active combination.
-    If data already exists for that combination above, it all gets deleted.
+    If data already exists for that combination above, it all gets set to inactive.
     Then the new data gets inserted. No updates!
     It does lots of checks to make sure it is in the correct format,
     including:
@@ -198,21 +198,20 @@ def update_center_of_mass(urlModel):
     :param urlModel: the long url from neuroglancer
     :return: nothing
     """
-    try:
-        json_txt = json.loads(urlModel.url)
-    except ValueError as e:
-        print('Loading json from url failed', e)
-        return
+    json_txt = urlModel.url
 
     try:
         person = User.objects.get(pk=urlModel.person.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
+        return
 
     try:
         prep = Animal.objects.get(pk=urlModel.animal)
     except Animal.DoesNotExist:
         logger.error("Animal does not exist")
+        return
+
 
     try:
         scanrun = ScanRun.objects.filter(prep=prep)[0]
@@ -233,7 +232,8 @@ def update_center_of_mass(urlModel):
                         .filter(input_type__in=['aligned', 'manual'])\
                         .filter(prep=prep)\
                         .filter(active=True)\
-                        .delete()
+                        .update(active=False)
+                    
                     annotation = layer['annotations']
                     aligned_coms = []
                     for com in annotation:
@@ -247,23 +247,16 @@ def update_center_of_mass(urlModel):
                                 structure = Structure.objects.get(
                                     abbreviation=abbreviation)
                             except Structure.DoesNotExist:
+                                print(f'Structure {abbreviation} does not exist')
                                 logger.error("Structure does not exist")
 
                             # Create the manual COM
                             if structure is not None and prep is not None and person is not None:
-                                aligned_coms.append([x,y,z, structure])
-                                CenterOfMass.objects.create(
-                                    prep=prep, structure=structure,
-                                    active=True, person=person, input_type='manual',
-                                        x=int(x),y=int(y),section=int(z))
-                    # Create the aligned COM which is dependent on the MANUAL ones
-                    # fetch the R,t
-                    R, t = align_atlas(urlModel.animal, input_type='manual', person_id=person.id)
-
-                    for com in aligned_coms:
-                        x,y,z = brain_to_atlas_transform(com[0:3], R, t, brain_scale=scales)                            
-                        CenterOfMass.objects.create(
-                            prep=prep, structure=com[3],
-                            active=True, person=person, input_type='aligned',
-                                x=x,y=y,section=z)
+                                try:
+                                    CenterOfMass.objects.create(
+                                        prep=prep, structure=structure,
+                                        active=True, person=person, input_type='manual',
+                                            x=int(x),y=int(y),section=int(z))
+                                except:
+                                    print(f'Error inserting manual {structure.abbreviation}')
 

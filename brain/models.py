@@ -51,6 +51,20 @@ class Animal(AtlasModel):
     def __str__(self):
         return u'{}'.format(self.prep_id)
 
+    def histogram(self):
+        links = []
+        png = f'{self.prep_id}.png'
+        for channel in [1,2,3]:
+            testfile = f'/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{self.prep_id}/histogram/CH{channel}/{png}'
+            if os.path.isfile(testfile):
+                histogram = f'/data/{self.prep_id}/histogram/CH{channel}/{png}'
+                link = f'<div class="hover_img"><a href="#">CH{channel}<span><img src="https://activebrainatlas.ucsd.edu/{histogram}" /></span></a></div>' 
+                links.append(link)
+
+        return mark_safe(' '.join(links))
+
+    histogram.short_description = 'Histogram'
+
 
 
 class FileOperation(AtlasModel):

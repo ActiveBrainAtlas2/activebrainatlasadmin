@@ -1,14 +1,25 @@
+from django import forms
+from django.db.models.expressions import OuterRef
+from django.utils import translation
+from brain.models import Animal
+import json
 from django.conf import settings
-from django.contrib import admin
-from django.forms import TextInput
+from django.contrib import admin, messages
+from django.forms import TextInput, Select
+
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
 import neuroglancer.dash_apps
 import neuroglancer.dash_point_table
-from brain.admin import ExportCsvMixin
+from brain.admin import AtlasAdminModel, ExportCsvMixin
 
-from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, COL_LENGTH, ATLAS_RAW_SCALE, \
+from pygments import highlight
+from pygments.lexers import JsonLexer
+from pygments.formatters import HtmlFormatter
+from django.utils.safestring import mark_safe
+from django.contrib.auth import get_user_model
+from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
@@ -27,14 +38,33 @@ class UrlModelAdmin(admin.ModelAdmin):
     }
     list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'person', 'updated')
     ordering = ['-vetted', '-updated']
-    readonly_fields = ['url', 'created', 'user_date', 'updated']
+    readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
+    exclude = ['url']
     list_filter = ['updated', 'created', 'vetted']
     search_fields = ['url', 'comments']
-    #user_id = None
 
-    #def get_queryset(self, request):
-    #    self.user_id = request.user.id
-    #    return super(UrlModelAdmin, self).get_queryset(request)
+    def pretty_url(self, instance):
+            """Function to display pretty version of our data"""
+
+            # Convert the data to sorted, indented JSON
+            response = json.dumps(instance.url, sort_keys=True, indent=2)
+
+            # Truncate the data. Alter as needed
+            #response = response[:5000]
+
+            # Get the Pygments formatter
+            formatter = HtmlFormatter(style='colorful')
+
+            # Highlight the data
+            response = highlight(response, JsonLexer(), formatter)
+
+            # Get the stylesheet
+            style = "<style>" + formatter.get_style_defs() + "</style><br>"
+
+            # Safe the output
+            return mark_safe(style + response)
+
+    pretty_url.short_description = 'Formatted URL'    
 
 
     def open_oldneuroglancer(self, obj):
@@ -56,10 +86,8 @@ class UrlModelAdmin(admin.ModelAdmin):
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
-        #comments = escape(obj.comments)
         comments = "Testing"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
-        #links = f'<a target="_blank" href="{host}/{obj.id}/1">{comments}</a>'
         return format_html(links)
 
 
@@ -84,9 +112,7 @@ class PointsAdmin(admin.ModelAdmin):
     created_display.short_description = 'Created'    
 
     def get_queryset(self, request):
-        points = Points.objects.filter(url__contains='annotations')
-        points = points.filter(url__contains='point')
-        #points = Points.objects.filter(url__layers__contains={'type':'annotation'})
+        points = Points.objects.filter(url__layers__contains={'type':'annotation'})
         return points
 
 
@@ -194,6 +220,7 @@ class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
     show_hexadecimal.short_description = 'Hexadecimal'
 
 
+
 def atlas_scale_xy(x):
     """
     0.325 is the scale for Neurotrace brains
@@ -251,4 +278,45 @@ class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
+
+
+@admin.register(Transformation)
+class TransformationAdmin(AtlasAdminModel):
+    list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
+    ordering = ['com_name']
+    readonly_fields = ['created', 'updated']
+    list_filter = ['created', 'active']
+    search_fields = ['prep_id', 'com_name']
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "prep":
+            kwargs["queryset"] = Animal.objects.filter(centerofmass__active=True).distinct().order_by()
+        if db_field.name == "person":
+            UserModel = get_user_model()
+            com_users = CenterOfMass.objects.values_list('person', flat=True).distinct().order_by()
+            kwargs["queryset"] = UserModel.objects.filter(id__in=com_users)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def com_count(self, obj):
+        count = CenterOfMass.objects.filter(prep_id=obj.prep_id)\
+            .filter(input_type=obj.input_type)\
+            .filter(person_id=obj.person_id).filter(active=True).count()
+        return count
+
+    com_count.short_description = "Active COMS"
+
+    def save_model(self, request, obj, form, change):
+        obj.user = request.user
+        count = CenterOfMass.objects.filter(prep=obj.prep)\
+            .filter(input_type=obj.input_type)\
+            .filter(person=obj.person).filter(active=True).count()        
+        if count < 1:
+            messages.add_message(request, messages.WARNING, f'There no COMs associated with that animal/user/input type combination. Please correct it.')
+            return
+        else:
+            super().save_model(request, obj, form, change)
+            CenterOfMass.objects.filter(prep=obj.prep)\
+                .filter(input_type=obj.input_type)\
+                .filter(person=obj.person).filter(active=True).update(transformation=obj)
+
 
