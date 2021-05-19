@@ -1,11 +1,8 @@
-from django import forms
-from django.db.models.expressions import OuterRef
-from django.utils import translation
 from brain.models import Animal
 import json
 from django.conf import settings
 from django.contrib import admin, messages
-from django.forms import TextInput, Select
+from django.forms import TextInput
 
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
@@ -28,7 +25,6 @@ from neuroglancer.dash_view import dash_scatter_view
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
-
 
 
 @admin.register(UrlModel)

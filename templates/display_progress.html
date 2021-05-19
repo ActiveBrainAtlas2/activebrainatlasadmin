@@ -1,37 +1,103 @@
-{% include 'header.html' with title='DK Lab Active Brain Atlas' %}
-<script src="static/celery_progress/celery_progress.js"></script>
-<script>
-// vanilla JS version
-$(function () {
-  var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
-  CeleryProgressBar.initProgressBar(progressUrl)
-});
-var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
+<!DOCTYPE html>
+<html lang="en">
 
-function customResult(resultElement, result) {
-  $( resultElement ).append(
-    $('<p>').text('Sum of all seconds is ' + result)
-  );
-}
+<head>
+  {% load bootstrap4 %}
+  {# Load CSS and JavaScript #}
+  {% bootstrap_css %}
+  {% bootstrap_javascript jquery='full' %}
 
-$(function () {
-  CeleryProgressBar.initProgressBar(progressUrl, {
-    onResult: customResult,
-  })
-});
-</script>
+  {# Display django.contrib.messages as Bootstrap alerts #}
+  {% bootstrap_messages %}
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>{{ title }} </title>
+  <script src="static/celery_progress/celery_progress.js"></script>
+  <script>
+    function customResult(resultElement, result) {
+      $(resultElement).append(
+        $('<p>').text('Sum of all seconds is ' + result)
+      );
+    }
 
-<div class="jumbotron" style="text-align: center; background:#417690; margin:10px; ">
-    <h2>Active Brain Atlas</h2>
-    <p>Progress</p>
-</div>
+    function customProgress(progressBarElement, progressBarMessageElement, progress) {
+      barIdentifier = progressBarElement.id.substring(12)
 
-<div class='progress-wrapper'>
-    <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;</div>
-  </div>
-  <div id="progress-bar-message">Initializing program ...</div>
+      if (progress.current == 0 && progress.total == 100) {
+        progressMessage = ""
+      } else {
+        taskNumber = parseInt(progress.current) + 1
+        taskPercentage = taskNumber / progress.total * 100
+
+        progressBarElement.style.backgroundColor = "#68a9ef"
+        progressBarElement.style.width = taskPercentage + "%"
+        progressBarMessageElement.className = "alert alert-info"
+        if (progress.description) {
+          var taskElement = document.getElementById(progressBarElement.id + "-header");
+          taskElement.textContent = progress.description
+          progressMessage = "Running " + taskNumber + " of " + progress.total
+        } else {
+          progressMessage = "Task " + taskNumber + " of " + progress.total
+        }
+
+      }
+
+      progressBarMessageElement.innerHTML = (progressMessage);
+    }
+  </script>
 
 
-  <div id="celery-result"></div> 
+  {% for key, value in celery_task_ids.items %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var progressUrl = "{% url 'celery_progress:task_status' value %}";
+      CeleryProgressBar.initProgressBar(progressUrl, {
+        onProgress: customProgress,
+        progressBarId: "progress-bar{{ key }}",
+        progressBarMessageId: "progress-bar{{ key }}-message",
+        onResult: customResult,
+        onError: "Task had an error",
+        onIgnored: "This task did not complete.{{ key }}"
+      });
+    });
+  </script>
+  {% endfor %}
 
-{% include 'footer.html' %}
+</head>
+
+<body>
+  <div class="container">
+    <!-- closed in footer -->
+
+    <div class="bg-dark text-white text-center">
+      <h1>Active Brain Atlas Pipeline</h1>
+    </div>
+
+    <div class="container-fluid">
+      {% for key in celery_task_ids %}
+      <div class="row"><div class="col" id="progress-bar{{ key }}-header"></div></div>
+      <div class="row">
+        <div class="col">
+          <div class='progress-wrapper'>
+            <div id="progress-bar{{ key }}" class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;
+            </div>
+          </div>
+          <div id="progress-bar{{ key }}-message"></div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <footer class="pt-4 my-md-5 pt-md-5 border-top">
+        <div class="row">
+          <div class="col-12 col-md" style="text-align:center;">
+            <a href="http://neurophysics.ucsd.edu">UCSD Department of Neurophysics</a>
+          </div>
+        </div>
+      </footer>
+
+
+
+    </div> <!-- end container -->
+
+</body>
+
+</html>

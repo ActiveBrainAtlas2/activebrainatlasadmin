@@ -2,7 +2,8 @@ import json
 import numpy as np
 from django.contrib.auth.models import User
 
-from neuroglancer.models import Structure, CenterOfMass, ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
+from neuroglancer.models import Structure, CenterOfMass, Transformation, \
+    ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
 
@@ -55,6 +56,7 @@ def align_atlas(animal, input_type=None, person_id=None):
     :param animal: the animal we are aligning to
     :return: a 3x3 matrix and a 1x3 matrix
     """
+
     atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
     atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
     atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
@@ -88,8 +90,7 @@ def align_atlas(animal, input_type=None, person_id=None):
 def brain_to_atlas_transform(
     brain_coord, r, t,
     brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)
-):
+    atlas_scale=(10, 10, 20)):
     """
     Takes an x,y,z brain coordinates as a list, and a rotation matrix and transform vector.
     Returns the point in atlas coordinates.
@@ -121,8 +122,7 @@ def brain_to_atlas_transform(
 def atlas_to_brain_transform(
     atlas_coord, r, t,
     brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)
-):
+    atlas_scale=(10, 10, 20)):
     """
     Takes an x,y,z atlas coordinates, and a rotation matrix and transform vector.
     Returns the point in brain coordinates.
@@ -212,16 +212,6 @@ def update_center_of_mass(urlModel):
         logger.error("Animal does not exist")
         return
 
-
-    try:
-        scanrun = ScanRun.objects.filter(prep=prep)[0]
-        resolution = scanrun.resolution
-    except Animal.DoesNotExist:
-        logger.error("Scan run does not exist")
-        resolution = 0.325
-
-    scales = [resolution, resolution, 20]
-
     if 'layers' in json_txt:
         layers = json_txt['layers']
         for layer in layers:
@@ -229,10 +219,20 @@ def update_center_of_mass(urlModel):
                 lname = str(layer['name']).upper().strip()
                 if lname == 'COM':
                     CenterOfMass.objects.filter(person=person)\
-                        .filter(input_type__in=['aligned', 'manual'])\
+                        .filter(input_type='manual')\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .update(active=False)
+                    
+                    transformations = Transformation.objects.filter(person=person)\
+                        .filter(input_type='manual')\
+                        .filter(prep=prep)\
+                        .filter(active=True).all()
+
+                    if len(transformations) > 0:
+                        transformation = transformations[0]
+                    else:
+                        transformation = None
                     
                     annotation = layer['annotations']
                     aligned_coms = []
@@ -255,8 +255,10 @@ def update_center_of_mass(urlModel):
                                 try:
                                     CenterOfMass.objects.create(
                                         prep=prep, structure=structure,
+                                        transformation = transformation,
                                         active=True, person=person, input_type='manual',
-                                            x=int(x),y=int(y),section=int(z))
+                                            x=x, y=y, section=int(z))
                                 except:
                                     print(f'Error inserting manual {structure.abbreviation}')
+                                    logger.error(f'Error inserting manual {structure.abbreviation}')
 
