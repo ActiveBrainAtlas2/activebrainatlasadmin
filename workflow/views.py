@@ -25,14 +25,14 @@ def progress_view(request):
     for i, task_id in enumerate([setup_id, tif_id, meta_id, scene_id]):
         celery_task_ids[i] = task_id
     
-    return render(request, 'display_progress.html', context={'celery_task_ids': celery_task_ids})
+    return render(request, 'pipeline.html', context={'celery_task_ids': celery_task_ids})
 
 def progress_test(request):
     animal = 'DK54'
     channel = 1
     njobs = 2
     
-    return render(request, 'basic.html', context={'animal': animal, 'opts': ''})
+    return render(request, 'pipeline.html', context={'animal': animal, 'opts': ''})
 
 
 def get_progress(request, task_id):

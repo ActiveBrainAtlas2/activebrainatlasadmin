@@ -19,4 +19,7 @@
     1. Still on the new annotation layer you created, go to the "Source" tab at the top right of the page.
     1. Look for the "Select transformation" dropdown at the bottom right side. 
     1. Select "DK39 manual Beth" and click Align. The points should move into the brain stem area of the brain.
-    1. Repeat the above steps with another annotation layer. Make sure you align the set of points with the same brain as the set of points belongs to.
+    1. Give the annotation layer a good name as the defaults aren't very informative. In the top right panel, rename "annotation" (or "annotation1") to DKXXpremotor
+    1. Repeat the above steps with another annotation layer. Make sure you align the set of points with the same brain as the set of points belongs to. Two other good layers to look at are:
+        1. DK52 with PMnu/premotor
+        1. DK55_Hannah_Ann/Premotor

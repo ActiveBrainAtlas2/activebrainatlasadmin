@@ -11,7 +11,10 @@ from plotly.offline import plot
 import plotly.graph_objects as go
 
 from neuroglancer.models import UrlModel
-from .models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
+from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
+from workflow.forms import PipelineForm
+from celery import chain
+from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 
 
 class WorkflowAdminModel(admin.ModelAdmin):
@@ -48,11 +51,47 @@ class TaskAdmin(admin.ModelAdmin):
         return instance.prep.prep_id
 
     def view_pipeline(self, request):
+        celery_task_ids = {i:i for i in range(4)}
+        animal = None
+        title = 'Active Brain Atlas Pipeline'
+        
+        if request.method == 'POST':
+            form = PipelineForm(request.POST)
+
+
+            if form.is_valid():
+                animal = form.cleaned_data['animal']
+                print(f'type of animal is {type(animal)}')
+                # do celery stuff here.
+                animal = animal.prep_id
+                result = chain(
+                    setup.si(animal),
+                    make_meta.si(animal),
+                    make_tifs.si(animal, 1, 3),
+                    make_scenes.si(animal, 3)
+                ).apply_async()
+                scene_id =  result.id
+                meta_id = result.parent.id
+                tif_id =  result.parent.parent.id
+                setup_id = result.parent.parent.parent.id
+                
+                for i, task_id in enumerate([setup_id, tif_id, meta_id, scene_id]):
+                    celery_task_ids[i] = task_id
+                title = f'Active Brain Atlas {animal} Pipeline'
+                form = None
+
+        else:
+            form = PipelineForm()
+        
+
         context = dict(
             self.admin_site.each_context(request),
-            title="sdfsdfsdf"
+            title = title,
+            form = form,
+            animal = animal,
+            celery_task_ids = celery_task_ids
         )
-        return TemplateResponse(request, "basic.html", context)
+        return TemplateResponse(request, "pipeline.html", context)
 
     def get_urls(self):
         urls = super().get_urls()
