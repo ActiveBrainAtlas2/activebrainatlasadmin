@@ -105,7 +105,7 @@ class PointList(views.APIView):
             for layer in layers:
                 if 'annotations' in layer:
                     annotation = layer['annotations']
-                    if len(annotation) > 0 and layer_name in layer['name']:
+                    if len(annotation) > 0 and str(layer_name).strip().lower() == str(layer['name']).strip().lower():
                         points = annotation
         except UrlModel.DoesNotExist:
             raise Http404
