@@ -4,6 +4,8 @@ from itertools import zip_longest
 from django.contrib import admin
 from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
+from django.urls import path
+from django.template.response import TemplateResponse
 
 from plotly.offline import plot
 import plotly.graph_objects as go
@@ -34,7 +36,6 @@ class TaskAdmin(admin.ModelAdmin):
     ordering = ['prep', 'lookup']
     list_filter = ['created']
 
-
     def is_complete(self, instance):
         return instance.completed == 1
 
@@ -45,6 +46,21 @@ class TaskAdmin(admin.ModelAdmin):
 
     def prep_id(self, instance):
         return instance.prep.prep_id
+
+    def view_pipeline(self, request):
+        context = dict(
+            self.admin_site.each_context(request),
+            title="sdfsdfsdf"
+        )
+        return TemplateResponse(request, "basic.html", context)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('pipeline/', self.admin_site.admin_view(self.view_pipeline))
+        ]
+        return my_urls + urls
+       
 
 
 

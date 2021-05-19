@@ -9,6 +9,8 @@ from django.http import HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from django.urls import path
+from django.template.response import TemplateResponse
 
 from brain.forms import save_slide_model, TifInlineFormset
 from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
@@ -74,6 +76,21 @@ class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
     search_fields = ('prep_id',)
     ordering = ['prep_id']
     exclude = ('created',)
+
+    def view_pipeline(self, request):
+        context = dict(
+            self.admin_site.each_context(request),
+            title="sdfsdfsdf"
+        )
+        return TemplateResponse(request, "basic.html", context)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('pipeline/', self.admin_site.admin_view(self.view_pipeline))
+        ]
+        return my_urls + urls
+
 
 
 @admin.register(Histology)

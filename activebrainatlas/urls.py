@@ -32,7 +32,7 @@ urlpatterns = [
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
     path('', include('brain.urls')),
     path('', include('neuroglancer.urls')),
-    path('', include('pipeline.urls')),
+    path('', include('workflow.urls')),
     re_path(r'^celery-progress/', include('celery_progress.urls')), 
 ]
 

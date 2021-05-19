@@ -226,9 +226,7 @@ class CenterOfMass(models.Model):
         db_table = 'center_of_mass'
         verbose_name = 'Center Of Mass'
         verbose_name_plural = 'Center of Mass'
-        constraints = [
-        models.UniqueConstraint(fields=['prep', 'structure', 'active', 'person', 'input_type'], name='unique COM')
-    ]
+        #constraints = [models.UniqueConstraint(fields=['prep', 'structure', 'active', 'person', 'input_type'], name='unique COM')]
 
     def __str__(self):
         return u'{}'.format(self.structure.abbreviation)
