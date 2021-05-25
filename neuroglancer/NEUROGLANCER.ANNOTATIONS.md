@@ -13,7 +13,7 @@
     1. To align it, click in the "C1" rectangle near the top left and then go to the "Source" tab on th right. Look near the bottom of the "Source" tab and find the dropdown for alignment. It should already say "DK52 manual beth". If not, find that selection in the dropdown and click the "Align" link. You'll need to move the brain into the center of the quadrants.
 
 ### Adding annotation layers
-1. Click the "+" button in the top left next to the "atlasV7" rectangle. Make sure you use control+click as we are adding annotation layers.
+1. Click the "+" button in the top left next to the "atlasV7" rectangle. Make sure you use control+click(command+click for mac users) as we are adding annotation layers.
     1. In the dropdown menu in the right side of the page, select an annotation layer, in this example, we'll try "DK39_Hannah_Ann/premotor". After selecting that, click the "Import" link next to it.
     1. Change the size of the dots by going to the "Rendering" tab. Increase the size, 3 is a good size. You should be able to see the dots in the lower left quadrant. They need to be aligned.
     1. Still on the new annotation layer you created, go to the "Source" tab at the top right of the page.
