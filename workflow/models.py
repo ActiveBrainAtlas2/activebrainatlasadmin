@@ -47,9 +47,26 @@ class Resource(WorkflowModel):
         return u'{} {}'.format(self.first_name, self.last_name)
 
 
+class ProgressLookup(WorkflowModel):
+    description = models.TextField()
+    script = models.CharField(max_length=200, blank=True, null=True)
+    channel = models.IntegerField(null=False, default=0)
+    action = models.CharField(max_length=25, blank=True)
+    downsample = models.BooleanField(default = True)
+
+    class Meta:
+        managed = False
+        db_table = 'progress_lookup'
+        verbose_name = 'Pipeline lookup'
+        verbose_name_plural = 'Pipeline lookups'
+
+    def __str__(self):
+        return u'{}'.format(self.description)
+
+
 class Task(WorkflowModel):
-    lookup = models.ForeignKey('ProgressLookup', models.DO_NOTHING)
-    prep = models.ForeignKey(Animal, models.CASCADE)
+    lookup = models.ForeignKey(ProgressLookup, models.CASCADE, related_name='lookup')
+    prep = models.ForeignKey(Animal, models.CASCADE, related_name='animal')
     completed = models.BooleanField()
     #resources = models.ManyToManyField('Resource', blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
@@ -151,22 +168,6 @@ class TaskView(models.Model):
     def __str__(self):
         return u'{}'.format(self.prep_id)
 
-
-class ProgressLookup(WorkflowModel):
-    description = models.TextField()
-    script = models.CharField(max_length=200, blank=True, null=True)
-    channel = models.IntegerField(null=False, default=0)
-    action = models.CharField(max_length=25, blank=True)
-    downsample = models.BooleanField(default = True)
-
-    class Meta:
-        managed = False
-        db_table = 'progress_lookup'
-        verbose_name = 'Pipeline lookup'
-        verbose_name_plural = 'Pipeline lookups'
-
-    def __str__(self):
-        return u'{}'.format(self.description)
 
 class FileLog(WorkflowModel):
     prep = models.ForeignKey(Animal, models.CASCADE)

@@ -69,7 +69,6 @@ class UrlModel(models.Model):
         dfs = []
         if self.url is not None:
             json_txt = self.url
-            #json_txt = json.loads(self.url)
             layers = json_txt['layers']
             for layer in layers:
                 if 'annotations' in layer:
@@ -77,9 +76,6 @@ class UrlModel(models.Model):
                     annotation = layer['annotations']
                     d = [row['point'] for row in annotation]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
-                    #df['X'] = df['X'].astype(int)
-                    #df['Y'] = df['Y'].astype(int)
-                    #df['Section'] = df['Section'].round(decimals=0).astype(int)
                     df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
                     structures = [row['description'] for row in annotation if 'description' in row]
@@ -158,12 +154,14 @@ class Structure(AtlasModel):
 
 class LayerData(models.Model):
     id = models.BigAutoField(primary_key=True)
+    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
                                verbose_name="Url")
     layer = models.CharField(max_length=255)
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
+    active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
 
@@ -177,12 +175,30 @@ class LayerData(models.Model):
         return u'{}'.format(self.layer)
 
 
+
+class InputType(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    input_type = models.CharField(max_length=50, blank=False, null=False, verbose_name='Input')
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'com_type'
+        verbose_name = 'COM Type'
+        verbose_name_plural = 'COM Types'
+
+    def __str__(self):
+        return u'{}'.format(self.input_type)
+
 class Transformation(models.Model):
     id = models.BigAutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
                                verbose_name="User", blank=False, null=False)
-    input_type = EnumField(choices=['manual','detected','aligned'], blank=False, null=False, verbose_name='Input')
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
+                               verbose_name="Input", blank=False, null=False)
     com_name = models.CharField(max_length=50, null=False, blank=False, verbose_name="Name")
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
@@ -211,11 +227,12 @@ class CenterOfMass(models.Model):
                                verbose_name="User", blank=False, null=False)
     transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
                                verbose_name="Transformation", blank=True, null=True)
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
+                               verbose_name="Input", blank=False, null=False)
 
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
-    input_type = EnumField(choices=['manual','detected','aligned'], blank=False, null=False, verbose_name='Input')
 
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)

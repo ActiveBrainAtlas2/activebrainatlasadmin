@@ -10,6 +10,7 @@ from brain.models import Animal, ScanRun
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+MANUAL = 1
 
 
 def align_point_sets(src, dst, with_scaling=True):
@@ -49,7 +50,7 @@ def align_point_sets(src, dst, with_scaling=True):
     t = dst_mean - r @ src_mean
     return r, t
 
-def align_atlas(animal, input_type=None, person_id=None):
+def align_atlas(animal, input_type_id=None, person_id=None):
     """
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
@@ -60,7 +61,7 @@ def align_atlas(animal, input_type=None, person_id=None):
     atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
     atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
     atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
-    reference_centers = get_centers_dict(animal, input_type=input_type, person_id=person_id)
+    reference_centers = get_centers_dict(animal, input_type_id=input_type_id, person_id=person_id)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -158,7 +159,7 @@ def get_atlas_centers(
     atlas_box_scales = np.array(atlas_box_scales)
     atlas_box_size = np.array(atlas_box_size)
     atlas_box_center = atlas_box_size / 2
-    atlas_centers = get_centers_dict('atlas', input_type='manual')
+    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL)
 
     for structure, origin in atlas_centers.items():
         # transform into the atlas box coordinates that neuroglancer assumes
@@ -167,10 +168,10 @@ def get_atlas_centers(
 
     return atlas_centers
 
-def get_centers_dict(prep_id, input_type=None, person_id=None):
+def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     rows = CenterOfMass.objects.filter(prep__prep_id=prep_id).filter(active=True).order_by('structure', 'updated')
-    if input_type is not None:
-        rows = rows.filter(input_type=input_type)
+    if input_type_id > 0:
+        rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
 
@@ -219,13 +220,13 @@ def update_center_of_mass(urlModel):
                 lname = str(layer['name']).upper().strip()
                 if lname == 'COM':
                     CenterOfMass.objects.filter(person=person)\
-                        .filter(input_type='manual')\
+                        .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .update(active=False)
                     
                     transformations = Transformation.objects.filter(person=person)\
-                        .filter(input_type='manual')\
+                        .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True).all()
 
@@ -256,7 +257,7 @@ def update_center_of_mass(urlModel):
                                     CenterOfMass.objects.create(
                                         prep=prep, structure=structure,
                                         transformation = transformation,
-                                        active=True, person=person, input_type='manual',
+                                        active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=int(z))
                                 except:
                                     print(f'Error inserting manual {structure.abbreviation}')

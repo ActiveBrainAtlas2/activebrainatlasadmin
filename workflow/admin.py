@@ -1,16 +1,17 @@
 import random
-from itertools import zip_longest
 
 from django.contrib import admin
 from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
 from django.urls import path
 from django.template.response import TemplateResponse
+from django.db.models import Count
 
 from plotly.offline import plot
 import plotly.graph_objects as go
 
 from neuroglancer.models import UrlModel
+from brain.models import Animal
 from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
 from workflow.forms import PipelineForm
 from celery import chain
@@ -51,7 +52,7 @@ class TaskAdmin(admin.ModelAdmin):
         return instance.prep.prep_id
 
     def view_pipeline(self, request):
-        celery_task_ids = {i:i for i in range(4)}
+        celery_task_ids = {}
         animal = None
         title = 'Active Brain Atlas Pipeline'
         
@@ -64,6 +65,7 @@ class TaskAdmin(admin.ModelAdmin):
                 print(f'type of animal is {type(animal)}')
                 # do celery stuff here.
                 animal = animal.prep_id
+                
                 result = chain(
                     setup.si(animal),
                     make_meta.si(animal),
@@ -73,10 +75,15 @@ class TaskAdmin(admin.ModelAdmin):
                 scene_id =  result.id
                 meta_id = result.parent.id
                 tif_id =  result.parent.parent.id
-                setup_id = result.parent.parent.parent.id
+                setup_id = result.parent.parent.parent.id                
+                ids = [setup_id, tif_id, meta_id, scene_id]
                 
-                for i, task_id in enumerate([setup_id, tif_id, meta_id, scene_id]):
+                #result = setup.delay(animal)
+                #ids = [result.id]
+                print(result.status, ids)
+                for i, task_id in enumerate(ids):
                     celery_task_ids[i] = task_id
+                celery_task_ids = celery_task_ids
                 title = f'Active Brain Atlas {animal} Pipeline'
                 form = None
 
@@ -125,40 +132,39 @@ class TaskViewAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
 
-# add url to view more detail
 
     def changelist_view(self, request, extra_context=None):
-        # Aggregate new subscribers per day
-        tasks = TaskView.objects.order_by('prep_id').all()
-        lookups = ProgressLookup.objects.order_by('id').all()
+        counts = Task.objects.all().filter(lookup__channel__in=[0,1]).filter(lookup__downsample=False)\
+        .filter(prep__active=True)\
+        .values('prep_id').annotate(total=Count('prep_id')).order_by('prep_id')
+        animals = Animal.objects.filter(active=True).order_by('prep_id').all()
+        lookups = ProgressLookup.objects.filter(channel__in=[0,1]).filter(downsample=False).order_by('id').all()
+
+        al = []
+        x = [] 
+        i = 0
+        for animal in animals:
+            if animal.aliases_1 is None:
+                continue
+            al.append(str(animal.prep_id + '-' + animal.aliases_1))
+            x.append(counts[i]['total'])
+            i += 1
 
         lookup_list = []
         id_list = []
-        for i, (look, task) in enumerate(zip_longest(lookups, tasks)):
-            descs = look.description
-            lookup_list.append(descs)
+        for i, lookup in enumerate(lookups):
             id_list.append(i)
-
-        x = []
-        y = []
-        created = []
-        for row in tasks:
-            y.append(row.prep_id)
-            x.append(row.complete)
-            created.append(row.created)
-
+            lookup_list.append(lookup.description)
         limit = len(lookup_list)
-        get_colors = lambda n: list(map(lambda i: "#" + "%06x" % random.randint(0, 0xFFFFFF), range(n)))
-        colors = get_colors(len(x))
-        fig = go.Figure(data=[go.Bar(x=x, y=y, orientation='h', marker=dict(color=colors), hovertext = created )])
+        colors = [x*19 for x in range(len(x))]
+        marker={'color': colors, 'colorscale': 'Viridis'}
+        fig = go.Figure(data=[go.Bar(x=x, y=al, orientation='h', marker=marker )])
         fig.update_layout(xaxis_showgrid=True, yaxis_showgrid=True, height=600)
-        fig.update_xaxes(ticks='outside',tickwidth=2, tickangle=45, tickcolor='crimson', ticklen=10, range=[0,limit])
-
+        fig.update_xaxes(ticks='outside',tickwidth=2, tickangle=45, tickcolor='crimson', ticklen=10, range=[0,limit-1])
         fig.update_layout(autosize=True, xaxis=dict(tickmode='array', tickvals=id_list, ticktext=lookup_list),
-
-                          margin=dict(l=20, r=20, t=20, b=280),
-                          paper_bgcolor="LightSteelBlue",
-                          )
+                  margin=dict(l=20, r=20, t=20, b=280),
+                  paper_bgcolor="LightSteelBlue",
+                  )                                  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
         # Serialize and attach the workflow data to the template context
         extra_context = extra_context or {"gantt_div": gantt_div, 'title':'Pipeline Progress by Animal'}
