@@ -12,6 +12,7 @@ from celery.app import shared_task
 from celery.utils.log import get_task_logger
 from celery import states, current_task
 from django.conf import settings
+from time import sleep
 
 import random
 
@@ -32,20 +33,17 @@ if settings.DEBUG:
         INPUT = fileLocationManager.czi
         files = []
         description = "Looking for CZI files."
+        
         try:
             files = os.listdir(INPUT)
-            progress_recorder.set_progress(len(files), len(files), description='Found CZI files.')
-        except Exception as ex:
-            logger.error(f'Could not list files in {INPUT}')
-            self.update_state(
-                state=states.FAILURE,
-                meta={
-                    'exc_type': type(ex).__name__,
-                    'exc_message': traceback.format_exc().split('\n'),
-                    'custom': 'Could not find any CZI files.'
-                })
-            progress_recorder.set_progress(0, 0, description='Found no CZI files.')
+        except FileNotFoundError as fe:
+            error = f'Error: {fe}'
+            logger.error(error)
             raise Ignore()
+        
+        for i in range(len(files)):
+            progress_recorder.set_progress(i, len(files), description=description)
+            sleep(1)
         return len(files)
 
 
@@ -66,8 +64,13 @@ if settings.DEBUG:
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
         scan_run = ScanRun.objects.filter(prep_id=animal)[0]
+        slides = Slide.objects.filter(scan_run=scan_run).all()
 
-        Slide.objects.filter(scan_run=scan_run).delete()
+        lslides = len(slides)
+        if lslides > 0:
+            logger.info(f"Found {lslides} some slides, so existing function.")
+            return lslides
+
 
         try:
             czi_files = sorted(os.listdir(fileLocationManager.czi))
@@ -138,11 +141,9 @@ if settings.DEBUG:
             animal: the prep id of the animal
             channel: the channel of the stack to process
             njobs: number of jobs for parallel computing
-            compression: default is no compression so we can create jp2 files for CSHL. The files get
-            compressed using LZW when running create_preps.py
 
         Returns:
-            nothing
+            number of tifs created
         """
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
@@ -197,6 +198,15 @@ if settings.DEBUG:
 
     @shared_task(bind=True)
     def make_scenes(self, animal, njobs):
+        """
+        This will create some PNG files from the tif files.
+        The PNG files are downsampled to 3.125% of the original size.
+        Args:
+            animal: the animal to work on
+            njobs: how many procs to spawn.
+        Returns:
+            the number of PNG files created.
+        """
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
         INPUT = fileLocationManager.tif
@@ -224,3 +234,13 @@ if settings.DEBUG:
             p.map(workernoshell, commands)
 
         return len(tifs)
+
+else:
+    def setup():
+        pass 
+    def make_meta():
+        pass
+    def make_tifs():
+        pass 
+    def make_scenes():
+        pass

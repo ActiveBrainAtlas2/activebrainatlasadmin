@@ -5,7 +5,7 @@ from brain.models import Animal
 class PipelineForm(forms.Form):
     animal = ModelChoiceField(label='Animal',
                             queryset=Animal.objects.all().order_by('prep_id'),
-                            required=False,
+                            required=True,
                             widget=forms.Select(attrs={'onchange': 'id_list.submit();', 'class': 'form-control'}))
     class Meta:
         fields = ('prep_id',)

@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 import logging
 
 from brain.models import Animal
-from neuroglancer.models import UrlModel, CenterOfMass, Structure
+from neuroglancer.models import CenterOfMass, LayerData, Structure, UrlModel
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -20,17 +20,32 @@ class IdSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
 
-class PointSerializer(serializers.Serializer):
+class AnnotationSerializer(serializers.Serializer):
+    """
+    This one feeds the data import
+    """
     id = serializers.CharField()
     point = serializers.ListField()
     type = serializers.CharField()
-    description = serializers.CharField()
 
+class AnnotationsSerializer(serializers.Serializer):
+    """
+    This one feeds the dropdown
+    """
+    id = serializers.CharField()
+    description = serializers.CharField()
+    layer_name = serializers.CharField()
 
 class StructureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Structure
+        fields = '__all__'
+
+class LayerDataSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = LayerData
         fields = '__all__'
 
 
@@ -71,12 +86,18 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
         return com
 
 
-class RotationSerializer(serializers.ModelSerializer):
+class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
     class Meta:
         model = CenterOfMass
-        fields = ['prep_id', 'input_type', 'person_id', 'username']
+        fields = ['prep_id', 'input_type_id', 'person_id', 'username']
+
+class RotationSerializer(serializers.Serializer):
+    prep_id = serializers.CharField()
+    input_type__input_type = serializers.CharField()
+    person_id = serializers.IntegerField()
+    person__username = serializers.CharField()
 
 
 

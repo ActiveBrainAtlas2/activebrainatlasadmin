@@ -19,11 +19,17 @@
 {% endblock %}
 {% block extrahead %}
 
+<script type="text/javascript" src="{% static "jquery/jquery-3.6.0.min.js" %}"></script>
 <script type="text/javascript" src="{% static "celery_progress/celery_progress.js" %}"></script>
 <script type="text/javascript" >
   function customResult(resultElement, result) {
     $(resultElement).append(
-      $('<p>').text('Sum of all seconds is ' + result)
+      $('<p>').text('custom result function ' + result)
+    );
+  }
+  function customIgnore(resultElement, result) {
+    $(resultElement).append(
+      $('<p>').text('This task has failed.')
     );
   }
 
@@ -35,7 +41,6 @@
     } else {
       taskNumber = parseInt(progress.current) + 1
       taskPercentage = taskNumber / progress.total * 100
-
       progressBarElement.style.backgroundColor = "#68a9ef"
       progressBarElement.style.width = taskPercentage + "%"
       progressBarMessageElement.className = "alert alert-info"
@@ -46,9 +51,7 @@
       } else {
         progressMessage = "Task " + taskNumber + " of " + progress.total
       }
-
     }
-
     progressBarMessageElement.innerHTML = (progressMessage);
   }
 </script>
@@ -63,13 +66,11 @@
       progressBarId: "progress-bar{{ key }}",
       progressBarMessageId: "progress-bar{{ key }}-message",
       onResult: customResult,
-      onError: "Task had an error",
-      onIgnored: "This task did not complete.{{ key }}"
+      onIgnored: customIgnore
     });
   });
 </script>
 {% endfor %}
-
 
 {% endblock %}
 
@@ -87,7 +88,7 @@
 </form>
 {% endif %}
 {% if animal %}
-<p>Finding CZI files for {{animal}}</p>
+<p>Starting tasks for {{animal}}</p>
 
 <div class="container-fluid">
   {% for key in celery_task_ids %}
@@ -103,10 +104,6 @@
   </div>
   {% endfor %}
 
-
-
 {% endif %}
-
-
 
 {% endblock %}

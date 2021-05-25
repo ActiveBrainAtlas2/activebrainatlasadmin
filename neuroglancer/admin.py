@@ -16,7 +16,7 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from neuroglancer.models import UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
+from neuroglancer.models import InputType, UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
@@ -315,4 +315,11 @@ class TransformationAdmin(AtlasAdminModel):
                 .filter(input_type=obj.input_type)\
                 .filter(person=obj.person).filter(active=True).update(transformation=obj)
 
+@admin.register(InputType)
+class InputTypeAdmin(AtlasAdminModel):
+    list_display = ('id', 'input_type', 'active','created')
+    ordering = ['id']
+    readonly_fields = ['created', 'updated']
+    list_filter = ['created', 'active']
+    search_fields = ['input_type']
 

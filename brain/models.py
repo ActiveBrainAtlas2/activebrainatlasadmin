@@ -69,7 +69,7 @@ class Animal(AtlasModel):
 
 class FileOperation(AtlasModel):
     id = models.AutoField(primary_key=True)
-    tif = models.ForeignKey('SlideCziToTif', models.DO_NOTHING)
+    tif = models.ForeignKey('SlideCziToTif', models.CASCADE)
     operation = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
     file_size = models.FloatField()
@@ -84,9 +84,9 @@ class FileOperation(AtlasModel):
 
 class Histology(AtlasModel):
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.DO_NOTHING)
-    virus = models.ForeignKey('Virus', models.DO_NOTHING, blank=True, null=True)
-    label = models.ForeignKey('OrganicLabel', models.DO_NOTHING, blank=True, null=True)
+    prep = models.ForeignKey(Animal, models.CASCADE)
+    virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True)
+    label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     anesthesia = EnumField(choices=['ketamine','isoflurane','pentobarbital','fatal plus'], blank=True, null=True)
     perfusion_age_in_days = models.PositiveIntegerField()
@@ -125,8 +125,8 @@ class Histology(AtlasModel):
 
 class Injection(AtlasModel):
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.DO_NOTHING)
-    label = models.ForeignKey('OrganicLabel', models.DO_NOTHING, blank=True, null=True)
+    prep = models.ForeignKey(Animal, models.CASCADE)
+    label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True)
     anesthesia = EnumField(choices=['ketamine','isoflurane'], blank=True, null=True)
     method = EnumField(choices=['iontophoresis','pressure','volume'], blank=True, null=True)
@@ -155,8 +155,8 @@ class Injection(AtlasModel):
 
 class InjectionVirus(AtlasModel):
     id = models.AutoField(primary_key=True)
-    injection = models.ForeignKey(Injection, models.DO_NOTHING)
-    virus = models.ForeignKey('Virus', models.DO_NOTHING)
+    injection = models.ForeignKey(Injection, models.CASCADE)
+    virus = models.ForeignKey('Virus', models.CASCADE)
 
     class Meta:
         managed = False
@@ -197,7 +197,7 @@ class OrganicLabel(AtlasModel):
 
 class ScanRun(AtlasModel):
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.DO_NOTHING)
+    prep = models.ForeignKey(Animal, models.CASCADE)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     machine = EnumField(choices=['Invitrogen','Sigma','Thermo-Fisher'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
@@ -229,7 +229,7 @@ class ScanRun(AtlasModel):
 
 class Slide(AtlasModel):
     id = models.AutoField(primary_key=True)
-    scan_run = models.ForeignKey(ScanRun, models.DO_NOTHING)
+    scan_run = models.ForeignKey(ScanRun, models.CASCADE)
     slide_physical_id = models.IntegerField()
     rescan_number = EnumField(choices=['1','2','3'], blank=False, null=False, default='1')
     slide_status = EnumField(choices=['Bad','Good'], blank=False, null=False)
@@ -284,7 +284,7 @@ class Slide(AtlasModel):
 
 class SlideCziToTif(AtlasModel):
     id = models.AutoField(primary_key=True)
-    slide = models.ForeignKey(Slide, models.DO_NOTHING, related_name='slideczis')
+    slide = models.ForeignKey(Slide, models.CASCADE, related_name='slideczis')
     file_name = models.CharField(max_length=200, null=False)
     scene_number = models.IntegerField(blank=False, null=False, default=1,
                                                     verbose_name='Scene',
