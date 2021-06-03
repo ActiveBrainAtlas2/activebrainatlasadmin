@@ -21,7 +21,11 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 
-
+def load_layers(request):
+    url_id = request.GET.get('id')
+    urlModel = UrlModel.objects.get(pk=url_id).all()
+    layers = ['one', 'two', 'three']
+    return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
 
 
 class UrlViewSet(viewsets.ModelViewSet):
@@ -95,8 +99,8 @@ class UrlDataView(views.APIView):
 class Com(views.APIView):
     """
     Fetch UrlModel and return parsed annotation layer.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DK52/2
-    Where DK52 is the primary key of the model and 'COM' is the layer name
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DK52/manual
+    Where DK52 is the primary key of the model and 'manual' is the input type.
     """
 
     def get(self, request, prep_id, input_type, format=None):
@@ -156,7 +160,8 @@ class Annotation(views.APIView):
 
 class Annotations(views.APIView):
     """
-    Fetch UrlModel and return a list of dictionaries:
+    Fetch UrlModel and return a set of two dictionaries. One is from the layer_data
+    table and the other is the COMs that have been set as transformations.
     {'id': 213, 'description': 'DK39 COM Test', 'layer_name': 'COM'}
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """

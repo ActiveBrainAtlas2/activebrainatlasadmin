@@ -1,3 +1,4 @@
+from django.forms.models import BaseModelForm
 from brain.models import Animal
 import json
 from django.conf import settings
@@ -16,12 +17,13 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from neuroglancer.models import InputType, UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
+from neuroglancer.models import InputType, LayerData, UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
 from django.db import models
 from neuroglancer.dash_view import dash_scatter_view
+from neuroglancer.forms import LayerForm
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
@@ -100,7 +102,7 @@ class PointsAdmin(admin.ModelAdmin):
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
-    list_filter = ['created', 'updated']
+    list_filter = ['created', 'updated','vetted']
 
 
     def created_display(self, obj):
@@ -322,4 +324,19 @@ class InputTypeAdmin(AtlasAdminModel):
     readonly_fields = ['created', 'updated']
     list_filter = ['created', 'active']
     search_fields = ['input_type']
+
+@admin.register(LayerData)
+class LayerDataAdmin(AtlasAdminModel):
+    list_display = ('url', 'prep', 'layer','created')
+    ordering = ['prep', 'layer']
+    excluded_fields = ['created', 'updated', 'layer']
+    list_filter = ['created', 'active']
+    search_fields = ['url__comments', 'prep__prep_id', 'layer']
+    change_form_template = "add_annotation.html"
+    form = LayerForm
+
+
+    def save_model(self, request, obj, form, change):
+        obj.person = request.user
+        super().save_model(request, obj, form, change)
 
