@@ -21,7 +21,6 @@ ATLAS_RAW_SCALE = 10
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField()
-    #url = models.TextField()
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
@@ -168,11 +167,11 @@ class LayerData(models.Model):
     class Meta:
         managed = False
         db_table = 'layer_data'
-        verbose_name = 'Layer Data'
-        verbose_name_plural = 'Layer Data'
+        verbose_name = 'Annotation Data'
+        verbose_name_plural = 'Annotation Data'
 
     def __str__(self):
-        return u'{}'.format(self.layer)
+        return u'{} {}'.format(self.prep, self.layer)
 
 
 

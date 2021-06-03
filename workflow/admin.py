@@ -154,7 +154,7 @@ class TaskViewAdmin(admin.ModelAdmin):
         id_list = []
         for i, lookup in enumerate(lookups):
             id_list.append(i)
-            lookup_list.append(lookup.description)
+            lookup_list.append(lookup.action)
         limit = len(lookup_list)
         colors = [x*19 for x in range(len(x))]
         marker={'color': colors, 'colorscale': 'Viridis'}
