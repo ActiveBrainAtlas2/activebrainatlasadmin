@@ -1,5 +1,5 @@
 import json
-from neuroglancer.atlas import align_atlas, brain_to_atlas_transform
+from neuroglancer.atlas import align_atlas
 from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
@@ -12,9 +12,9 @@ import string
 import random
 
 
-from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, UrlSerializer, CenterOfMassSerializer, \
+from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import CenterOfMass, InputType, UrlModel, LayerData
+from neuroglancer.models import InputType, UrlModel, LayerData
 
 import logging
 logging.basicConfig()
@@ -28,6 +28,15 @@ def load_layers(request):
     return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
 
 
+
+class LayerDataViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows centers of mass to be viewed or edited.
+    """
+    queryset = LayerData.objects.order_by('prep_id').all()
+    serializer_class = LayerData
+    permission_classes = [permissions.AllowAny]
+
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -35,17 +44,6 @@ class UrlViewSet(viewsets.ModelViewSet):
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
-    # lookup_field = "id"
-
-
-class CenterOfMassViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows centers of mass to be viewed or edited.
-    """
-    queryset = CenterOfMass.objects.order_by('prep_id').all()
-    serializer_class = CenterOfMassSerializer
-    permission_classes = [permissions.AllowAny]
-    # lookup_field = "id"
 
 
 class AlignAtlasView(views.APIView):
@@ -66,9 +64,6 @@ class AlignAtlasView(views.APIView):
         data['translation'] = tl
 
         return JsonResponse(data)
-
-# from url initial page
-
 
 def public_list(request):
     """
@@ -94,15 +89,8 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-
-
+"""
 class Com(views.APIView):
-    """
-    Fetch UrlModel and return parsed annotation layer.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DK52/manual
-    Where DK52 is the primary key of the model and 'manual' is the input type.
-    """
-
     def get(self, request, prep_id, input_type, format=None):
         
 
@@ -131,27 +119,35 @@ class Com(views.APIView):
             points.append(point_dict)
 
         return JsonResponse(points, safe=False)
-
+"""
 
 class Annotation(views.APIView):
     """
-    Fetch UrlModel and return parsed annotation layer.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/164/COM
-    Where 164 is the primary key of the model and 'COM' is the layer name
+    Fetch LayerData model and return parsed annotation layer.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DKXX/premotor/2
+    Where:
+         DKXX is the animal,
+         premotor is the layer name,
+         2 is the input type ID
     """
 
-    def get(self, request, url_id, layer, format=None):
+    def get(self, request, prep_id, layer, input_type_id, format=None):
         points = []
         try:
-            layers = LayerData.objects.filter(url_id=url_id).filter(layer=layer).filter(active=True).all()
+            layers = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer)\
+                .filter(input_type_id=input_type_id).filter(active=True).all()
         except LayerData.DoesNotExist:
             raise Http404
 
-        for layer in layers:
+        for annotation in layers:
             point_dict = {}
-            point_dict['point'] = [layer.x, layer.y, layer.section]
+            point_dict['point'] = [annotation.x, annotation.y, annotation.section]
             point_dict['type'] = "point"
             point_dict['id'] = random_string()
+            if 'COM' in layer:
+                point_dict['description'] = annotation.structure.abbreviation
+            else:
+                point_dict['description'] = ""
             points.append(point_dict)
 
         serializer = AnnotationSerializer(points, many=True)
@@ -166,41 +162,24 @@ class Annotations(views.APIView):
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """
 
-    def get_centers(self, layer_keys):
-        coms = CenterOfMass.objects.order_by('prep_id', 'person_id', 'input_type')\
-            .filter(active=True)\
-            .filter(transformation__active=True)\
-            .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
-
-        for com in coms:
-            layer_keys.append(
-                {"id": com['prep_id'],
-                 "description": f"{com['prep_id']} COM {com['person__username']}",
-                 "layer_name": com['input_type__input_type']})
-
-        return layer_keys
-
     def get(self, request, format=None):
         """
-        This will get the layer_data and also the COMs that have a transformation
+        This will get the layer_data
         """
         data = []
-        layers = LayerData.objects.order_by('prep_id', 'layer')\
+        layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
             .filter(active=True)\
-            .values('url_id', 'prep_id', 'layer').distinct()
+            .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
         for layer in layers:
             data.append({
-                "id":layer['url_id'],
-                "description":layer['prep_id'],
-                "layer_name":layer['layer']
+                "prep_id":layer['prep_id'],
+                "layer":layer['layer'],
+                "input_type":layer['input_type__input_type'],
+                "input_type_id":layer['input_type_id'],                
                 })
-        points = self.get_centers(data)
 
-        serializer = AnnotationsSerializer(points, many=True)
+        serializer = AnnotationsSerializer(data, many=True)
         return Response(serializer.data)
-
-
-        #return JsonResponse(all_layers, safe=False)
 
 
 class Rotation(views.APIView):
@@ -214,11 +193,6 @@ class Rotation(views.APIView):
     def get(self, request, prep_id, input_type, person_id, format=None):
 
         input_type_id = get_input_type_id(input_type)
-
-        #serializer = RotationSerializer(
-        #    data={'prep_id': prep_id, 'input_type_id': input_type_id, 'person_id':person_id})
-        #serializer.is_valid(self)
-
         data = {}
         # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id, input_type_id=input_type_id, person_id=person_id)
@@ -235,34 +209,29 @@ class Rotations(views.APIView):
     """
 
     def get(self, request, format=None):
-        rotations = []
-        coms = CenterOfMass.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+        data = []
+        coms = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+            .filter(layer='COM')\
             .filter(active=True).filter(input_type__input_type__in=['detected', 'manual','corrected'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
-        #serializer = RotationSerializer(queryset, many=True)
-        #return Response(serializer.data)
         for com in coms:
-            rotations.append({
+            data.append({
                 "prep_id":com['prep_id'],
                 "input_type":com['input_type__input_type'],
                 "person_id":com['person_id'],
                 "username":com['person__username'],
                 })
         
-        
-        return JsonResponse(rotations, safe=False)
+        serializer = RotationSerializer(data, many=True)
+        return Response(serializer.data)
 
-
+"""
 class CenterOfMassList(views.APIView):
-    """
-    List all COM. No creation at this time.
-    """
-
     def get(self, request, format=None):
         coms = CenterOfMass.objects.filter(active=True).order_by('prep_id')
         serializer = CenterOfMassSerializer(coms, many=True)
         return Response(serializer.data)
-
+"""
 
 def get_input_type_id(input_type):
     input_type_id = 0

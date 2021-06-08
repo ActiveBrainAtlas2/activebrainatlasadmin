@@ -1,4 +1,3 @@
-from neuroglancer.models import CenterOfMass
 from django.shortcuts import render
 from brain.models import Animal, Section
 from brain.forms import AnimalForm

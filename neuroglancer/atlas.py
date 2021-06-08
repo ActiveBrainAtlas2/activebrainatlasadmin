@@ -2,7 +2,7 @@ import json
 import numpy as np
 from django.contrib.auth.models import User
 
-from neuroglancer.models import Structure, CenterOfMass, Transformation, \
+from neuroglancer.models import Structure, LayerData, Transformation, \
     ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
@@ -169,7 +169,9 @@ def get_atlas_centers(
     return atlas_centers
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
-    rows = CenterOfMass.objects.filter(prep__prep_id=prep_id).filter(active=True).order_by('structure', 'updated')
+    rows = LayerData.objects.filter(prep__prep_id=prep_id)\
+        .filter(active=True).filter(layer='COM')\
+            .order_by('structure', 'updated')
     if input_type_id > 0:
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
@@ -219,10 +221,11 @@ def update_center_of_mass(urlModel):
             if 'annotations' in layer:
                 lname = str(layer['name']).upper().strip()
                 if lname == 'COM':
-                    CenterOfMass.objects.filter(person=person)\
+                    LayerData.objects.filter(person=person)\
                         .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True)\
+                        .filter(layer='COM')\
                         .update(active=False)
                     
                     transformations = Transformation.objects.filter(person=person)\
@@ -254,9 +257,10 @@ def update_center_of_mass(urlModel):
                             # Create the manual COM
                             if structure is not None and prep is not None and person is not None:
                                 try:
-                                    CenterOfMass.objects.create(
+                                    LayerData.objects.create(
                                         prep=prep, structure=structure,
                                         transformation = transformation,
+                                        layer = 'COM',
                                         active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=int(z))
                                 except:

@@ -14,9 +14,11 @@ class LayerForm(forms.ModelForm):
                             widget=forms.Select(attrs={'onchange': 'layerdata_form.submit();', 'class': 'form-control'}))
     class Meta:
         model = UrlModel
-        exclude = ['prep','url','x', 'y', 'section', 'active']
+        exclude = ['prep','structure','person','url','transformation','input_type',
+            'x', 'y', 'section', 'active']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['layer'].queryset = LayerData.objects.all()
+        #self.fields['layer'].queryset = LayerData.objects.all()
+        self.fields['layer'].options = {'one':1, 'two':2}
     

@@ -5,7 +5,7 @@ from rest_framework.exceptions import APIException
 import logging
 
 from brain.models import Animal
-from neuroglancer.models import CenterOfMass, LayerData, Structure, UrlModel
+from neuroglancer.models import LayerData, Structure, UrlModel
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -27,14 +27,16 @@ class AnnotationSerializer(serializers.Serializer):
     id = serializers.CharField()
     point = serializers.ListField()
     type = serializers.CharField()
+    description = serializers.CharField()
 
 class AnnotationsSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
-    id = serializers.CharField()
-    description = serializers.CharField()
-    layer_name = serializers.CharField()
+    prep_id = serializers.CharField()
+    layer = serializers.CharField()
+    input_type = serializers.CharField()
+    input_type_id = serializers.IntegerField()
 
 class StructureSerializer(serializers.ModelSerializer):
 
@@ -54,12 +56,12 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
     structure_id = serializers.CharField()
 
     class Meta:
-        model = CenterOfMass
+        model = LayerData
         fields = '__all__'
 
     def create(self, validated_data):
         logger.debug('Creating COM')
-        com = CenterOfMass(
+        com = LayerData(
             x=validated_data['x'],
             y=validated_data['y'],
             section=validated_data['section'],
@@ -90,14 +92,14 @@ class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
     class Meta:
-        model = CenterOfMass
+        model = LayerData
         fields = ['prep_id', 'input_type_id', 'person_id', 'username']
 
 class RotationSerializer(serializers.Serializer):
     prep_id = serializers.CharField()
-    input_type__input_type = serializers.CharField()
+    input_type = serializers.CharField()
     person_id = serializers.IntegerField()
-    person__username = serializers.CharField()
+    username = serializers.CharField()
 
 
 

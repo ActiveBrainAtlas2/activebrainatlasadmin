@@ -82,17 +82,13 @@ class TestUrlModel(TransactionTestCase):
             request = response.wsgi_request
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_com_url(self):
-            response = self.client.get("/center")
-            request = response.wsgi_request
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotations_url(self):
             response = self.client.get("/rotations")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_annotations_url(self):
-            response = self.client.get("/rotations")
+            response = self.client.get("/annotations")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotation_url(self):
@@ -100,5 +96,13 @@ class TestUrlModel(TransactionTestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_annotation_url(self):
-            response = self.client.get("/annotation/182/premotor")
+            response = self.client.get("/annotation/DK39/premotor/1")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_annotation_Atlas_url(self):
+            response = self.client.get("/annotation/Atlas/COM/1")
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_annotation_atlas_url(self):
+            response = self.client.get("/annotation/atlas/COM/1")
             self.assertEqual(response.status_code, status.HTTP_200_OK)

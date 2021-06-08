@@ -92,6 +92,19 @@ class UrlModel(models.Model):
 
         return result
 
+    @property
+    def layers(self):
+        layer_list = []
+        if self.url is not None:
+            json_txt = self.url
+            layers = json_txt['layers']
+            for layer in layers:
+                if 'annotations' in layer:
+                    layer_name = layer['name']
+                    layer_list.append(layer_name)
+
+        return layer_list
+
     class Meta:
         managed = False
         verbose_name = "Url"
@@ -151,29 +164,6 @@ class Structure(AtlasModel):
         return f'{self.description} {self.abbreviation}'
 
 
-class LayerData(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
-                               verbose_name="Url")
-    layer = models.CharField(max_length=255)
-    x = models.FloatField()
-    y = models.FloatField()
-    section = models.FloatField()
-    active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
-
-    class Meta:
-        managed = False
-        db_table = 'layer_data'
-        verbose_name = 'Annotation Data'
-        verbose_name_plural = 'Annotation Data'
-
-    def __str__(self):
-        return u'{} {}'.format(self.prep, self.layer)
-
-
 
 class InputType(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -213,11 +203,8 @@ class Transformation(models.Model):
         return u'{} {}'.format(self.prep.prep_id, self.com_name)
 
 
+"""
 class CenterOfMass(models.Model):
-    """
-    I set both structure and prep to be nullable. This is just to make it easier
-    for the serializers. The database will ensure they are not null.
-    """
     id = models.BigAutoField(primary_key=True)
     structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
                                verbose_name="Structure")
@@ -246,4 +233,35 @@ class CenterOfMass(models.Model):
 
     def __str__(self):
         return u'{}'.format(self.structure.abbreviation)
+"""
 
+class LayerData(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
+                               verbose_name="Url")
+    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
+    
+    structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
+                               verbose_name="Structure")
+    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
+                               verbose_name="User", blank=False, null=False)
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
+                               verbose_name="Input", blank=False, null=False)
+    transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
+                               verbose_name="Transformation", blank=True, null=True)    
+    layer = models.CharField(max_length=255)
+    x = models.FloatField()
+    y = models.FloatField()
+    section = models.FloatField()
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'Annotation Data'
+        verbose_name_plural = 'Annotation Data'
+
+    def __str__(self):
+        return u'{} {}'.format(self.prep, self.layer)
