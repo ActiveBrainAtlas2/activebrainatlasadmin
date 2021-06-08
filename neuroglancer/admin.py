@@ -17,7 +17,7 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from neuroglancer.models import InputType, LayerData, UrlModel, Structure, Points, CenterOfMass, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
+from neuroglancer.models import InputType, LayerData, UrlModel, Structure, Points, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
@@ -46,32 +46,22 @@ class UrlModelAdmin(admin.ModelAdmin):
 
             # Convert the data to sorted, indented JSON
             response = json.dumps(instance.url, sort_keys=True, indent=2)
-
             # Truncate the data. Alter as needed
             #response = response[:5000]
-
             # Get the Pygments formatter
             formatter = HtmlFormatter(style='colorful')
-
             # Highlight the data
             response = highlight(response, JsonLexer(), formatter)
-
             # Get the stylesheet
             style = "<style>" + formatter.get_style_defs() + "</style><br>"
-
             # Safe the output
             return mark_safe(style + response)
 
     pretty_url.short_description = 'Formatted URL'    
 
 
-    def open_oldneuroglancer(self, obj):
-        host = "https://activebrainatlas.ucsd.edu/ng/"
-        return format_html('<a target="_blank" href="{}?id={}&amp;#!{}">Long URL</a>',
-                           host, obj.id, escape(obj.url))
-
     def open_neuroglancer(self, obj):
-        host = "https://activebrainatlas.ucsd.edu/ng_multi"
+        host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
@@ -89,8 +79,6 @@ class UrlModelAdmin(admin.ModelAdmin):
         return format_html(links)
 
 
-    open_oldneuroglancer.short_description = 'Long URL'
-    open_oldneuroglancer.allow_tags = True
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
     open_multiuser.short_description = 'Multi-User'
@@ -98,7 +86,7 @@ class UrlModelAdmin(admin.ModelAdmin):
  
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'comments', 'person','show_points', 'created_display', 'updated')
+    list_display = ('animal', 'comments', 'person','show_points', 'updated')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
@@ -185,7 +173,8 @@ class PointsAdmin(admin.ModelAdmin):
             self.admin_site.each_context(request),
             title=urlModel.comments,
             chart=result,
-            display=display
+            display=display,
+            opts=UrlModel._meta,
         )
         return TemplateResponse(request, "points_table.html", context)
 
@@ -248,6 +237,7 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
+"""
 @admin.register(CenterOfMass)
 class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'person', 'input_type')
@@ -276,7 +266,7 @@ class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
-
+"""
 
 @admin.register(Transformation)
 class TransformationAdmin(AtlasAdminModel):
@@ -291,13 +281,13 @@ class TransformationAdmin(AtlasAdminModel):
             kwargs["queryset"] = Animal.objects.filter(centerofmass__active=True).distinct().order_by()
         if db_field.name == "person":
             UserModel = get_user_model()
-            com_users = CenterOfMass.objects.values_list('person', flat=True).distinct().order_by()
+            com_users = LayerData.objects.values_list('person', flat=True).distinct().order_by()
             kwargs["queryset"] = UserModel.objects.filter(id__in=com_users)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def com_count(self, obj):
-        count = CenterOfMass.objects.filter(prep_id=obj.prep_id)\
-            .filter(input_type=obj.input_type)\
+        count = LayerData.objects.filter(prep_id=obj.prep_id)\
+            .filter(input_type=obj.input_type).filter(layer='COM')\
             .filter(person_id=obj.person_id).filter(active=True).count()
         return count
 
@@ -305,16 +295,16 @@ class TransformationAdmin(AtlasAdminModel):
 
     def save_model(self, request, obj, form, change):
         obj.user = request.user
-        count = CenterOfMass.objects.filter(prep=obj.prep)\
-            .filter(input_type=obj.input_type)\
+        count = LayerData.objects.filter(prep=obj.prep)\
+            .filter(input_type=obj.input_type).filter(layer='COM')\
             .filter(person=obj.person).filter(active=True).count()        
         if count < 1:
             messages.add_message(request, messages.WARNING, f'There no COMs associated with that animal/user/input type combination. Please correct it.')
             return
         else:
             super().save_model(request, obj, form, change)
-            CenterOfMass.objects.filter(prep=obj.prep)\
-                .filter(input_type=obj.input_type)\
+            LayerData.objects.filter(prep=obj.prep)\
+                .filter(input_type=obj.input_type).filter(layer='COM')\
                 .filter(person=obj.person).filter(active=True).update(transformation=obj)
 
 @admin.register(InputType)
@@ -327,11 +317,11 @@ class InputTypeAdmin(AtlasAdminModel):
 
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
-    list_display = ('url', 'prep', 'layer','created')
+    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'input_type')
     ordering = ['prep', 'layer']
     excluded_fields = ['created', 'updated', 'layer']
-    list_filter = ['created', 'active']
-    search_fields = ['url__comments', 'prep__prep_id', 'layer']
+    list_filter = ['created', 'active','input_type']
+    search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer']
     change_form_template = "add_annotation.html"
     form = LayerForm
 
@@ -340,3 +330,22 @@ class LayerDataAdmin(AtlasAdminModel):
         obj.person = request.user
         super().save_model(request, obj, form, change)
 
+    def x_f(self, obj):
+        number = int(obj.x)
+        #if 'atlas' in str(obj.prep_id).lower():
+        #    number = atlas_scale_xy(obj.x)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+    def y_f(self, obj):
+        number = int(obj.y)
+        #if 'atlas' in str(obj.prep_id).lower():
+        #    number = atlas_scale_xy(obj.y)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+    def z_f(self, obj):
+        number = int(obj.section)
+        #if 'atlas' in str(obj.prep_id).lower():
+        #    number = atlas_scale_section(obj.section)
+        return format_html(f"<div style='text-align:right;'>{number}</div>")
+
+    x_f.short_description = "X"
+    y_f.short_description = "Y"
+    z_f.short_description = "Z"
