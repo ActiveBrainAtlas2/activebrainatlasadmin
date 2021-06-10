@@ -41,8 +41,9 @@ inner join auth_user AU on AUG.user_id = AU.id;`
 1. Enter the cvat container `docker exec -u 0 -it cvat bash` and:
     1. apt-get update
     1. apt install libmysqlclient-dev vim
-    1. pip3 install -U pip
-    1. pip3 install django-mysql mysqlclient
+    1. pip install -U pip
+    1. apt install build-essential
+    1. pip install django-mysql mysqlclient
     1. edit supervisor.conf and change postgres port to mysql and remove migrate
         1. change 5432 to 3306
         1. remove the migration at line 62
@@ -60,13 +61,13 @@ DATABASES = {
     }
 }
 `
-    1. remove migrations:
-    `find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-    find . -path "*/migrations/*.pyc"  -delete`
-    1. test with `python3 manage.py check`
+1. remove migrations:
+`find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc"  -delete`
+1. test with `python3 manage.py check`
 1. exit cvat container 
-1. get container ID with `docker ps`
-1. commit `docker commit container_id cvat_myqsl:latest`
+1. get container ID of cvat with `docker ps`
+1. commit `docker commit container_id cvat_mysql:latest`
 1. edit docker.compose.yml and remove cvat_db service and all references to it.
 1. change container_name and image_name from cvat to cvat_mysql
 1. changes references of CVAT_POSTGRES_HOST to point to db.dk.ucsd.edu

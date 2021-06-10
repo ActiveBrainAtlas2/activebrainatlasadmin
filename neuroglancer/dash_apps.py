@@ -1,15 +1,10 @@
-'''Dash demonstration application
-
-TODO attribution here
+'''Dash charts for Django
 '''
-
-import json
 
 import dash_core_components as dcc
 import plotly.graph_objs as go
 from django_plotly_dash import DjangoDash
 import pandas as pd
-import dash_table
 from dash.dependencies import Input, Output
 import dash_html_components as html
 

@@ -5,9 +5,7 @@ This program allows the user to view annotations per section, make selections
 and place those selected annotations into an editable and exportable datatable, (spreadsheet)
 Make sure this app is imported into the admin.py app
 """
-import json
 
-import os
 import dash_core_components as dcc
 import plotly.graph_objs as go
 from django_plotly_dash import DjangoDash
