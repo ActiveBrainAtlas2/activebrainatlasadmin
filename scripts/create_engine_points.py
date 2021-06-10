@@ -14,7 +14,7 @@ from neuroglancer.models import LayerData
 STRUCTURE_ID = 52
 
 
-def create_layer(animal, layer, id, start):
+def create_layer(animal, layer, id, start, debug):
 
     with connection.cursor() as cursor:
         sql = """select el.frame, el.points 
@@ -36,11 +36,13 @@ def create_layer(animal, layer, id, start):
             y = float(y)
             x *= 32
             y *= 32
-            print(count, section, x, y)
-            count += 1
-            LayerData.objects.create(prep_id=animal, structure_id = STRUCTURE_ID, person_id=1,
-                                            layer=layer, input_type_id = 1,
-                                            x=x,y=y,section=section)    
+            if debug:
+                print(count, section, x, y)
+                count += 1
+            else:
+                LayerData.objects.create(prep_id=animal, structure_id = STRUCTURE_ID, person_id=1,
+                                                layer=layer, input_type_id = 1,
+                                                x=x,y=y,section=section)    
     
 
 
@@ -59,7 +61,7 @@ if __name__ == '__main__':
     id = int(args.id)
     start = int(args.start)
     debug = bool({'true': True, 'false': False}[str(args.debug).lower()])
-    create_layer(animal, layer, id, start)
+    create_layer(animal, layer, id, start, debug)
 
 
 

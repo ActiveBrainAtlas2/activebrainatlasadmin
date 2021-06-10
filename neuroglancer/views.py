@@ -1,4 +1,3 @@
-import json
 from neuroglancer.atlas import align_atlas
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -19,15 +18,6 @@ from neuroglancer.models import InputType, UrlModel, LayerData
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-
-def load_layers(request):
-    url_id = request.GET.get('id')
-    urlModel = UrlModel.objects.get(pk=url_id).all()
-    layers = ['one', 'two', 'three']
-    return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
-
-
 
 class LayerDataViewSet(viewsets.ModelViewSet):
     """
@@ -64,16 +54,6 @@ class AlignAtlasView(views.APIView):
         data['translation'] = tl
 
         return JsonResponse(data)
-
-def public_list(request):
-    """
-    Shows a listing of urls made available to the public
-    :param request:
-    :return:
-    """
-    urls = UrlModel.objects.filter(public=True).order_by('comments')
-    return render(request, 'public.html', {'urls': urls})
-
 # from urldata request, take the ID of the URL model and return all data in escaped format
 
 
@@ -89,37 +69,6 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-"""
-class Com(views.APIView):
-    def get(self, request, prep_id, input_type, format=None):
-        
-
-        points = []
-        
-        try:
-            coms = CenterOfMass.objects.filter(prep_id=prep_id)\
-                .filter(transformation__active=True)\
-                .filter(input_type__input_type=input_type)\
-                .order_by('prep_id').all()
-        except CenterOfMass.DoesNotExist:
-            raise Http404
-
-        input_type_id = get_input_type_id(input_type)
-
-        R, t = align_atlas(prep_id, input_type_id=input_type_id)
-
-        for com in coms:
-            point_dict = {}
-            coords = (com.x, com.y, com.section)
-            x,y,z = brain_to_atlas_transform(coords, R, t) 
-            point_dict['point'] = [x, y, z]
-            point_dict['type'] = "point"
-            point_dict['id'] = random_string()
-            point_dict['description'] = com.structure.abbreviation
-            points.append(point_dict)
-
-        return JsonResponse(points, safe=False)
-"""
 
 class Annotation(views.APIView):
     """
@@ -131,21 +80,22 @@ class Annotation(views.APIView):
          2 is the input type ID
     """
 
-    def get(self, request, prep_id, layer, input_type_id, format=None):
+    def get(self, request, prep_id, layer_name, input_type_id, format=None):
         points = []
         try:
-            layers = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer)\
+            layers = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer_name)\
                 .filter(input_type_id=input_type_id).filter(active=True).all()
         except LayerData.DoesNotExist:
             raise Http404
 
-        for annotation in layers:
+
+        for layer in layers:
             point_dict = {}
-            point_dict['point'] = [annotation.x, annotation.y, annotation.section]
-            point_dict['type'] = "point"
+            point_dict['point'] = [layer.x, layer.y, layer.section]
+            point_dict['type'] = layer.annotation_type
             point_dict['id'] = random_string()
-            if 'COM' in layer:
-                point_dict['description'] = annotation.structure.abbreviation
+            if 'COM' in layer_name:
+                point_dict['description'] = layer.structure.abbreviation
             else:
                 point_dict['description'] = ""
             points.append(point_dict)
@@ -225,13 +175,6 @@ class Rotations(views.APIView):
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
 
-"""
-class CenterOfMassList(views.APIView):
-    def get(self, request, format=None):
-        coms = CenterOfMass.objects.filter(active=True).order_by('prep_id')
-        serializer = CenterOfMassSerializer(coms, many=True)
-        return Response(serializer.data)
-"""
 
 def get_input_type_id(input_type):
     input_type_id = 0
@@ -249,3 +192,20 @@ def get_input_type_id(input_type):
 def random_string():
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
         
+def load_layers(request):
+    layers = []
+    url_id = request.GET.get('id')
+    urlModel = UrlModel.objects.get(pk=url_id).all()
+    if urlModel.layers is not None:
+        layers = urlModel.layers
+    return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
+
+def public_list(request):
+    """
+    Shows a listing of urls made available to the public
+    :param request:
+    :return:
+    """
+    urls = UrlModel.objects.filter(public=True).order_by('comments')
+    return render(request, 'public.html', {'urls': urls})
+

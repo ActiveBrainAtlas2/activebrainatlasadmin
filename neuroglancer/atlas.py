@@ -1,4 +1,3 @@
-import json
 import numpy as np
 from django.contrib.auth.models import User
 
@@ -239,7 +238,6 @@ def update_center_of_mass(urlModel):
                         transformation = None
                     
                     annotation = layer['annotations']
-                    aligned_coms = []
                     for com in annotation:
                         x = com['point'][0]
                         y = com['point'][1]

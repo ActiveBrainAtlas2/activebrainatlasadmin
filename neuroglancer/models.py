@@ -4,8 +4,8 @@ from django.utils.html import escape
 import re
 import json
 import pandas as pd
+from enum import Enum
 from django.template.defaultfilters import truncatechars
-from django_mysql.models import EnumField
 
 from brain.models import AtlasModel, Animal
 
@@ -17,6 +17,20 @@ ATLAS_X_BOX_SCALE = 10
 ATLAS_Y_BOX_SCALE = 10
 ATLAS_Z_BOX_SCALE = 20
 ATLAS_RAW_SCALE = 10
+
+
+class AnnotationChoice(str, Enum):
+    POINT = 'point'
+    LINE = 'line'
+
+    @classmethod
+    def choices(cls):
+        return tuple((x.value, x.name) for x in cls)
+
+    def __str__(self):
+        return self.value
+
+
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -163,8 +177,6 @@ class Structure(AtlasModel):
     def __str__(self):
         return f'{self.description} {self.abbreviation}'
 
-
-
 class InputType(models.Model):
     id = models.BigAutoField(primary_key=True)
     input_type = models.CharField(max_length=50, blank=False, null=False, verbose_name='Input')
@@ -203,38 +215,6 @@ class Transformation(models.Model):
         return u'{} {}'.format(self.prep.prep_id, self.com_name)
 
 
-"""
-class CenterOfMass(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
-                               verbose_name="Structure")
-    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
-                               verbose_name="User", blank=False, null=False)
-    transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
-                               verbose_name="Transformation", blank=True, null=True)
-    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
-                               verbose_name="Input", blank=False, null=False)
-
-    x = models.FloatField()
-    y = models.FloatField()
-    section = models.FloatField()
-
-    active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
-
-    class Meta:
-        managed = False
-        db_table = 'center_of_mass'
-        verbose_name = 'Center Of Mass'
-        verbose_name_plural = 'Center of Mass'
-        #constraints = [models.UniqueConstraint(fields=['prep', 'structure', 'active', 'person', 'input_type'], name='unique COM')]
-
-    def __str__(self):
-        return u'{}'.format(self.structure.abbreviation)
-"""
-
 class LayerData(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
@@ -249,6 +229,7 @@ class LayerData(models.Model):
                                verbose_name="Input", blank=False, null=False)
     transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
                                verbose_name="Transformation", blank=True, null=True)    
+    annotation_type = models.CharField(max_length=25, choices=AnnotationChoice.choices(), default=AnnotationChoice.POINT)
     layer = models.CharField(max_length=255)
     x = models.FloatField()
     y = models.FloatField()

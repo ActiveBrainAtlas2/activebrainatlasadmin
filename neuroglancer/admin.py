@@ -1,4 +1,3 @@
-from django.forms.models import BaseModelForm
 from brain.models import Animal
 import json
 from django.conf import settings
@@ -66,7 +65,7 @@ class UrlModelAdmin(admin.ModelAdmin):
             host = "http://127.0.0.1:8080"
 
         comments = escape(obj.comments)
-        links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=0">{comments}</a>'
+        links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
         return format_html(links)
 
     def open_multiuser(self, obj):
@@ -237,36 +236,6 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-"""
-@admin.register(CenterOfMass)
-class CenterOfMassAdmin(admin.ModelAdmin, ExportCsvMixin):
-    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'person', 'input_type')
-    ordering = ['prep_id', 'structure']
-    readonly_fields = ['created']
-    list_filter = ['created', 'active', 'input_type']
-    search_fields = ('prep__prep_id',)
-    actions = [make_inactive, make_active,  "export_as_csv"]
-
-    def x_f(self, obj):
-        number = int(obj.x)
-        if 'atlas' in str(obj.prep_id).lower():
-            number = atlas_scale_xy(obj.x)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
-    def y_f(self, obj):
-        number = int(obj.y)
-        if 'atlas' in str(obj.prep_id).lower():
-            number = atlas_scale_xy(obj.y)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
-    def z_f(self, obj):
-        number = int(obj.section)
-        if 'atlas' in str(obj.prep_id).lower():
-            number = atlas_scale_section(obj.section)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
-
-    x_f.short_description = "X"
-    y_f.short_description = "Y"
-    z_f.short_description = "Z"
-"""
 
 @admin.register(Transformation)
 class TransformationAdmin(AtlasAdminModel):
@@ -278,7 +247,7 @@ class TransformationAdmin(AtlasAdminModel):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "prep":
-            kwargs["queryset"] = Animal.objects.filter(centerofmass__active=True).distinct().order_by()
+            kwargs["queryset"] = Animal.objects.filter(layerdata__active=True).distinct().order_by()
         if db_field.name == "person":
             UserModel = get_user_model()
             com_users = LayerData.objects.values_list('person', flat=True).distinct().order_by()
@@ -299,7 +268,7 @@ class TransformationAdmin(AtlasAdminModel):
             .filter(input_type=obj.input_type).filter(layer='COM')\
             .filter(person=obj.person).filter(active=True).count()        
         if count < 1:
-            messages.add_message(request, messages.WARNING, f'There no COMs associated with that animal/user/input type combination. Please correct it.')
+            messages.add_message(request, messages.WARNING, 'There no COMs associated with that animal/user/input type combination. Please correct it.')
             return
         else:
             super().save_model(request, obj, form, change)
