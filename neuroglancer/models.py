@@ -234,6 +234,7 @@ class LayerData(models.Model):
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
+    segment_id = models.IntegerField()
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
