@@ -118,6 +118,11 @@ class Annotation(views.APIView):
 
         return Response(serializer.data)
 
+    def create_polygon_dictionary(rows):
+        pass
+
+
+
 """
 json for line:
 {
