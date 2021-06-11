@@ -11,7 +11,7 @@ import string
 import random
 
 
-from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, RotationSerializer, UrlSerializer,  \
+from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
 from neuroglancer.models import InputType, UrlModel, LayerData
 
@@ -83,25 +83,71 @@ class Annotation(views.APIView):
     def get(self, request, prep_id, layer_name, input_type_id, format=None):
         points = []
         try:
-            layers = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer_name)\
-                .filter(input_type_id=input_type_id).filter(active=True).all()
+            rows = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer_name)\
+                .filter(input_type_id=input_type_id).filter(active=True).filter(segment_id=64689).order_by('section','id').all()
         except LayerData.DoesNotExist:
             raise Http404
 
-
-        for layer in layers:
-            point_dict = {}
-            point_dict['point'] = [layer.x, layer.y, layer.section]
-            point_dict['type'] = layer.annotation_type
-            point_dict['id'] = random_string()
-            if 'COM' in layer_name:
-                point_dict['description'] = layer.structure.abbreviation
-            else:
+        if input_type_id != 5:
+            for row  in rows:
+                point_dict = {}
+                point_dict['id'] = random_string()
+                point_dict['point'] = [row.x, row.y, row.section]
+                point_dict['type'] = row.annotation_type
+                            
+                if 'COM' in layer_name:
+                    point_dict['description'] = row.structure.abbreviation
+                else:
+                    point_dict['description'] = ""
+                points.append(point_dict)
+            serializer = AnnotationSerializer(points, many=True)
+        else:
+            lrows = len(rows) // 2
+            for i in range(lrows):
+                point_dict = {}
+                pointA = rows[i]
+                pointB = rows[i+1]
+                point_dict['id'] = random_string()
+                point_dict['pointA'] = [pointA.x, pointA.y, pointA.section]
+                point_dict['pointB'] = [pointB.x, pointB.y, pointB.section]
+                point_dict['type'] = 'line'
                 point_dict['description'] = ""
-            points.append(point_dict)
+                points.append(point_dict)
+            serializer = LineSerializer(points, many=True)
 
-        serializer = AnnotationSerializer(points, many=True)
+
         return Response(serializer.data)
+
+"""
+json for line:
+{
+          "id": "6ce1a6e0b25292ed7d95abc19e29beaf61471718",
+          "pointA": [
+            23453.7265625,
+            6428.55322265625,
+            236.49998474121094
+          ],
+          "pointB": [
+            25050.107421875,
+            11495.3271484375,
+            236.49998474121094
+          ],
+          "type": "line"
+        },
+json for point
+{
+          "id": "c6f81a41abdcf7d6b419a3353b982abc03e0a37e",
+          "point": [
+            47751.0859375,
+            21584.93359375,
+            276.5000305175781
+          ],
+          "type": "point"
+        }
+ """       
+
+
+
 
 
 class Annotations(views.APIView):

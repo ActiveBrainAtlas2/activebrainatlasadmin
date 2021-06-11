@@ -17,7 +17,7 @@ STRUCTURE_ID = 52
 def create_layer(animal, layer, id, start, debug):
 
     with connection.cursor() as cursor:
-        sql = """select el.frame, el.points 
+        sql = """select el.id, el.frame, el.points 
                 from engine_labeledshape el  
                 inner join engine_label elab on el.label_id = elab.id
                 where elab.task_id = %s 
@@ -25,11 +25,14 @@ def create_layer(animal, layer, id, start, debug):
         cursor.execute(sql, [id])
         rows = cursor.fetchall()
     count = 1
+    point_type = ['pointA', 'pointB']
     for row in rows:
-        section = row[0] + start
-        points = row[1]
+        id = row[0]
+        section = row[1] + start
+        points = row[2]
         s = points.split(',')
         points = map(','.join, zip(s[::2], s[1::2]))
+        p = 0
         for point in points:
             x,y = point.split(',')
             x = float(x)
@@ -37,11 +40,14 @@ def create_layer(animal, layer, id, start, debug):
             x *= 32
             y *= 32
             if debug:
-                print(count, section, x, y)
+                print(count, id, animal, STRUCTURE_ID, 1, layer, 1, x,y,section, point_type[p])
                 count += 1
+                p += 1
+                if p > 1:
+                    p = 0
             else:
-                LayerData.objects.create(prep_id=animal, structure_id = STRUCTURE_ID, person_id=1,
-                                                layer=layer, input_type_id = 1,
+                LayerData.objects.create(prep_id=animal, segment_id=id, structure_id = STRUCTURE_ID, person_id=1,
+                                                layer=layer, input_type_id = 5,
                                                 x=x,y=y,section=section)    
     
 
@@ -67,6 +73,32 @@ if __name__ == '__main__':
 
 
                 
-        
+"""
+json for line:
+{
+          "id": "6ce1a6e0b25292ed7d95abc19e29beaf61471718",
+          "pointA": [
+            23453.7265625,
+            6428.55322265625,
+            236.49998474121094
+          ],
+          "pointB": [
+            25050.107421875,
+            11495.3271484375,
+            236.49998474121094
+          ],
+          "type": "line"
+        },
+json for point
+{
+          "id": "c6f81a41abdcf7d6b419a3353b982abc03e0a37e",
+          "point": [
+            47751.0859375,
+            21584.93359375,
+            276.5000305175781
+          ],
+          "type": "point"
+        }
+ """       
 
 

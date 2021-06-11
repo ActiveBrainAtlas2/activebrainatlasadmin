@@ -29,6 +29,16 @@ class AnnotationSerializer(serializers.Serializer):
     type = serializers.CharField()
     description = serializers.CharField()
 
+class LineSerializer(serializers.Serializer):
+    """
+    This one feeds the data import
+    """
+    id = serializers.CharField()
+    pointA = serializers.ListField()
+    pointB = serializers.ListField()
+    type = serializers.CharField()
+    description = serializers.CharField()
+
 class AnnotationsSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
