@@ -17,6 +17,7 @@ ATLAS_X_BOX_SCALE = 10
 ATLAS_Y_BOX_SCALE = 10
 ATLAS_Z_BOX_SCALE = 20
 ATLAS_RAW_SCALE = 10
+ANNOTATION_ID = 52
 
 
 class AnnotationChoice(str, Enum):
@@ -87,13 +88,13 @@ class UrlModel(models.Model):
                 if 'annotations' in layer:
                     name = layer['name']
                     annotation = layer['annotations']
-                    d = [row['point'] for row in annotation]
+                    d = [row['point'] for row in annotation if 'point' in row and 'pointA' not in row]
                     df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
                     df['Section'] = df['Section'].astype(int)
                     df['Layer'] = name
                     structures = [row['description'] for row in annotation if 'description' in row]
                     if len(structures) != len(df):
-                        structures = ['' for row in annotation]
+                        structures = ['' for row in annotation if 'point' in row and 'pointA' not in row]
                     df['Description'] = structures
                     df = df[['Layer', 'Description', 'X', 'Y', 'Section']]
                     dfs.append(df)
@@ -227,14 +228,11 @@ class LayerData(models.Model):
                                verbose_name="User", blank=False, null=False)
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
                                verbose_name="Input", blank=False, null=False)
-    transformation = models.ForeignKey(Transformation, models.CASCADE, db_column="transformation_id",
-                               verbose_name="Transformation", blank=True, null=True)    
-    annotation_type = models.CharField(max_length=25, choices=AnnotationChoice.choices(), default=AnnotationChoice.POINT)
     layer = models.CharField(max_length=255)
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
-    segment_id = models.IntegerField()
+    segment_id = models.IntegerField(blank=True, null=True)
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
