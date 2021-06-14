@@ -9,11 +9,13 @@ from django.utils.html import escape
 from django.http import Http404
 import string
 import random
-
+from collections import defaultdict
+import numpy as np
+from scipy.interpolate import UnivariateSpline
 
 from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, LayerData
+from neuroglancer.models import InputType, UrlModel, LayerData, ANNOTATION_ID
 
 import logging
 logging.basicConfig()
@@ -81,10 +83,10 @@ class Annotation(views.APIView):
     """
 
     def get(self, request, prep_id, layer_name, input_type_id, format=None):
-        points = []
+        data = []
         try:
             rows = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer_name)\
-                .filter(input_type_id=input_type_id).filter(active=True).filter(segment_id=64689).order_by('section','id').all()
+                .filter(input_type_id=input_type_id).filter(active=True).order_by('section','id').all()
         except LayerData.DoesNotExist:
             raise Http404
 
@@ -93,34 +95,48 @@ class Annotation(views.APIView):
                 point_dict = {}
                 point_dict['id'] = random_string()
                 point_dict['point'] = [row.x, row.y, row.section]
-                point_dict['type'] = row.annotation_type
+                point_dict['type'] = 'point'
                             
                 if 'COM' in layer_name:
                     point_dict['description'] = row.structure.abbreviation
                 else:
                     point_dict['description'] = ""
-                points.append(point_dict)
-            serializer = AnnotationSerializer(points, many=True)
+                data.append(point_dict)
+            serializer = AnnotationSerializer(data, many=True)
         else:
-            lrows = len(rows) // 2
-            for i in range(lrows):
-                point_dict = {}
-                pointA = rows[i]
-                pointB = rows[i+1]
-                point_dict['id'] = random_string()
-                point_dict['pointA'] = [pointA.x, pointA.y, pointA.section]
-                point_dict['pointB'] = [pointB.x, pointB.y, pointB.section]
-                point_dict['type'] = 'line'
-                point_dict['description'] = ""
-                points.append(point_dict)
-            serializer = LineSerializer(points, many=True)
+            data_dict = defaultdict(list)
+            for row in rows:
+                id = row.segment_id
+                x = row.x
+                y = row.y
+                section = row.section
+                data_dict[(id,section)].append((x,y))
+
+            for (k,section), points in data_dict.items():
+                lp = len(points)
+                if lp > 3:
+                    new_len = max(lp, 100)
+                    points.append(points[0])
+                    points = interpolate(points, new_len)
+                    for i in range(new_len):
+                        tmp_dict = {}
+                        pointA = points[i]
+                        try:
+                            pointB = points[i+1]
+                        except IndexError as e:
+                            pointB = points[0]
+
+                        tmp_dict['id'] = random_string()
+                        tmp_dict['pointA'] = [pointA[0], pointA[1], section]
+                        tmp_dict['pointB'] = [pointB[0], pointB[1], section]
+                        tmp_dict['type'] = 'line'
+                        tmp_dict['description'] = ""
+                        data.append(tmp_dict)
+
+            serializer = LineSerializer(data, many=True)
 
 
         return Response(serializer.data)
-
-    def create_polygon_dictionary(rows):
-        pass
-
 
 
 """
@@ -152,9 +168,6 @@ json for point
  """       
 
 
-
-
-
 class Annotations(views.APIView):
     """
     Fetch UrlModel and return a set of two dictionaries. One is from the layer_data
@@ -169,7 +182,7 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True)\
+            .filter(active=True).filter(structure_id__gte=ANNOTATION_ID)\
             .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
         for layer in layers:
             data.append({
@@ -225,6 +238,22 @@ class Rotations(views.APIView):
         
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
+
+
+def interpolate(points, new_len):
+    x = [v[0] for v in points]
+    y = [v[1] for v in points]
+    vx = np.array(x)
+    vy = np.array(y)
+    indices = np.arange(0,len(points))
+    new_indices = np.linspace(0,len(points)-1,new_len)
+    splx = UnivariateSpline(indices,vx,k=3,s=0)
+    x_array = splx(new_indices)
+    sply = UnivariateSpline(indices,vy,k=3,s=1)
+    y_array = sply(new_indices)
+    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
+    a = list(map(tuple, arr_2d))
+    return a
 
 
 def get_input_type_id(input_type):

@@ -64,4 +64,6 @@ local_settings.py
 *migrations*
 .env
 db.sqlite3
-    
+
+### images
+*.png

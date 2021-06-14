@@ -1,0 +1,29 @@
+.profile-pic-wrapper {
+  width: 90px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.profile-pic-wrapper img {
+  position: relative;
+  width: 90px;
+  border: 1px solid #1e7e34;
+}
+
+.profile-pic-wrapper:hover img {
+  position: relative;
+  top:0px;
+  left:-300px;
+  width: 360px;
+  z-index: 1;
+}
+
+.hover_img a { position:relative; }
+.hover_img a span { position:absolute; display:none; z-index:99; }
+.hover_img a:hover span { 
+  display:block; 
+  top:0px;
+  left:-600px;
+  width: 260px;
+  z-index: 1;
+}

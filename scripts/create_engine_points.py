@@ -10,8 +10,8 @@ import django
 from django.db import connection
 django.setup()
 
-from neuroglancer.models import LayerData
-STRUCTURE_ID = 52
+from neuroglancer.models import LayerData, ANNOTATION_ID
+
 
 
 def create_layer(animal, layer, id, start, debug):
@@ -40,13 +40,13 @@ def create_layer(animal, layer, id, start, debug):
             x *= 32
             y *= 32
             if debug:
-                print(count, id, animal, STRUCTURE_ID, 1, layer, 1, x,y,section, point_type[p])
+                print(count, id, animal, ANNOTATION_ID, 1, layer, 1, x,y,section, point_type[p])
                 count += 1
                 p += 1
                 if p > 1:
                     p = 0
             else:
-                LayerData.objects.create(prep_id=animal, segment_id=id, structure_id = STRUCTURE_ID, person_id=1,
+                LayerData.objects.create(prep_id=animal, segment_id=id, structure_id = ANNOTATION_ID, person_id=1,
                                                 layer=layer, input_type_id = 5,
                                                 x=x,y=y,section=section)    
     
