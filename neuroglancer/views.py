@@ -115,9 +115,9 @@ class Annotation(views.APIView):
             for (k,section), points in data_dict.items():
                 lp = len(points)
                 if lp > 3:
-                    new_len = max(lp, 100)
-                    #points.append(points[0])
+                    new_len = max(lp, 200)
                     points = interpolate(points, new_len)
+                    points.append(points[0])
                     if len(points) < 3:
                         continue
                     for i in range(new_len):
@@ -260,9 +260,14 @@ def interpolateXXX(points, new_len):
 
 def interpolate(points, new_len):
     points = np.array(points)
+    pu = points.astype(int)
+    indexes = np.unique(pu, axis=0, return_index=True)[1]
+    points = np.array([pu[index] for index in sorted(indexes)])
+
     try:
         tck, u = splprep(points.T, u=None, s=3, per=1) 
     except:
+        print(points)
         return []
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
