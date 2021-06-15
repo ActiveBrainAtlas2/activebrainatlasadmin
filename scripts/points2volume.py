@@ -1,7 +1,7 @@
 import os, sys
 import argparse
 import numpy as np
-from collections import defaultdict
+from scipy.interpolate import UnivariateSpline,splprep, splev
 
 HOME = os.path.expanduser("~")
 PATH = os.path.join(HOME, 'programming/activebrainatlas')
@@ -13,7 +13,6 @@ from django.db import connection
 django.setup()
 
 from neuroglancer.models import LayerData, ANNOTATION_ID
-
 
 def create_volume(str_contour, structure, color):
     """
@@ -117,6 +116,21 @@ def create_volume(str_contour, structure, color):
 
 
 
+def interpolate(points, new_len):
+    pu = points.astype(int)
+    indexes = np.unique(pu, axis=0, return_index=True)[1]
+    points = np.array([pu[index] for index in sorted(indexes)])
+
+    try:
+        tck, u = splprep(points.T, u=None, s=3, per=1) 
+    except:
+        return []
+    u_new = np.linspace(u.min(), u.max(), new_len)
+    x_array, y_array = splev(u_new, tck, der=0)
+    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
+    a = list(map(tuple, arr_2d))
+    return arr_2d
+
 
 def create_layer(id, start, debug):
 
@@ -134,9 +148,14 @@ def create_layer(id, start, debug):
         rows = cursor.fetchall()
     for row in rows:
         section = row[0]
-        data = row[1]
-        pts = np.array([tuple(map(float, x.split())) for x in data.strip().split(',')])
+        pts = row[1]
+        pts = np.array([tuple(map(float, x.split())) for x in pts.strip().split(',')])
         vertices = pts.reshape(pts.shape[0]//2, 2)
+        lp = vertices.shape[0]
+        if lp > 4:
+          #print('interpolating section', section, lp)
+          new_len = max(lp, 200)
+          vertices = interpolate(vertices, new_len)
 
         structure_section_vertices[section] = vertices
     
@@ -144,6 +163,7 @@ def create_layer(id, start, debug):
     volume, xyz_offsets = create_volume(structure_section_vertices, structure, 9)
 
     print('volume', type(volume), volume.shape, volume.dtype, xyz_offsets)
+    print(volume)
 
 
 
