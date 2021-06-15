@@ -14,22 +14,22 @@ from neuroglancer.models import LayerData, ANNOTATION_ID
 
 
 
-def create_layer(animal, layer, id, start, debug):
+def create_layer(animal, id, start, debug):
 
     with connection.cursor() as cursor:
-        sql = """select el.id, el.frame, el.points 
+        sql = """select el.id, el.frame, el.points, elab.name 
                 from engine_labeledshape el  
                 inner join engine_label elab on el.label_id = elab.id
                 where elab.task_id = %s 
-                order by el.frame"""
+                order by elab.name, el.frame"""
         cursor.execute(sql, [id])
         rows = cursor.fetchall()
     count = 1
-    point_type = ['pointA', 'pointB']
     for row in rows:
         id = row[0]
         section = row[1] + start
         points = row[2]
+        layer = row[3]
         s = points.split(',')
         points = map(','.join, zip(s[::2], s[1::2]))
         p = 0
@@ -40,11 +40,8 @@ def create_layer(animal, layer, id, start, debug):
             x *= 32
             y *= 32
             if debug:
-                print(count, id, animal, ANNOTATION_ID, 1, layer, 1, x,y,section, point_type[p])
+                print(count, id, animal, ANNOTATION_ID, layer, x,y,section)
                 count += 1
-                p += 1
-                if p > 1:
-                    p = 0
             else:
                 LayerData.objects.create(prep_id=animal, segment_id=id, structure_id = ANNOTATION_ID, person_id=1,
                                                 layer=layer, input_type_id = 5,
@@ -57,17 +54,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Work on Animal')
     parser.add_argument('--id', help='Enter ID', required=True)
     parser.add_argument('--animal', help='Enter animal', required=True)    
-    parser.add_argument('--layer', help='Enter layer name', required=True)    
     parser.add_argument('--start', help='Enter start', required=True)
     parser.add_argument('--debug', help='Enter debug True|False', required=False, default='false')
 
     args = parser.parse_args()
     animal = args.animal
-    layer = args.layer
     id = int(args.id)
     start = int(args.start)
     debug = bool({'true': True, 'false': False}[str(args.debug).lower()])
-    create_layer(animal, layer, id, start, debug)
+    create_layer(animal, id, start, debug)
 
 
 
