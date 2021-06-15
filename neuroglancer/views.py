@@ -11,7 +11,7 @@ import string
 import random
 from collections import defaultdict
 import numpy as np
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import UnivariateSpline,splprep, splev
 
 from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
@@ -116,8 +116,10 @@ class Annotation(views.APIView):
                 lp = len(points)
                 if lp > 3:
                     new_len = max(lp, 100)
-                    points.append(points[0])
+                    #points.append(points[0])
                     points = interpolate(points, new_len)
+                    if len(points) < 3:
+                        continue
                     for i in range(new_len):
                         tmp_dict = {}
                         pointA = points[i]
@@ -240,7 +242,7 @@ class Rotations(views.APIView):
         return Response(serializer.data)
 
 
-def interpolate(points, new_len):
+def interpolateXXX(points, new_len):
     x = [v[0] for v in points]
     y = [v[1] for v in points]
     vx = np.array(x)
@@ -251,6 +253,19 @@ def interpolate(points, new_len):
     x_array = splx(new_indices)
     sply = UnivariateSpline(indices,vy,k=3,s=1)
     y_array = sply(new_indices)
+    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
+    a = list(map(tuple, arr_2d))
+    return a
+
+
+def interpolate(points, new_len):
+    points = np.array(points)
+    try:
+        tck, u = splprep(points.T, u=None, s=3, per=1) 
+    except:
+        return []
+    u_new = np.linspace(u.min(), u.max(), new_len)
+    x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
     a = list(map(tuple, arr_2d))
     return a
