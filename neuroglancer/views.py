@@ -267,7 +267,6 @@ def interpolate(points, new_len):
     try:
         tck, u = splprep(points.T, u=None, s=3, per=1) 
     except:
-        print(points)
         return []
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
