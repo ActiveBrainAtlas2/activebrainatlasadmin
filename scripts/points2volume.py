@@ -132,7 +132,7 @@ def interpolate(points, new_len):
     return arr_2d
 
 
-def create_layer(id, start, debug):
+def create_layer(animal, id, start, debug):
 
     structure_section_vertices = {}
     structure = 'infrahypoglossal'
@@ -163,22 +163,28 @@ def create_layer(id, start, debug):
     volume, xyz_offsets = create_volume(structure_section_vertices, structure, 9)
 
     print('volume', type(volume), volume.shape, volume.dtype, xyz_offsets)
-    print(volume)
+    ATLAS_DIR = '/net/birdstore/Active_Atlas_Data/data_root/atlas_data'
+    outpath = os.path.join(ATLAS_DIR, animal, 'structures')
+    os.makedirs(outpath, exist_ok=True)
+    outfile = os.path.join(outpath, f'{structure}.npy')
+    np.save(outfile, volume)
 
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Work on Animal')
+    parser.add_argument('--animal', help='Enter animal', required=True)
     parser.add_argument('--id', help='Enter ID', required=True)
     parser.add_argument('--start', help='Enter start', required=True)
     parser.add_argument('--debug', help='Enter debug True|False', required=False, default='false')
 
     args = parser.parse_args()
+    animal = args.animal
     id = int(args.id)
     start = int(args.start)
     debug = bool({'true': True, 'false': False}[str(args.debug).lower()])
-    create_layer(id, start, debug)
+    create_layer(animal, id, start, debug)
 
 
 
