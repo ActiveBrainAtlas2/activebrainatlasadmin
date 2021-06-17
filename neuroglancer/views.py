@@ -117,9 +117,6 @@ class Annotation(views.APIView):
                 if lp > 3:
                     new_len = max(lp, 200)
                     points = interpolate(points, new_len)
-                    points.append(points[0])
-                    if len(points) < 3:
-                        continue
                     for i in range(new_len):
                         tmp_dict = {}
                         pointA = points[i]
@@ -228,7 +225,7 @@ class Rotations(views.APIView):
         data = []
         coms = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
             .filter(layer='COM')\
-            .filter(active=True).filter(input_type__input_type__in=['detected', 'manual','corrected'])\
+            .filter(active=True).filter(input_type__input_type__in=['manual','corrected'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
         for com in coms:
             data.append({
@@ -262,17 +259,15 @@ def interpolate(points, new_len):
     points = np.array(points)
     pu = points.astype(int)
     indexes = np.unique(pu, axis=0, return_index=True)[1]
-    points = np.array([pu[index] for index in sorted(indexes)])
+    points = np.array([points[index] for index in sorted(indexes)])
+    addme = points[0].reshape(1,2)
+    points = np.concatenate((points,addme), axis=0)
 
-    try:
-        tck, u = splprep(points.T, u=None, s=3, per=1) 
-    except:
-        return []
+    tck, u = splprep(points.T, u=None, s=3, per=1) 
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
-    a = list(map(tuple, arr_2d))
-    return a
+    return list(map(tuple, arr_2d))
 
 
 def get_input_type_id(input_type):

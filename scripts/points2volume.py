@@ -119,23 +119,23 @@ def create_volume(str_contour, structure, color):
 def interpolate(points, new_len):
     pu = points.astype(int)
     indexes = np.unique(pu, axis=0, return_index=True)[1]
-    points = np.array([pu[index] for index in sorted(indexes)])
+    points = np.array([points[index] for index in sorted(indexes)])
+    addme = points[0].reshape(1,2)
+    points = np.concatenate((points,addme), axis=0)
 
-    try:
-        tck, u = splprep(points.T, u=None, s=3, per=1) 
-    except:
-        return []
+    tck, u = splprep(points.T, u=None, s=3, per=1) 
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
-    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
-    a = list(map(tuple, arr_2d))
-    return arr_2d
+    return np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
+
 
 
 def create_layer(animal, id, start, debug):
 
     structure_section_vertices = {}
     structure = 'infrahypoglossal'
+    template = np.zeros((aligned_shape[1], aligned_shape[0]), dtype=np.uint8)
+
     with connection.cursor() as cursor:
         sql = """select el.frame + %s as section, el.points 
           from engine_labeledshape el
@@ -150,21 +150,24 @@ def create_layer(animal, id, start, debug):
         section = row[0]
         pts = row[1]
         pts = np.array([tuple(map(float, x.split())) for x in pts.strip().split(',')])
-        vertices = pts.reshape(pts.shape[0]//2, 2)
+        vertices = pts.reshape(pts.shape[0]//2, 2).astype(np.float64)
+        addme = vertices[0].reshape(1,2)
+        vertices = np.concatenate((vertices,addme), axis=0)
         lp = vertices.shape[0]
-        if lp > 4:
-          #print('interpolating section', section, lp)
-          new_len = max(lp, 200)
+        if lp > 2:
+          new_len = max(lp, 100)
           vertices = interpolate(vertices, new_len)
 
+        if debug:
+            print(section, vertices.shape, vertices.dtype)
         structure_section_vertices[section] = vertices
+
     
-    #print(structure_section_vertices)
     volume, xyz_offsets = create_volume(structure_section_vertices, structure, 9)
 
     print('volume', type(volume), volume.shape, volume.dtype, xyz_offsets)
     ATLAS_DIR = '/net/birdstore/Active_Atlas_Data/data_root/atlas_data'
-    outpath = os.path.join(ATLAS_DIR, animal, 'structures')
+    outpath = os.path.join(ATLAS_DIR, 'shapes', animal)
     os.makedirs(outpath, exist_ok=True)
     outfile = os.path.join(outpath, f'{structure}.npy')
     np.save(outfile, volume)
