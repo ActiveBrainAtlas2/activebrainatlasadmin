@@ -258,32 +258,32 @@ class DummyModelAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         start = timer()
         #brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
-        brains_to_examine = list(LayerData.objects.filter(active=True)\
+        brains = list(LayerData.objects.filter(active=True)\
             .filter(input_type__input_type__in=['manual'])\
             .filter(layer='COM')\
             .filter(active=True)\
             .exclude(prep_id='Atlas')\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-        print(brains_to_examine)
+        print(brains)
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
         INPUT_TYPE_CORRECTED = 2
         atlas_coms = get_atlas_centers()
-        common_structures = get_common_structure()
+        common_structures = get_common_structure(brains)
 
         fig = make_subplots(
             rows=3, cols=1,
             subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction", "Rough Alignment Error"))
         df1 = prepare_table_for_plot(atlas_coms, common_structures,
-            brains_to_examine,
+            brains,
             person_id=PERSON_ID_BILLI,
             input_type_id=INPUT_TYPE_ALIGNED,)
         df2 = prepare_table_for_plot(atlas_coms, common_structures,
-            brains_to_examine,
+            brains,
             person_id=PERSON_ID_BILLI,
             input_type_id=INPUT_TYPE_CORRECTED,)
         df3 = prepare_table_for_plot(atlas_coms, common_structures,
-            brains_to_examine,
+            brains,
             person_id=1,
             input_type_id=INPUT_TYPE_ALIGNED,)
         add_trace(df1,fig,1)
@@ -297,7 +297,7 @@ class DummyModelAdmin(admin.ModelAdmin):
         )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
         # Serialize and attach the workflow data to the template context
-        title = 'Rigig Alignment Error for ' + ", ".join(brains_to_examine)
+        title = 'Rigid Alignment Error for ' + ", ".join(brains)
         extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
 
         # Call the superclass changelist_view to render the page
@@ -307,11 +307,10 @@ class DummyModelAdmin(admin.ModelAdmin):
 
 
 
-def get_common_structure():
+def get_common_structure(brains):
     start = timer()
-    brains_to_extract_common_structures = ['DK39', 'DK41', 'DK43', 'DK54', 'DK55']
     common_structures = set()
-    for brain in brains_to_extract_common_structures:
+    for brain in brains:
         common_structures = common_structures | set(get_centers_dict(brain).keys())
     common_structures = list(sorted(common_structures))
     end = timer()
