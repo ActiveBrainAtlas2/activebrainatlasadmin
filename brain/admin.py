@@ -359,4 +359,5 @@ class LogEntryAdmin(admin.ModelAdmin):
 admin.site.site_header = 'Active Brain Atlas Admin'
 admin.site.site_title = "Active Brain Atlas"
 admin.site.index_title = "Welcome to Active Brain Atlas Portal"
+admin.site.site_url = "https://github.com/ActiveBrainAtlasPipeline/neuroglancer/wiki"
 
