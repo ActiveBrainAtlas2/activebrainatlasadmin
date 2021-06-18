@@ -260,18 +260,21 @@ class DummyModelAdmin(admin.ModelAdmin):
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
         INPUT_TYPE_CORRECTED = 2
+        atlas_coms = get_atlas_centers()
+        common_structures = get_common_structure()
+
         fig = make_subplots(
             rows=3, cols=1,
             subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction", "Rough Alignment Error"))
-        df1 = prepare_table_for_plot(
+        df1 = prepare_table_for_plot(atlas_coms, common_structures,
             brains_to_examine,
             person_id=PERSON_ID_BILLI,
             input_type_id=INPUT_TYPE_ALIGNED,)
-        df2 = prepare_table_for_plot(
+        df2 = prepare_table_for_plot(atlas_coms, common_structures,
             brains_to_examine,
             person_id=PERSON_ID_BILLI,
             input_type_id=INPUT_TYPE_CORRECTED,)
-        df3 = prepare_table_for_plot(
+        df3 = prepare_table_for_plot(atlas_coms, common_structures,
             brains_to_examine,
             person_id=1,
             input_type_id=INPUT_TYPE_ALIGNED,)
@@ -320,11 +323,9 @@ def get_brain_coms(brains, person_id, input_type_id):
     print(f'get brain coms took {end - start} seconds')
     return brain_coms
 
-def prepare_table_for_plot(brains, person_id, input_type_id):
+def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, input_type_id):
     start = timer()
-    atlas_coms = get_atlas_centers()
     global dx,dy,dz,dist,structurei
-    common_structures = get_common_structure()
     brain_coms = get_brain_coms(brains, input_type_id = input_type_id, person_id = person_id )
     df = pd.DataFrame()
     for brain in brain_coms.keys():
