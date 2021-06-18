@@ -5,7 +5,7 @@ from neuroglancer.models import Structure, LayerData, Transformation, \
     ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
-
+from timeit import default_timer as timer
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -168,6 +168,8 @@ def get_atlas_centers(
     return atlas_centers
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
+    start = timer()
+
     rows = LayerData.objects.filter(prep__prep_id=prep_id)\
         .filter(active=True).filter(layer='COM')\
             .order_by('structure', 'updated')
@@ -176,12 +178,18 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
 
-
+    structure_dict = {}
+    structures = Structure.objects.filter(active=True).all()
+    for structure in structures:
+        structure_dict[structure.id] = structure.abbreviation
     row_dict = {}
     for row in rows:
-        structure = row.structure.abbreviation
-        row_dict[structure] = [row.x, row.y, row.section]
+        structure_id = row.structure_id
+        abbreviation = structure_dict[structure_id]
+        row_dict[abbreviation] = [row.x, row.y, row.section]
 
+    end = timer()
+    print(f'get centers_dict took {end - start} seconds')
     return row_dict
 
 
