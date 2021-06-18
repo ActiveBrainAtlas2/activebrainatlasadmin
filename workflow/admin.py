@@ -18,6 +18,9 @@ from workflow.forms import PipelineForm
 from celery import chain
 from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 import plotly.express as px
+import numpy as np
+import pandas as pd
+from timeit import default_timer as timer
 # from test.get_data_from_histogram import prepare_table_for_plot
 
 class WorkflowAdminModel(admin.ModelAdmin):
@@ -239,10 +242,7 @@ class DummyModel(models.Model):
 
 @admin.register(DummyModel)
 class DummyModelAdmin(admin.ModelAdmin):
-    # list_display = ('prep_id', 'percent_complete')
-    change_list_template = "admin/task_view.html"
-    # ordering = ['prep_id']
-    # readonly_fields = ['prep_id', 'percent_complete']
+    change_list_template = "alignment.html"
 
     def has_add_permission(self, request):
         return False
@@ -253,14 +253,9 @@ class DummyModelAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def get_actions(self, request):
-        actions = super(DummyModelAdmin, self).get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
-
 
     def changelist_view(self, request, extra_context=None):
+        start = timer()
         brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
@@ -282,28 +277,38 @@ class DummyModelAdmin(admin.ModelAdmin):
             input_type_id=INPUT_TYPE_ALIGNED,)
         add_trace(df1,fig,1)
         add_trace(df2,fig,2)
-        add_trace(df3,fig,3)  
+        add_trace(df3,fig,3)
+        fig.update_layout(
+            autosize=False,
+            height=1000,
+            margin=dict(l=50, r=50, b=100, t=100, pad=4),
+            paper_bgcolor="LightSteelBlue",
+        )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
         # Serialize and attach the workflow data to the template context
         extra_context = extra_context or {"gantt_div": gantt_div, 'title':'Rigid Alignment Error'}
 
         # Call the superclass changelist_view to render the page
+        end = timer()
+        print(f'change list view took {end - start} seconds')
         return super().changelist_view(request, extra_context=extra_context)
 
 
-import numpy as np
-import pandas as pd
 
 def get_common_structure():
+    start = timer()
     brains_to_extract_common_structures = ['DK39', 'DK41', 'DK43', 'DK54', 'DK55']
     common_structures = set()
     for brain in brains_to_extract_common_structures:
         common_structures = common_structures | set(get_centers_dict(brain).keys())
     common_structures = list(sorted(common_structures))
+    end = timer()
+    print(f'get common structures took {end - start} seconds')
     return common_structures
 
 
 def get_brain_coms(brains, person_id, input_type_id):
+    start = timer()
     brain_coms = {}
     for brain in brains:
         brain_coms[brain] = get_centers_dict(
@@ -311,9 +316,12 @@ def get_brain_coms(brains, person_id, input_type_id):
             person_id=person_id,
             input_type_id=input_type_id
         )
+    end = timer()
+    print(f'get brain coms took {end - start} seconds')
     return brain_coms
 
 def prepare_table_for_plot(brains, person_id, input_type_id):
+    start = timer()
     atlas_coms = get_atlas_centers()
     global dx,dy,dz,dist,structurei
     common_structures = get_common_structure()
@@ -354,13 +362,24 @@ def prepare_table_for_plot(brains, person_id, input_type_id):
 
         df_brain['brain'] = brain
         df = df.append(df_brain, ignore_index=True)
+    end = timer()
+    print(f'prepare table for plot took {end - start} seconds')
     return df
 
 def add_trace(df,fig,rowi):
+    start = timer()
     colors = ["#ee6352","#08b2e3","#484d6d","#57a773"]
     colori = 0
     for row_type in ['dx','dy','dz','dist']:
-        print(colori)
         rows_of_type = df[df.type==row_type]
-        fig.append_trace(go.Scatter(x=rows_of_type['structure'],y=rows_of_type['value'],mode='markers', marker_color = colors[colori],name = row_type,text=rows_of_type['brain']),row = rowi,col=1)
+        fig.append_trace(
+            go.Scatter(x=rows_of_type['structure'],
+                y=rows_of_type['value'],mode='markers', 
+                marker_color = colors[colori],
+                name = row_type,
+                text=rows_of_type['brain']),
+                row = rowi,col=1
+                )
         colori+=1
+    end = timer()
+    print(f'add_trace took {end - start} seconds')
