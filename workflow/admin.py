@@ -256,7 +256,11 @@ class DummyModelAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         start = timer()
-        brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
+        #brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
+        brains_to_examine = list(Animal.objects
+            .filter(active=True)
+            .filter(prep_id__contains='DK').values_list('prep_id', flat=True))
+        print(brains_to_examine)
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
         INPUT_TYPE_CORRECTED = 2
