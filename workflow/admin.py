@@ -10,10 +10,11 @@ from django.db.models import Count
 from plotly.offline import plot
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from neuroglancer.models import UrlModel
+from neuroglancer.models import UrlModel, LayerData
 from neuroglancer.atlas import get_atlas_centers,get_centers_dict
 from brain.models import Animal
 from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
+
 from workflow.forms import PipelineForm
 from celery import chain
 from workflow.tasks import setup, make_meta, make_tifs, make_scenes
@@ -257,9 +258,12 @@ class DummyModelAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         start = timer()
         #brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
-        brains_to_examine = list(Animal.objects
-            .filter(active=True)
-            .filter(prep_id__contains='DK').values_list('prep_id', flat=True))
+        brains_to_examine = list(LayerData.objects.filter(active=True)\
+            .filter(input_type__input_type__in=['manual'])\
+            .filter(layer='COM')\
+            .filter(active=True)\
+            .exclude(prep_id='Atlas')\
+            .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
         print(brains_to_examine)
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
@@ -293,7 +297,8 @@ class DummyModelAdmin(admin.ModelAdmin):
         )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
         # Serialize and attach the workflow data to the template context
-        extra_context = extra_context or {"gantt_div": gantt_div, 'title':'Rigid Alignment Error'}
+        title = 'Rigig Alignment Error for ' + ", ".join(brains_to_examine)
+        extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
 
         # Call the superclass changelist_view to render the page
         end = timer()
