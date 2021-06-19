@@ -3,14 +3,10 @@ import json
 from django.conf import settings
 from django.contrib import admin, messages
 from django.forms import TextInput
-
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
-import neuroglancer.dash_apps
-import neuroglancer.dash_point_table
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-
 from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
@@ -23,6 +19,17 @@ from plotly.offline import plot
 from django.db import models
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.forms import LayerForm
+import plotly.express as px
+import numpy as np
+import pandas as pd
+from timeit import default_timer as timer
+from neuroglancer.brain_specimens import get_list_of_DK_brains_excluding_DK52
+from neuroglancer.structures import get_common_structures_among_brains
+from neuroglancer.get_data_for_com_histogram import prepare_table_for_plot,add_trace
+from plotly.subplots import make_subplots
+from neuroglancer.models import UrlModel, LayerData,ComHistogram
+from neuroglancer.atlas import get_atlas_centers
+
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
@@ -318,3 +325,66 @@ class LayerDataAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
+
+
+@admin.register(ComHistogram)
+class ComHistogramAdmin(admin.ModelAdmin):
+    change_list_template = "alignment.html"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+    def changelist_view(self, request, extra_context=None):
+        start = timer()
+        brains = get_list_of_DK_brains_excluding_DK52()
+        PERSON_ID_BILLI = 28
+        INPUT_TYPE_ALIGNED = 4
+        INPUT_TYPE_CORRECTED = 2
+        atlas_coms = get_atlas_centers()
+        common_structures = get_common_structures_among_brains(brains)
+
+        fig = make_subplots(
+            rows=3, cols=1,
+            subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction", "Rough Alignment Error"))
+        df1 = prepare_table_for_plot(atlas_coms, common_structures,
+            brains,
+            person_id=PERSON_ID_BILLI,
+            input_type_id=INPUT_TYPE_ALIGNED,)
+        df2 = prepare_table_for_plot(atlas_coms, common_structures,
+            brains,
+            person_id=PERSON_ID_BILLI,
+            input_type_id=INPUT_TYPE_CORRECTED,)
+        df3 = prepare_table_for_plot(atlas_coms, common_structures,
+            brains,
+            person_id=1,
+            input_type_id=INPUT_TYPE_ALIGNED,)
+        add_trace(df1,fig,1)
+        add_trace(df2,fig,2)
+        add_trace(df3,fig,3)
+        fig.update_layout(
+            autosize=False,
+            height=1000,
+            margin=dict(l=50, r=50, b=100, t=100, pad=4),
+            paper_bgcolor="LightSteelBlue",
+        )  
+        gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
+        # Serialize and attach the workflow data to the template context
+        title = 'Rigid Alignment Error for ' + ", ".join(brains)
+        extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
+
+        # Call the superclass changelist_view to render the page
+        end = timer()
+        print(f'change list view took {end - start} seconds')
+        return super().changelist_view(request, extra_context=extra_context)
+
+
+
+
+
