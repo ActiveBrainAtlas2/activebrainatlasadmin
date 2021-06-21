@@ -23,9 +23,9 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from timeit import default_timer as timer
-from neuroglancer.brain_specimens import get_list_of_DK_brains_excluding_DK52
-from neuroglancer.structures import get_common_structures_among_brains
-from neuroglancer.get_data_for_com_histogram import prepare_table_for_plot,add_trace
+#from neuroglancer.brain_specimens import get_list_of_DK_brains_excluding_DK52
+#from neuroglancer.structures import get_common_structures_among_brains
+#from neuroglancer.get_data_for_com_histogram import prepare_table_for_plot,add_trace
 from plotly.subplots import make_subplots
 from neuroglancer.models import UrlModel, LayerData,ComHistogram
 from neuroglancer.atlas import get_atlas_centers
