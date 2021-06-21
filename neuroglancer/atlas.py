@@ -155,6 +155,8 @@ def get_atlas_centers(
         atlas_box_size=(1000, 1000, 300),
         atlas_box_scales=(10, 10, 20),
         atlas_raw_scale=10):
+    """ atlas_raw_scale=10 refers to 10.0um which means each voxel size is 10 microns"""
+        
     atlas_box_scales = np.array(atlas_box_scales)
     atlas_box_size = np.array(atlas_box_size)
     atlas_box_center = atlas_box_size / 2
