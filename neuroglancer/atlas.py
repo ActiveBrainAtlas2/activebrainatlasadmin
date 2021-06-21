@@ -168,7 +168,6 @@ def get_atlas_centers(
     return atlas_centers
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
-    start = timer()
 
     rows = LayerData.objects.filter(prep__prep_id=prep_id)\
         .filter(active=True).filter(layer='COM')\
@@ -188,8 +187,6 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         abbreviation = structure_dict[structure_id]
         row_dict[abbreviation] = [row.x, row.y, row.section]
 
-    end = timer()
-    print(f'get centers_dict took {end - start} seconds')
     return row_dict
 
 
