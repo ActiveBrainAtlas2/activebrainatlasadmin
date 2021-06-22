@@ -181,7 +181,7 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True).filter(structure_id__gte=ANNOTATION_ID)\
+            .filter(active=True)\
             .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
         for layer in layers:
             data.append({
