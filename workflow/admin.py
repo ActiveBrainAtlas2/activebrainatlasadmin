@@ -309,27 +309,6 @@ class DummyModelAdmin(admin.ModelAdmin):
 
 
 
-def get_common_structure(brains):
-    start = timer()
-    common_structures = set()
-    for brain in brains:
-        common_structures = common_structures | set(get_centers_dict(brain).keys())
-    common_structures = list(sorted(common_structures))
-    end = timer()
-    print(f'get common structures took {end - start} seconds')
-    return common_structures
-
-
-def get_brain_coms(brains, person_id, input_type_id):
-    start = timer()
-    brain_coms = {}
-    for brain in brains:
-        brain_coms[brain] = get_centers_dict(prep_id=brain, 
-        person_id=person_id, 
-        input_type_id=input_type_id)
-    end = timer()
-    print(f'get brain coms took {end - start} seconds to fetch {len(brain_coms)} centers')
-    return brain_coms
 
 def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, input_type_id):
     start = timer()

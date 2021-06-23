@@ -285,11 +285,11 @@ class TransformationAdmin(AtlasAdminModel):
 
 @admin.register(InputType)
 class InputTypeAdmin(AtlasAdminModel):
-    list_display = ('id', 'input_type', 'active','created')
+    list_display = ('id', 'input_type', 'description', 'active','created')
     ordering = ['id']
     readonly_fields = ['created', 'updated']
     list_filter = ['created', 'active']
-    search_fields = ['input_type']
+    search_fields = ['input_type', 'description']
 
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
