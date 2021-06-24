@@ -18,7 +18,7 @@ ATLAS_Y_BOX_SCALE = 10
 ATLAS_Z_BOX_SCALE = 20
 ATLAS_RAW_SCALE = 10
 ANNOTATION_ID = 52
-
+LAUREN_ID = 16
 
 class AnnotationChoice(str, Enum):
     POINT = 'point'
@@ -181,6 +181,7 @@ class Structure(AtlasModel):
 class InputType(models.Model):
     id = models.BigAutoField(primary_key=True)
     input_type = models.CharField(max_length=50, blank=False, null=False, verbose_name='Input')
+    description = models.TextField(max_length=255, blank=False, null=False)
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)

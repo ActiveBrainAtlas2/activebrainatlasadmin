@@ -1,8 +1,13 @@
+"""
+These are methods taken from notebooks, mostly Bili's
+There are constants defined in the models.py script and imported here
+so we can resuse them througout the code.
+"""
 import numpy as np
 from django.contrib.auth.models import User
 
 from neuroglancer.models import Structure, LayerData, Transformation, \
-    ROW_LENGTH, COL_LENGTH, Z_LENGTH, \
+    ROW_LENGTH, COL_LENGTH, Z_LENGTH, LAUREN_ID, \
     ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
 from timeit import default_timer as timer
@@ -54,6 +59,9 @@ def align_atlas(animal, input_type_id=None, person_id=None):
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
+    :param input_type_id: the int defining what type of input. Taken from the com_type table with 
+    column=id
+    :param person_id: the int defining the person. Taken from the auth_user table column=id
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
@@ -155,10 +163,16 @@ def get_atlas_centers(
         atlas_box_size=(1000, 1000, 300),
         atlas_box_scales=(10, 10, 20),
         atlas_raw_scale=10):
+    """ atlas_raw_scale=10 refers to 10.0um which means each voxel size is 10 microns
+        We want the original COMs entered by the anatomist, in this case it is Lauren
+        whose ID = 16
+    """
+
+        
     atlas_box_scales = np.array(atlas_box_scales)
     atlas_box_size = np.array(atlas_box_size)
     atlas_box_center = atlas_box_size / 2
-    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL)
+    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL, person_id=LAUREN_ID)
 
     for structure, origin in atlas_centers.items():
         # transform into the atlas box coordinates that neuroglancer assumes
@@ -270,3 +284,20 @@ def update_center_of_mass(urlModel):
                                     print(f'Error inserting manual {structure.abbreviation}')
                                     logger.error(f'Error inserting manual {structure.abbreviation}')
 
+
+
+def get_common_structures(brains):
+    common_structures = set()
+    for brain in brains:
+        common_structures = common_structures | set(get_centers_dict(brain).keys())
+    common_structures = list(sorted(common_structures))
+    return common_structures
+
+
+def get_brain_coms(brains, person_id, input_type_id):
+    brain_coms = {}
+    for brain in brains:
+        brain_coms[brain] = get_centers_dict(prep_id=brain, 
+        person_id=person_id, 
+        input_type_id=input_type_id)
+    return brain_coms
