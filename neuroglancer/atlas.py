@@ -189,6 +189,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
 
+    
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
@@ -197,6 +198,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     for row in rows:
         structure_id = row.structure_id
         abbreviation = structure_dict[structure_id]
+        # do transform here.
         row_dict[abbreviation] = [row.x, row.y, row.section]
 
     return row_dict
