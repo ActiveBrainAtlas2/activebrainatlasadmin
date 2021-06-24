@@ -23,9 +23,9 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from timeit import default_timer as timer
-from neuroglancer.com_histogram import prepare_table_for_plot,add_trace,get_common_structure
+from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
 from plotly.subplots import make_subplots
-from neuroglancer.models import UrlModel, LayerData,ComHistogram
+from neuroglancer.models import UrlModel, LayerData,ComBoxplot
 from neuroglancer.atlas import get_atlas_centers
 from plotly.subplots import make_subplots
 
@@ -326,8 +326,8 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Z"
 
-@admin.register(ComHistogram)
-class ComHistogramAdmin(admin.ModelAdmin):
+@admin.register(ComBoxplot)
+class ComBoxplotAdmin(admin.ModelAdmin):
     change_list_template = "alignment.html"
 
     def has_add_permission(self, request):
@@ -361,15 +361,15 @@ class ComHistogramAdmin(admin.ModelAdmin):
         df1 = prepare_table_for_plot(atlas_coms, common_structures,
             brains,
             person_id=PERSON_ID_BILLI,
-            input_type_id=INPUT_TYPE_ALIGNED,)
+            input_type_id=INPUT_TYPE_ALIGNED)
         df2 = prepare_table_for_plot(atlas_coms, common_structures,
             brains,
             person_id=PERSON_ID_BILLI,
-            input_type_id=INPUT_TYPE_CORRECTED,)
+            input_type_id=INPUT_TYPE_CORRECTED)
         df3 = prepare_table_for_plot(atlas_coms, common_structures,
             brains,
             person_id=1,
-            input_type_id=INPUT_TYPE_ALIGNED,)
+            input_type_id=INPUT_TYPE_ALIGNED)
         add_trace(df1,fig,1)
         add_trace(df2,fig,2)
         add_trace(df3,fig,3)
