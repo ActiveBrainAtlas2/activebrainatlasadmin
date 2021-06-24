@@ -248,10 +248,12 @@ class LayerData(models.Model):
         return u'{} {}'.format(self.prep, self.layer)
 
     
-class ComHistogram(models.Model):
+class ComBoxplot(models.Model):
     class Meta:
-        verbose_name = 'center of mass histograms'
-        verbose_name_plural = 'center of mass histograms'
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'center of mass boxplot'
+        verbose_name_plural = 'center of mass boxplots'
 
     def __str__(self):
         return u'{}'.format(self.prep_id)

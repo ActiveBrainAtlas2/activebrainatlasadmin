@@ -2,6 +2,7 @@ from timeit import default_timer as timer
 from neuroglancer.atlas import get_centers_dict
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 
 def get_common_structure(brains):
     start = timer()
