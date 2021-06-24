@@ -247,18 +247,11 @@ class LayerData(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
 
-
+    
 class ComHistogram(models.Model):
-    prep_id = models.CharField(primary_key=True, max_length=20)
-    percent_complete = models.DecimalField(max_digits=6, decimal_places=2)
-    complete = models.IntegerField()
-    created = models.CharField(max_length=20)
-
     class Meta:
-        managed = False
-        db_table = 'task_view'
-        verbose_name = 'COM histograms'
-        verbose_name_plural = 'COM of mass histograms'
+        verbose_name = 'center of mass histograms'
+        verbose_name_plural = 'center of mass histograms'
 
     def __str__(self):
         return u'{}'.format(self.prep_id)
