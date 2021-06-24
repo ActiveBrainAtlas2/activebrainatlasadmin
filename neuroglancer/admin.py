@@ -23,12 +23,12 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 from timeit import default_timer as timer
-#from neuroglancer.brain_specimens import get_list_of_DK_brains_excluding_DK52
-#from neuroglancer.structures import get_common_structures_among_brains
-#from neuroglancer.get_data_for_com_histogram import prepare_table_for_plot,add_trace
+from neuroglancer.com_histogram import prepare_table_for_plot,add_trace,get_common_structure
 from plotly.subplots import make_subplots
 from neuroglancer.models import UrlModel, LayerData,ComHistogram
 from neuroglancer.atlas import get_atlas_centers
+from plotly.subplots import make_subplots
+
 
 
 def datetime_format(dtime):
@@ -326,7 +326,6 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Z"
 
-
 @admin.register(ComHistogram)
 class ComHistogramAdmin(admin.ModelAdmin):
     change_list_template = "alignment.html"
@@ -340,15 +339,21 @@ class ComHistogramAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-
     def changelist_view(self, request, extra_context=None):
         start = timer()
-        brains = get_list_of_DK_brains_excluding_DK52()
+        #brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
+        brains = list(LayerData.objects.filter(active=True)\
+            .filter(input_type__input_type__in=['manual'])\
+            .filter(layer='COM')\
+            .filter(active=True)\
+            .exclude(prep_id='Atlas')\
+            .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
+        print(brains)
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
         INPUT_TYPE_CORRECTED = 2
         atlas_coms = get_atlas_centers()
-        common_structures = get_common_structures_among_brains(brains)
+        common_structures = get_common_structure(brains)
 
         fig = make_subplots(
             rows=3, cols=1,
@@ -370,8 +375,9 @@ class ComHistogramAdmin(admin.ModelAdmin):
         add_trace(df3,fig,3)
         fig.update_layout(
             autosize=False,
+            width=800,
             height=1000,
-            margin=dict(l=50, r=50, b=100, t=100, pad=4),
+            margin=dict(l=10, r=10, b=10, t=10, pad=4),
             paper_bgcolor="LightSteelBlue",
         )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
@@ -383,8 +389,5 @@ class ComHistogramAdmin(admin.ModelAdmin):
         end = timer()
         print(f'change list view took {end - start} seconds')
         return super().changelist_view(request, extra_context=extra_context)
-
-
-
 
 
