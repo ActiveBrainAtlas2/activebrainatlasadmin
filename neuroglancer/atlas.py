@@ -87,12 +87,19 @@ def align_atlas(animal, input_type_id=None, person_id=None):
 
         R, t = align_point_sets(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T # production version
+<<<<<<< HEAD
         #t = t / np.array([atlas_box_scales]).T # this is NOT in production
 
     else:
         R = np.eye(3)
         t = np.zeros(3)
         t = t.reshape(3,1)
+=======
+
+    else:
+        R = np.eye(3)
+        t = np.zeros((3,1))
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
     return R, t
 
 def brain_to_atlas_transform(
@@ -174,9 +181,15 @@ def get_atlas_centers(
     atlas_box_center = atlas_box_size / 2
     atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL, person_id=LAUREN_ID)
 
+<<<<<<< HEAD
     for structure, origin in atlas_centers.items():
         # transform into the atlas box coordinates that neuroglancer assumes
         center = atlas_box_center + np.array(origin) * atlas_raw_scale / atlas_box_scales
+=======
+    for structure, com in atlas_centers.items():
+        # transform into the atlas box coordinates that neuroglancer assumes
+        center = atlas_box_center + np.array(com) * atlas_raw_scale / atlas_box_scales
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
         atlas_centers[structure] = center
 
     return atlas_centers
@@ -191,6 +204,10 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
 
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
@@ -199,6 +216,10 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     for row in rows:
         structure_id = row.structure_id
         abbreviation = structure_dict[structure_id]
+<<<<<<< HEAD
+=======
+        # do transform here.
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
         row_dict[abbreviation] = [row.x, row.y, row.section]
 
     return row_dict
@@ -298,6 +319,12 @@ def get_brain_coms(brains, person_id, input_type_id):
     brain_coms = {}
     for brain in brains:
         brain_coms[brain] = get_centers_dict(prep_id=brain, 
+<<<<<<< HEAD
         person_id=person_id, 
         input_type_id=input_type_id)
+=======
+                                            person_id=person_id, 
+                                            input_type_id=input_type_id
+                                            )
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
     return brain_coms

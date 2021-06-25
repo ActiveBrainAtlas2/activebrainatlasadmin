@@ -341,6 +341,7 @@ class ComBoxplotAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         start = timer()
+<<<<<<< HEAD
         #brains_to_examine = ['DK39', 'DK41', 'DK43', 'DK52', 'DK54', 'DK55']
         brains = list(LayerData.objects.filter(active=True)\
             .filter(input_type__input_type__in=['manual'])\
@@ -352,10 +353,22 @@ class ComBoxplotAdmin(admin.ModelAdmin):
         PERSON_ID_BILLI = 28
         INPUT_TYPE_ALIGNED = 4
         INPUT_TYPE_CORRECTED = 2
+=======
+        INPUT_TYPE_MANUAL = 1
+        INPUT_TYPE_CORRECTED = 2
+        brains = list(LayerData.objects.filter(active=True)\
+            .filter(input_type__id=INPUT_TYPE_MANUAL)\
+            .filter(layer='COM')\
+            .filter(active=True)\
+            .exclude(prep_id__in=['Atlas'])\
+            .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
+        print(brains)
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
         atlas_coms = get_atlas_centers()
         common_structures = get_common_structure(brains)
 
         fig = make_subplots(
+<<<<<<< HEAD
             rows=3, cols=1,
             subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction", "Rough Alignment Error"))
         df1 = prepare_table_for_plot(atlas_coms, common_structures,
@@ -376,12 +389,37 @@ class ComBoxplotAdmin(admin.ModelAdmin):
         fig.update_layout(
             autosize=False,
             width=800,
+=======
+            rows=2, cols=1,
+            subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction"))
+        
+        df1 = prepare_table_for_plot(atlas_coms, common_structures,
+            brains,
+            person_id=2,
+            input_type_id=INPUT_TYPE_MANUAL)
+        print(df1.head())
+        
+        df2 = prepare_table_for_plot(atlas_coms, common_structures,
+            brains,
+            person_id=2,
+            input_type_id=INPUT_TYPE_CORRECTED)
+        
+        add_trace(df1,fig,1)
+        add_trace(df2,fig,2)
+        fig.update_xaxes(tickangle=45, showticklabels = True)
+        fig.update_layout(
+            autosize=False,
+            width=1000,
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
             height=1000,
             margin=dict(l=10, r=10, b=10, t=10, pad=4),
             paper_bgcolor="LightSteelBlue",
         )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
+<<<<<<< HEAD
         # Serialize and attach the workflow data to the template context
+=======
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
         title = 'Rigid Alignment Error for ' + ", ".join(brains)
         extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
 
