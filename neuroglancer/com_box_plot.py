@@ -1,5 +1,10 @@
+<<<<<<< HEAD
+from timeit import default_timer as timer
+from neuroglancer.atlas import get_centers_dict
+=======
 from brain.models import ScanRun
 from neuroglancer.atlas import align_atlas, brain_to_atlas_transform, get_centers_dict
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,17 +20,35 @@ def get_common_structure(brains):
 def get_brain_coms(brains, person_id, input_type_id):
     brain_coms = {}
     for brain in brains:
+<<<<<<< HEAD
+        brain_coms[brain] = get_centers_dict(prep_id=brain, 
+        person_id=person_id, 
+        input_type_id=input_type_id)
+=======
         brain_dict = get_centers_dict(prep_id=brain,  person_id=person_id,input_type_id=input_type_id)
         if len(brain_dict) == 0:
             brain_dict = get_centers_dict(prep_id=brain,  person_id=person_id,input_type_id=1)
 
         brain_coms[brain] = brain_dict
+<<<<<<< HEAD
+=======
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
+    end = timer()
+    print(f'get brain coms took {end - start} seconds to fetch {len(brain_coms)} centers')
+>>>>>>> 8fd926cc2b2872f68442a35fb67519fe057d0d21
     return brain_coms
 
 def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, input_type_id):
     brain_coms = get_brain_coms(brains, input_type_id = input_type_id, person_id = person_id )
     df = pd.DataFrame()
     for brain in brain_coms.keys():
+<<<<<<< HEAD
+        offset = [brain_coms[brain][s] - atlas_coms[s]
+                  if s in brain_coms[brain] else [np.nan, np.nan, np.nan]
+                  for s in common_structures]
+        offset = np.array(offset)
+        scale = np.array([10, 10, 20])
+=======
         
         try:
             scan_run = ScanRun.objects.filter(prep_id=brain)[0]
@@ -54,7 +77,13 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
         #          if s in brain_coms[brain] else [np.nan, np.nan, np.nan]
         #          for s in common_structures]
         offset = np.array(offsets)
+<<<<<<< HEAD
         scale = np.array([10, 10, 20])
+=======
+        scale = np.array([1,1,1])
+        #scale = np.array([10, 10, 20])
+>>>>>>> 2506b46b783fcb79b7a2a01c72870d13be9b69fb
+>>>>>>> 8fd926cc2b2872f68442a35fb67519fe057d0d21
         dx, dy, dz = (offset * scale).T
         dist = np.sqrt(dx * dx + dy * dy + dz * dz)
         df_brain = pd.DataFrame()
