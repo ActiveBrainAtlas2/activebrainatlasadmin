@@ -1,3 +1,4 @@
+from neuroglancer.atlas import get_centers_dict
 from brain.models import Animal
 import json
 from django.conf import settings
@@ -12,7 +13,7 @@ from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from neuroglancer.models import InputType, LayerData, UrlModel, Structure, Points, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
+from neuroglancer.models import InputType, LAUREN_ID, LayerData, UrlModel, Structure, Points, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
     ATLAS_Z_BOX_SCALE, Z_LENGTH
 import plotly.express as px
 from plotly.offline import plot
@@ -25,8 +26,7 @@ import pandas as pd
 from timeit import default_timer as timer
 from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
 from plotly.subplots import make_subplots
-from neuroglancer.models import UrlModel, LayerData,ComBoxplot
-from neuroglancer.atlas import get_atlas_centers
+from neuroglancer.models import UrlModel, LayerData,ComBoxplot, LAUREN_ID
 from plotly.subplots import make_subplots
 
 
@@ -295,11 +295,11 @@ class InputTypeAdmin(AtlasAdminModel):
 class LayerDataAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'input_type')
     ordering = ['prep', 'layer']
-    excluded_fields = ['created', 'updated', 'layer']
+    excluded_fields = ['created', 'updated']
     list_filter = ['created', 'active','input_type']
     search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer']
-    change_form_template = "add_annotation.html"
-    form = LayerForm
+    #change_form_template = "add_annotation.html"
+    #form = LayerForm
 
 
     def save_model(self, request, obj, form, change):
@@ -350,20 +350,20 @@ class ComBoxplotAdmin(admin.ModelAdmin):
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
         print(brains)
-        atlas_coms = get_atlas_centers()
+        atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
+
         common_structures = get_common_structure(brains)
 
         fig = make_subplots(
             rows=2, cols=1,
-            subplot_titles=("Rigid Alignment Error", "Rigid Alignment Error After Correction"))
+            subplot_titles=("Rigid Alignment Error on Original COMs", "Rigid Alignment Error After Correction"))
         
-        df1 = prepare_table_for_plot(atlas_coms, common_structures,
+        df1 = prepare_table_for_plot(atlas_centers, common_structures,
             brains,
             person_id=2,
             input_type_id=INPUT_TYPE_MANUAL)
-        print(df1.head())
         
-        df2 = prepare_table_for_plot(atlas_coms, common_structures,
+        df2 = prepare_table_for_plot(atlas_centers, common_structures,
             brains,
             person_id=2,
             input_type_id=INPUT_TYPE_CORRECTED)
@@ -373,9 +373,9 @@ class ComBoxplotAdmin(admin.ModelAdmin):
         fig.update_xaxes(tickangle=45, showticklabels = True)
         fig.update_layout(
             autosize=False,
-            width=1000,
-            height=1000,
-            margin=dict(l=10, r=10, b=10, t=10, pad=4),
+            width=800,
+            height=600,
+            margin=dict(l=10, r=10, b=10, t=20, pad=10),
             paper_bgcolor="LightSteelBlue",
         )  
         gantt_div = plot(fig, output_type='div', include_plotlyjs=False)

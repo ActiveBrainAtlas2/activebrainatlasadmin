@@ -1,23 +1,18 @@
 from brain.models import ScanRun
-from timeit import default_timer as timer
 from neuroglancer.atlas import align_atlas, brain_to_atlas_transform, get_centers_dict
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
 def get_common_structure(brains):
-    start = timer()
     common_structures = set()
     for brain in brains:
         common_structures = common_structures | set(get_centers_dict(brain).keys())
     common_structures = list(sorted(common_structures))
-    end = timer()
-    print(f'get common structures took {end - start} seconds')
     return common_structures
 
 
 def get_brain_coms(brains, person_id, input_type_id):
-    start = timer()
     brain_coms = {}
     for brain in brains:
         brain_dict = get_centers_dict(prep_id=brain,  person_id=person_id,input_type_id=input_type_id)
@@ -25,12 +20,9 @@ def get_brain_coms(brains, person_id, input_type_id):
             brain_dict = get_centers_dict(prep_id=brain,  person_id=person_id,input_type_id=1)
 
         brain_coms[brain] = brain_dict
-    end = timer()
-    print(f'get brain coms took {end - start} seconds to fetch {len(brain_coms)} centers')
     return brain_coms
 
 def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, input_type_id):
-    start = timer()
     brain_coms = get_brain_coms(brains, input_type_id = input_type_id, person_id = person_id )
     df = pd.DataFrame()
     for brain in brain_coms.keys():
@@ -62,8 +54,7 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
         #          if s in brain_coms[brain] else [np.nan, np.nan, np.nan]
         #          for s in common_structures]
         offset = np.array(offsets)
-        scale = np.array([1,1,1])
-        #scale = np.array([10, 10, 20])
+        scale = np.array([10, 10, 20])
         dx, dy, dz = (offset * scale).T
         dist = np.sqrt(dx * dx + dy * dy + dz * dz)
         df_brain = pd.DataFrame()
@@ -75,12 +66,9 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
             df_brain = df_brain.append(pd.DataFrame(data), ignore_index=True)
         df_brain['brain'] = brain
         df = df.append(df_brain, ignore_index=True)
-    end = timer()
-    print(f'prepare table for plot took {end - start} seconds')
     return df
 
 def add_trace(df,fig,rowi):
-    start = timer()
     colors = ["#ee6352","#08b2e3","#484d6d","#57a773"]
     colori = 0
     for row_type in ['dx','dy','dz','dist']:
@@ -94,7 +82,5 @@ def add_trace(df,fig,rowi):
                 row = rowi,col=1
                 )
         colori+=1
-    end = timer()
-    print(f'add_trace took {end - start} seconds')
 
 
