@@ -7,10 +7,8 @@ import numpy as np
 from django.contrib.auth.models import User
 
 from neuroglancer.models import Structure, LayerData, Transformation, \
-    ROW_LENGTH, COL_LENGTH, Z_LENGTH, LAUREN_ID, \
-    ATLAS_RAW_SCALE, ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE
+    LAUREN_ID, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
-from timeit import default_timer as timer
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -65,9 +63,7 @@ def align_atlas(animal, input_type_id=None, person_id=None):
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
-    atlas_box_size=(ROW_LENGTH, COL_LENGTH, Z_LENGTH)
-    atlas_box_scales=(ATLAS_X_BOX_SCALE, ATLAS_Y_BOX_SCALE, ATLAS_Z_BOX_SCALE)
-    atlas_centers = get_atlas_centers(atlas_box_size, atlas_box_scales, ATLAS_RAW_SCALE)
+    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL, person_id=LAUREN_ID)
     reference_centers = get_centers_dict(animal, input_type_id=input_type_id, person_id=person_id)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
@@ -81,9 +77,7 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         # align animal to atlas
         common_keys = atlas_centers.keys() & reference_centers.keys()
         dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
-        dst_point_set = np.diag(atlas_box_scales) @ dst_point_set
         src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
-        src_point_set = np.diag(reference_scales) @ src_point_set
 
         R, t = align_point_sets(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T # production version
@@ -123,6 +117,8 @@ def brain_to_atlas_transform(
     # Bring atlas coordinates back to atlas space
     atlas_coord = np.linalg.inv(atlas_scale) @ atlas_coord_phys
 
+    altas_coord = r @ brain_coord + t
+
     return atlas_coord.T[0] # Convert back to a row vector
 
 def atlas_to_brain_transform(
@@ -156,28 +152,6 @@ def atlas_to_brain_transform(
     brain_coord = np.linalg.inv(brain_scale) @ brain_coord_phys
 
     return brain_coord.T[0] # Convert back to a row vector
-
-def get_atlas_centers(
-        atlas_box_size=(1000, 1000, 300),
-        atlas_box_scales=(10, 10, 20),
-        atlas_raw_scale=10):
-    """ atlas_raw_scale=10 refers to 10.0um which means each voxel size is 10 microns
-        We want the original COMs entered by the anatomist, in this case it is Lauren
-        whose ID = 16
-    """
-
-        
-    atlas_box_scales = np.array(atlas_box_scales)
-    atlas_box_size = np.array(atlas_box_size)
-    atlas_box_center = atlas_box_size / 2
-    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL, person_id=LAUREN_ID)
-
-    for structure, com in atlas_centers.items():
-        # transform into the atlas box coordinates that neuroglancer assumes
-        center = atlas_box_center + np.array(com) * atlas_raw_scale / atlas_box_scales
-        atlas_centers[structure] = center
-
-    return atlas_centers
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
 
@@ -285,20 +259,3 @@ def update_center_of_mass(urlModel):
                                     logger.error(f'Error inserting manual {structure.abbreviation}')
 
 
-
-def get_common_structures(brains):
-    common_structures = set()
-    for brain in brains:
-        common_structures = common_structures | set(get_centers_dict(brain).keys())
-    common_structures = list(sorted(common_structures))
-    return common_structures
-
-
-def get_brain_coms(brains, person_id, input_type_id):
-    brain_coms = {}
-    for brain in brains:
-        brain_coms[brain] = get_centers_dict(prep_id=brain, 
-                                            person_id=person_id, 
-                                            input_type_id=input_type_id
-                                            )
-    return brain_coms
