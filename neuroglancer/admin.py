@@ -348,7 +348,7 @@ class ComBoxplotAdmin(admin.ModelAdmin):
             .filter(active=True)\
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-        brains = ['DK39']
+        #brains = ['DK39']
         atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
         #atlas_centers = get_atlas_centers()
         common_structures = get_common_structure(brains)
