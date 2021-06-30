@@ -26,8 +26,8 @@ def get_brain_coms(brains, person_id, input_type_id):
 def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, input_type_id):
     df = pd.DataFrame()
     for brain in brains:
-        brain_com = get_centers_dict(prep_id=brain,  person_id=28,input_type_id=4)
-        #brain_com = get_centers_dict(prep_id=brain,  person_id=2,input_type_id=2)
+        ##WORKSbrain_com = get_centers_dict(prep_id=brain,  person_id=28,input_type_id=4)
+        brain_com = get_centers_dict(prep_id=brain,  person_id=2,input_type_id=2)
         if len(brain_com) == 0:
             print('defaulting back to default for ', brain)
             brain_com = get_centers_dict(prep_id=brain,  person_id=person_id,input_type_id=1)
@@ -37,18 +37,18 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
         except ScanRun.DoesNotExist:
             print('no scan run for ', brain)
 
-        #structures = sorted(brain_com.keys())
-        #common_keys = atlas_coms.keys() & brain_com.keys()
-        #dst_point_set = np.array([atlas_coms[s] for s in structures if s in common_keys]).T
-        #src_point_set = np.array([brain_com[s] for s in structures if s in common_keys]).T
+        structures = sorted(brain_com.keys())
+        common_keys = atlas_coms.keys() & brain_com.keys()
+        dst_point_set = np.array([atlas_coms[s] for s in structures if s in common_keys]).T
+        src_point_set = np.array([brain_com[s] for s in structures if s in common_keys]).T
 
-        #r, t = align_point_sets(src_point_set, dst_point_set)
-        brain_scale = [scan_run.resolution, scan_run.resolution, 20]
-        #brain_scalae = [1,1,1]
+        r, t = align_point_sets(src_point_set, dst_point_set)
+        #brain_scale = [scan_run.resolution, scan_run.resolution, 20]
+        #brain_scale = [1,1,1]
         #t = t / np.array(brain_scale) # production version
         #t = t.T
         #r, t = align_atlas(brain, input_type_id=1, person_id=2)
-        r, t = get_transformation_matrix(brain)
+        #r, t = get_transformation_matrix(brain)
 
         scale = np.array([10, 10, 20])
          
@@ -65,12 +65,13 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
                 #brain_coords = r @ brain_coords + t
                 #transformed =  brain_coords.T[0] # Convert back to a row vector
                 # mimic add aligned
-                #transformed = brain_to_atlas_transform(brain_coords, r, t, brain_scale=brain_scale)
+                transformed = brain_to_atlas_transform(brain_coords, r, t)
 
-                transformed = brain_coords
+                #transformed = brain_coords
             else:
                 transformed = np.array([x,y,section])
-            transformed = transformed * scale
+            #transformed = transformed / scale
+            # transforms have to be scaled when they are transformed in the DB with pid=28 and ITID=4
             offsets.append( transformed - atlas_coms[s] )
 
         #offsetX = [brain_coms[brain][s] - atlas_coms[s]
@@ -196,10 +197,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     return row_dict
 
 
-def brain_to_atlas_transform(
-    brain_coord, r, t,
-    brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)):
+def brain_to_atlas_transform(brain_coord, r, t):
     """
     Takes an x,y,z brain coordinates as a list, and a rotation matrix and transform vector.
     Returns the point in atlas coordinates.
@@ -211,6 +209,8 @@ def brain_to_atlas_transform(
     The corresponding reverse transformation is:
         brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
     """
+    brain_scale=(1,1,1)
+    atlas_scale=(1,1,1)
     brain_scale = np.diag(brain_scale)
     atlas_scale = np.diag(atlas_scale)
 
@@ -247,16 +247,3 @@ def add_trace(df,fig,rowi):
         colori+=1
 
 
-
-def get_transformation_matrix(animal):
-    import requests
-    url = f'https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/{animal}/corrected/2'
-    response = requests.get(url)
-    response.raise_for_status()
-    # access JSOn content
-    transformation_matrix = response.json()
-
-
-    r = np.array(transformation_matrix['rotation'])
-    t = np.array(transformation_matrix['translation'])
-    return r,t
