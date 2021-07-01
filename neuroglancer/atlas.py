@@ -89,11 +89,12 @@ def align_atlas(animal, input_type_id=None, person_id=None):
 
 def brain_to_atlas_transform(
     brain_coord, r, t,
-    brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)):
+    brain_scale=(1,1,1),
+    atlas_scale=(1,1,1)):
     """
     Takes an x,y,z brain coordinates as a list, and a rotation matrix and transform vector.
     Returns the point in atlas coordinates.
+    All data in the layer_data should be in microns, hence the default scaling of 1,1,1
     
     The provided r, t is the affine transformation from brain to atlas such that:
         t_phys = atlas_scale @ t
@@ -254,8 +255,7 @@ def update_center_of_mass(urlModel):
                                         layer = 'COM',
                                         active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=int(z))
-                                except:
-                                    print(f'Error inserting manual {structure.abbreviation}')
-                                    logger.error(f'Error inserting manual {structure.abbreviation}')
+                                except Exception as e:
+                                    logger.error(f'Error inserting manual {structure.abbreviation}', e)
 
 

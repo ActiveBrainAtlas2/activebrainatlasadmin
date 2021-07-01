@@ -343,14 +343,12 @@ class ComBoxplotAdmin(admin.ModelAdmin):
         INPUT_TYPE_MANUAL = 1
         INPUT_TYPE_CORRECTED = 2
         brains = list(LayerData.objects.filter(active=True)\
-            .filter(input_type__id=INPUT_TYPE_MANUAL)\
+            .filter(input_type__id=INPUT_TYPE_CORRECTED)\
             .filter(layer='COM')\
             .filter(active=True)\
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-        #brains = ['DK39']
         atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
-        #atlas_centers = get_atlas_centers()
         common_structures = get_common_structure(brains)
 
         fig = make_subplots(

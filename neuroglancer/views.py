@@ -1,3 +1,4 @@
+from brain.models import ScanRun
 from neuroglancer.atlas import align_atlas
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -15,7 +16,7 @@ from scipy.interpolate import UnivariateSpline,splprep, splev
 
 from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, LayerData, ANNOTATION_ID
+from neuroglancer.models import ATLAS_Z_BOX_SCALE, InputType, UrlModel, LayerData, ANNOTATION_ID
 
 import logging
 logging.basicConfig()
@@ -90,11 +91,24 @@ class Annotation(views.APIView):
         except LayerData.DoesNotExist:
             raise Http404
 
+        try:
+            query_set = ScanRun.objects.filter(prep_id=prep_id)
+        except ScanRun.DoesNotExist:
+            scan_run = None
+
+        if query_set is not None and len(query_set) > 0:
+            scan_run = query_set[0]
+            scale_xy = scan_run.resolution
+            z_scale = 20
+        else:
+            scale_xy = 1
+            z_scale = 1
+
         if input_type_id != 5:
             for row  in rows:
                 point_dict = {}
                 point_dict['id'] = random_string()
-                point_dict['point'] = [row.x, row.y, row.section]
+                point_dict['point'] = [row.x/scale_xy, row.y/scale_xy, row.section/z_scale]
                 point_dict['type'] = 'point'
                             
                 if 'COM' in layer_name:
@@ -107,9 +121,9 @@ class Annotation(views.APIView):
             data_dict = defaultdict(list)
             for row in rows:
                 id = row.segment_id
-                x = row.x
-                y = row.y
-                section = row.section
+                x = row.x / scale_xy
+                y = row.y / scale_xy
+                section = row.section / z_scale
                 data_dict[(id,section)].append((x,y))
 
             for (k,section), points in data_dict.items():
@@ -137,36 +151,6 @@ class Annotation(views.APIView):
 
         return Response(serializer.data)
 
-
-"""
-json for line:
-{
-          "id": "6ce1a6e0b25292ed7d95abc19e29beaf61471718",
-          "pointA": [
-            23453.7265625,
-            6428.55322265625,
-            236.49998474121094
-          ],
-          "pointB": [
-            25050.107421875,
-            11495.3271484375,
-            236.49998474121094
-          ],
-          "type": "line"
-        },
-json for point
-{
-          "id": "c6f81a41abdcf7d6b419a3353b982abc03e0a37e",
-          "point": [
-            47751.0859375,
-            21584.93359375,
-            276.5000305175781
-          ],
-          "type": "point"
-        }
- """       
-
-
 class Annotations(views.APIView):
     """
     Fetch UrlModel and return a set of two dictionaries. One is from the layer_data
@@ -181,7 +165,7 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True)\
+            .filter(active=True).filter(input_type_id__in=[1,2,5]).filter(layer__isnull=False)\
             .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
         for layer in layers:
             data.append({
@@ -224,8 +208,8 @@ class Rotations(views.APIView):
     def get(self, request, format=None):
         data = []
         coms = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
-            .filter(layer='COM')\
-            .filter(active=True).filter(input_type__input_type__in=['manual','corrected'])\
+            .filter(layer='COM').filter(person_id=2)\
+            .filter(active=True).filter(input_type__input_type__in=['corrected'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
         for com in coms:
             data.append({
@@ -237,22 +221,6 @@ class Rotations(views.APIView):
         
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
-
-
-def interpolateXXX(points, new_len):
-    x = [v[0] for v in points]
-    y = [v[1] for v in points]
-    vx = np.array(x)
-    vy = np.array(y)
-    indices = np.arange(0,len(points))
-    new_indices = np.linspace(0,len(points)-1,new_len)
-    splx = UnivariateSpline(indices,vx,k=3,s=0)
-    x_array = splx(new_indices)
-    sply = UnivariateSpline(indices,vy,k=3,s=1)
-    y_array = sply(new_indices)
-    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
-    a = list(map(tuple, arr_2d))
-    return a
 
 
 def interpolate(points, new_len):
