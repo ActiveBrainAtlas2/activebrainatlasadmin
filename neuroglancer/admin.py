@@ -350,6 +350,8 @@ class ComBoxplotAdmin(admin.ModelAdmin):
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
         atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
         common_structures = get_common_structure(brains)
+        common_structures.remove('4N_L')
+        common_structures.remove('10N_L')
 
         fig = make_subplots(
             rows=1, cols=1,
@@ -359,7 +361,7 @@ class ComBoxplotAdmin(admin.ModelAdmin):
             brains,
             person_id=2,
             input_type_id=INPUT_TYPE_MANUAL)
-        print(df1.query("structure == '10N_L'").head())
+        #print(df1.query("structure == '10N_L'").head())
         
         
         add_trace(df1,fig,1)

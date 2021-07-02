@@ -1,5 +1,5 @@
 from brain.models import ScanRun
-from neuroglancer.atlas import align_atlas
+from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
@@ -91,18 +91,7 @@ class Annotation(views.APIView):
         except LayerData.DoesNotExist:
             raise Http404
 
-        try:
-            query_set = ScanRun.objects.filter(prep_id=prep_id)
-        except ScanRun.DoesNotExist:
-            scan_run = None
-
-        if query_set is not None and len(query_set) > 0:
-            scan_run = query_set[0]
-            scale_xy = scan_run.resolution
-            z_scale = 20
-        else:
-            scale_xy = 1
-            z_scale = 1
+        scale_xy, z_scale = get_scales(prep_id)
 
         if input_type_id != 5:
             for row  in rows:

@@ -221,6 +221,10 @@ def update_center_of_mass(urlModel):
                         .filter(layer='COM')\
                         .update(active=False)
                     
+                    scale_xy, z_scale = get_scales(prep.prep_id)
+
+
+                    """
                     transformations = Transformation.objects.filter(person=person)\
                         .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
@@ -230,12 +234,12 @@ def update_center_of_mass(urlModel):
                         transformation = transformations[0]
                     else:
                         transformation = None
-                    
+                    """
                     annotation = layer['annotations']
                     for com in annotation:
-                        x = com['point'][0]
-                        y = com['point'][1]
-                        z = com['point'][2]
+                        x = com['point'][0] * scale_xy
+                        y = com['point'][1] * scale_xy
+                        z = com['point'][2] * z_scale
                         if 'description' in com:
                             abbreviation = str(com['description']).replace(
                                 '\n', '').strip()
@@ -251,11 +255,29 @@ def update_center_of_mass(urlModel):
                                 try:
                                     LayerData.objects.create(
                                         prep=prep, structure=structure,
-                                        transformation = transformation,
                                         layer = 'COM',
                                         active=True, person=person, input_type_id=MANUAL,
-                                            x=x, y=y, section=int(z))
+                                            x=x, y=y, section=z)
                                 except Exception as e:
                                     logger.error(f'Error inserting manual {structure.abbreviation}', e)
 
 
+def get_scales(prep_id):
+    """
+    A generic method to safely query and return resolutions
+    param: prep_id varchar of the primary key of the animal
+    """
+    try:
+        query_set = ScanRun.objects.filter(prep_id=prep_id)
+    except ScanRun.DoesNotExist:
+        scan_run = None
+
+    if query_set is not None and len(query_set) > 0:
+        scan_run = query_set[0]
+        scale_xy = scan_run.resolution
+        z_scale = ATLAS_Z_BOX_SCALE
+    else:
+        scale_xy = 1.0
+        z_scale = 1.0
+
+    return scale_xy, z_scale
