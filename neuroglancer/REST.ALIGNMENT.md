@@ -3,7 +3,7 @@
 1. There are several files in this repository which are used for this process:
     1. [views.py](views.py)
     1. [atlas.py](atlas.py)
-1. User selects a brain from a dropdown menu which has 3 variables to send to the REST API.
+1. In Neuroglancer the user selects a brain from a dropdown menu which has 3 variables to send to the REST API.
     1. Brain ID
     1. Input type (currently we are only using the 'corrected' COMs)
     1. User ID (currently this defaults to Beth as she did all the manual entry of the COMs)
