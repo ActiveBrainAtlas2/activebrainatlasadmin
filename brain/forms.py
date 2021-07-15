@@ -140,10 +140,11 @@ def save_slide_model(self, request, obj, form, change):
         if qc_value == OK and qc_value != current_qc:
             set_scene_active(obj.id, scene_number)
 
-    for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
-        if qc_value in [OUTOFFOCUS, BADTISSUE] and qc_value != current_qc:
-            tifs = find_closest_neighbor(obj.id, scene_number)
-            create_scene(tifs, scene_number)
+    # taken out 15 jul 2021
+    #for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
+    #    if qc_value in [OUTOFFOCUS, BADTISSUE] and qc_value != current_qc:
+    #        tifs = find_closest_neighbor(obj.id, scene_number)
+    #        create_scene(tifs, scene_number)
 
     for qc_value, current_qc, scene_number in zip(qc_values, current_qcs, scene_numbers):
         if qc_value == END and qc_value != current_qc:
