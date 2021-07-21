@@ -118,7 +118,7 @@ def brain_to_atlas_transform(
     # Bring atlas coordinates back to atlas space
     atlas_coord = np.linalg.inv(atlas_scale) @ atlas_coord_phys
 
-    altas_coord = r @ brain_coord + t
+    atlas_coord = r @ brain_coord + t
 
     return atlas_coord.T[0] # Convert back to a row vector
 
@@ -153,6 +153,7 @@ def atlas_to_brain_transform(
     brain_coord = np.linalg.inv(brain_scale) @ brain_coord_phys
 
     return brain_coord.T[0] # Convert back to a row vector
+
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
 
