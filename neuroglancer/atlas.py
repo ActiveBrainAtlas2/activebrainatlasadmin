@@ -87,72 +87,38 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         t = np.zeros((3,1))
     return R, t
 
-def brain_to_atlas_transform(
-    brain_coord, r, t,
-    brain_scale=(1,1,1),
-    atlas_scale=(1,1,1)):
+
+def atlas_to_brain_transform(atlas_coord, r, t):
     """
-    Takes an x,y,z brain coordinates as a list, and a rotation matrix and transform vector.
-    Returns the point in atlas coordinates.
-    All data in the layer_data should be in microns, hence the default scaling of 1,1,1
-    
-    The provided r, t is the affine transformation from brain to atlas such that:
-        t_phys = atlas_scale @ t
-        atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    The corresponding reverse transformation is:
-        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
+    Takes an x,y,z brain coordinates, and a rotation matrix and translation vector.
+    Returns the point in atlas coordinates in micrometers.
+    params:
+        atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
+        r: float of the rotation matrix
+        t: vector of the translation matrix
     """
-    brain_scale = np.diag(brain_scale)
-    atlas_scale = np.diag(atlas_scale)
-
-    # Bring brain coordinates to physical space
-    brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
-    brain_coord_phys = brain_scale @ brain_coord
-    
-    # Apply affine transformation in physical space
-    # The next line corresponds to method: align_atlas atlas_scales
-    t_phys = brain_scale @ t
-    atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    # Bring atlas coordinates back to atlas space
-    atlas_coord = np.linalg.inv(atlas_scale) @ atlas_coord_phys
-
-    atlas_coord = r @ brain_coord + t
-
-    return atlas_coord.T[0] # Convert back to a row vector
-
-def atlas_to_brain_transform(
-    atlas_coord, r, t,
-    brain_scale=(0.325, 0.325, 20),
-    atlas_scale=(10, 10, 20)):
-    """
-    Takes an x,y,z atlas coordinates, and a rotation matrix and transform vector.
-    Returns the point in brain coordinates.
-    
-    The provided r, t is the affine transformation from brain to atlas such that:
-        t_phys = atlas_scale @ t
-        atlas_coord_phys = r @ brain_coord_phys + t_phys
-
-    The corresponding reverse transformation is:
-        brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
-    """
-    brain_scale = np.diag(brain_scale)
-    atlas_scale = np.diag(atlas_scale)
-
     # Bring atlas coordinates to physical space
     atlas_coord = np.array(atlas_coord).reshape(3, 1) # Convert to a column vector
-    atlas_coord_phys = atlas_scale @ atlas_coord
-    
     # Apply affine transformation in physical space
-    t_phys = atlas_scale @ t
     r_inv = np.linalg.inv(r)
-    brain_coord_phys = r_inv @ atlas_coord_phys - r_inv @ t_phys
-
+    brain_coord_phys = r_inv @ atlas_coord - (r_inv @  t)
     # Bring brain coordinates back to brain space
-    brain_coord = np.linalg.inv(brain_scale) @ brain_coord_phys
+    return brain_coord_phys.T[0] # Convert back to a row vector
 
-    return brain_coord.T[0] # Convert back to a row vector
+
+def brain_to_atlas_transform(brain_coord, r, t):
+    """
+    Takes an x,y,z brain coordinates, and a rotation matrix and translation vector.
+    params:
+        atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
+        r: float of the rotation matrix
+        t: vector of the translation matrix
+    Returns the point in atlas coordinates in micrometers.
+    """
+    # Transform brain coordinates to physical space
+    brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
+    atlas_coord = r @ brain_coord + t
+    return atlas_coord.T[0] # Convert back to a row vector
 
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
@@ -278,7 +244,7 @@ def get_scales(prep_id):
         scale_xy = scan_run.resolution
         z_scale = ATLAS_Z_BOX_SCALE
     else:
-        scale_xy = 1.0
-        z_scale = 1.0
+        scale_xy = 1
+        z_scale = 1
 
     return scale_xy, z_scale
