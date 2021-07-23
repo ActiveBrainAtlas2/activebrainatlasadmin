@@ -247,4 +247,5 @@ def get_scales(prep_id):
         scale_xy = 1
         z_scale = 1
 
+    print('get scales', prep_id, scale_xy, z_scale)
     return scale_xy, z_scale
