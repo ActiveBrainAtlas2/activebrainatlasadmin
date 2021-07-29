@@ -22,7 +22,6 @@ from django.conf.urls.static import static
 from activebrainatlas.views import SessionVarView
 from workflow.gantt_view import gantt
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path(r'graph', gantt),

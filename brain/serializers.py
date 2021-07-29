@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from brain.models import Animal
 
 class AnimalSerializer(serializers.ModelSerializer):

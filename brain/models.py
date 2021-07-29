@@ -65,8 +65,6 @@ class Animal(AtlasModel):
 
     histogram.short_description = 'Histogram'
 
-
-
 class FileOperation(AtlasModel):
     id = models.AutoField(primary_key=True)
     tif = models.ForeignKey('SlideCziToTif', models.CASCADE)
@@ -80,7 +78,6 @@ class FileOperation(AtlasModel):
         db_table = 'file_operation'
         verbose_name = 'File Operation'
         verbose_name_plural = 'File Operations'
-
 
 class Histology(AtlasModel):
     id = models.AutoField(primary_key=True)
@@ -121,8 +118,6 @@ class Histology(AtlasModel):
 
         return histology_label
 
-
-
 class Injection(AtlasModel):
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
@@ -151,8 +146,6 @@ class Injection(AtlasModel):
     def __str__(self):
         return "{} {}".format(self.prep.prep_id, self.comments)
 
-
-
 class InjectionVirus(AtlasModel):
     id = models.AutoField(primary_key=True)
     injection = models.ForeignKey(Injection, models.CASCADE)
@@ -163,7 +156,6 @@ class InjectionVirus(AtlasModel):
         db_table = 'injection_virus'
         verbose_name = 'Injection Virus'
         verbose_name_plural = 'Injection Viruses'
-
 
 class OrganicLabel(AtlasModel):
     id = models.AutoField(primary_key=True)
@@ -192,8 +184,6 @@ class OrganicLabel(AtlasModel):
 
     def __str__(self):
         return "{} {}".format(self.label_id, self.label_type)
-
-
 
 class ScanRun(AtlasModel):
     id = models.AutoField(primary_key=True)
@@ -225,7 +215,6 @@ class ScanRun(AtlasModel):
     class Meta:
         managed = False
         db_table = 'scan_run'
-
 
 class Slide(AtlasModel):
     id = models.AutoField(primary_key=True)
@@ -281,7 +270,6 @@ class Slide(AtlasModel):
         managed = False
         db_table = 'slide'
 
-
 class SlideCziToTif(AtlasModel):
     id = models.AutoField(primary_key=True)
     slide = models.ForeignKey(Slide, models.CASCADE, related_name='slideczis')
@@ -311,8 +299,6 @@ class SlideCziToTif(AtlasModel):
 
     def __str__(self):
         return "{}".format(self.file_name)
-
-
 
 class Section(AtlasModel):
     id = models.AutoField(primary_key=True)

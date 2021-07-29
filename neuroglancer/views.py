@@ -38,7 +38,6 @@ class UrlViewSet(viewsets.ModelViewSet):
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
 
-
 class AlignAtlasView(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
     It will return the json rotation and translation matrix"""
@@ -59,7 +58,6 @@ class AlignAtlasView(views.APIView):
         return JsonResponse(data)
 # from urldata request, take the ID of the URL model and return all data in escaped format
 
-
 class UrlDataView(views.APIView):
     """This will be run when a a ID is sent to https://site.com/activebrainatlas/urldata?id=999
     Where 999 is the primary key of the url model"""
@@ -71,7 +69,6 @@ class UrlDataView(views.APIView):
         id = serializer.validated_data['id']
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
-
 
 class Annotation(views.APIView):
     """
@@ -167,7 +164,6 @@ class Annotations(views.APIView):
         serializer = AnnotationsSerializer(data, many=True)
         return Response(serializer.data)
 
-
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
     It will return the json rotation and translation matrix
@@ -186,7 +182,6 @@ class Rotation(views.APIView):
         data['translation'] = t.tolist()
 
         return JsonResponse(data)
-
 
 class Rotations(views.APIView):
     """
@@ -211,7 +206,6 @@ class Rotations(views.APIView):
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
 
-
 def interpolate(points, new_len):
     points = np.array(points)
     pu = points.astype(int)
@@ -225,7 +219,6 @@ def interpolate(points, new_len):
     x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
     return list(map(tuple, arr_2d))
-
 
 def get_input_type_id(input_type):
     input_type_id = 0
