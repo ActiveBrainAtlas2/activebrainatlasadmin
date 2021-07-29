@@ -86,7 +86,7 @@ def update_center_of_mass(urlModel):
     It does lots of checks to make sure it is in the correct format,
     including:
         layer must be named COM
-        structure name just be in the description field
+        structure name must be in the description field
         structures must exactly match the structure names in the database,
         though this script does strip line breaks, white space off.
     :param urlModel: the long url from neuroglancer
@@ -110,8 +110,8 @@ def update_center_of_mass(urlModel):
         layers = json_txt['layers']
         for layer in layers:
             if 'annotations' in layer:
-                lname = str(layer['name']).upper().strip()
-                if lname == 'COM':
+                layer_name = str(layer['name']).upper().strip()
+                if layer_name == 'COM':
                     existing_structures = set()
                     existing_layer_data = LayerData.objects.filter(person=person)\
                         .filter(input_type_id=MANUAL)\
@@ -132,8 +132,7 @@ def update_center_of_mass(urlModel):
                             abbreviation = str(com['description']).replace(
                                 '\n', '').strip()
                             try:
-                                structure = Structure.objects.get(
-                                    abbreviation=abbreviation)
+                                structure = Structure.objects.get(abbreviation=abbreviation)
                             except Structure.DoesNotExist:
                                 print(f'Structure {abbreviation} does not exist')
                                 logger.error("Structure does not exist")

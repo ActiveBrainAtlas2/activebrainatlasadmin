@@ -17,15 +17,7 @@ def image_list(request):
     if prep_id:
         title = 'Thumbnail images for: {}'.format(prep_id)
         sections = Section.objects.filter(prep_id=prep_id).order_by('file_name')
-
-
-
-    return render(request, 'list.html',{'animals': animals,
-                                        'sections': sections,
-                                        'form': form,
-                                        'prep_id': prep_id,
-                                        'title': title})
-
+    return render(request, 'list.html',{'animals': animals,'sections': sections,'form': form,'prep_id': prep_id,'title': title})
 
 class AnimalList(views.APIView):
     """

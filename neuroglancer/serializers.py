@@ -11,14 +11,11 @@ from django.contrib.auth.models import User
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-
 class AnimalInputSerializer(serializers.Serializer):
     animal = serializers.CharField()
 
-
 class IdSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-
 
 class AnnotationSerializer(serializers.Serializer):
     """
@@ -60,7 +57,6 @@ class LayerDataSerializer(serializers.ModelSerializer):
         model = LayerData
         fields = '__all__'
 
-
 class CenterOfMassSerializer(serializers.ModelSerializer):
     """Takes care of entering a set of points"""
     structure_id = serializers.CharField()
@@ -97,7 +93,6 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
 
         return com
 
-
 class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
@@ -110,8 +105,6 @@ class RotationSerializer(serializers.Serializer):
     input_type = serializers.CharField()
     person_id = serializers.IntegerField()
     username = serializers.CharField()
-
-
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.

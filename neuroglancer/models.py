@@ -6,9 +6,7 @@ import json
 import pandas as pd
 from enum import Enum
 from django.template.defaultfilters import truncatechars
-
 from brain.models import AtlasModel, Animal
-
 
 COL_LENGTH = 1000
 ROW_LENGTH = 1000
@@ -30,8 +28,6 @@ class AnnotationChoice(str, Enum):
 
     def __str__(self):
         return self.value
-
-
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -216,7 +212,6 @@ class Transformation(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.com_name)
 
-
 class LayerData(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
@@ -247,7 +242,6 @@ class LayerData(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
 
-    
 class ComBoxplot(models.Model):
     class Meta:
         managed = False
