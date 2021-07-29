@@ -6,51 +6,14 @@ so we can resuse them througout the code.
 import numpy as np
 from django.contrib.auth.models import User
 
-from neuroglancer.models import Structure, LayerData, Transformation, \
-    LAUREN_ID, ATLAS_Z_BOX_SCALE
+from neuroglancer.models import Structure, LayerData, LAUREN_ID, ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
+from abakit.registration.algorithm import umeyama
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 MANUAL = 1
 
-
-def align_point_sets(src, dst, with_scaling=True):
-    """
-    Analytically computes a transformation that minimizes the squared error between source and destination.
-    ------------------------------------------------------
-    src is the dictionary of the brain we want to align
-    dst is the dictionary of the atlas structures
-    Defaults to scaling true, which means the transformation is rigid and a uniform scale.
-    returns the linear transformation r, and the translation vector t
-    """
-    assert src.shape == dst.shape
-    assert len(src.shape) == 2
-    m, n = src.shape  # dimension, number of points
-
-    src_mean = np.mean(src, axis=1).reshape(-1, 1)
-    dst_mean = np.mean(dst, axis=1).reshape(-1, 1)
-
-    src_demean = src - src_mean
-    dst_demean = dst - dst_mean
-
-    u, s, vh = np.linalg.svd(dst_demean @ src_demean.T / n)
-
-    # deal with reflection
-    e = np.ones(m)
-    if np.linalg.det(u) * np.linalg.det(vh) < 0:
-        print('reflection detected')
-        e[-1] = -1
-
-    r = u @ np.diag(e) @ vh
-
-    if with_scaling:
-        src_var = (src_demean ** 2).sum(axis=0).mean()
-        c = sum(s * e) / src_var
-        r *= c
-
-    t = dst_mean - r @ src_mean
-    return r, t
 
 def align_atlas(animal, input_type_id=None, person_id=None):
     """
@@ -79,7 +42,7 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
         src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
 
-        R, t = align_point_sets(src_point_set, dst_point_set)
+        R, t = umeyama(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T # production version
 
     else:
@@ -87,38 +50,6 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         t = np.zeros((3,1))
     return R, t
 
-
-def atlas_to_brain_transform(atlas_coord, r, t):
-    """
-    Takes an x,y,z brain coordinates, and a rotation matrix and translation vector.
-    Returns the point in atlas coordinates in micrometers.
-    params:
-        atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
-        r: float of the rotation matrix
-        t: vector of the translation matrix
-    """
-    # Bring atlas coordinates to physical space
-    atlas_coord = np.array(atlas_coord).reshape(3, 1) # Convert to a column vector
-    # Apply affine transformation in physical space
-    r_inv = np.linalg.inv(r)
-    brain_coord_phys = r_inv @ atlas_coord - (r_inv @  t)
-    # Bring brain coordinates back to brain space
-    return brain_coord_phys.T[0] # Convert back to a row vector
-
-
-def brain_to_atlas_transform(brain_coord, r, t):
-    """
-    Takes an x,y,z brain coordinates, and a rotation matrix and translation vector.
-    params:
-        atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
-        r: float of the rotation matrix
-        t: vector of the translation matrix
-    Returns the point in atlas coordinates in micrometers.
-    """
-    # Transform brain coordinates to physical space
-    brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
-    atlas_coord = r @ brain_coord + t
-    return atlas_coord.T[0] # Convert back to a row vector
 
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
@@ -181,27 +112,17 @@ def update_center_of_mass(urlModel):
             if 'annotations' in layer:
                 lname = str(layer['name']).upper().strip()
                 if lname == 'COM':
-                    LayerData.objects.filter(person=person)\
+                    existing_structures = set()
+                    existing_layer_data = LayerData.objects.filter(person=person)\
                         .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .filter(layer='COM')\
-                        .update(active=False)
+
+                    for s in existing_layer_data:
+                        existing_structures.add(s.structure.id)
                     
                     scale_xy, z_scale = get_scales(prep.prep_id)
-
-
-                    """
-                    transformations = Transformation.objects.filter(person=person)\
-                        .filter(input_type_id=MANUAL)\
-                        .filter(prep=prep)\
-                        .filter(active=True).all()
-
-                    if len(transformations) > 0:
-                        transformation = transformations[0]
-                    else:
-                        transformation = None
-                    """
                     annotation = layer['annotations']
                     for com in annotation:
                         x = com['point'][0] * scale_xy
@@ -218,15 +139,38 @@ def update_center_of_mass(urlModel):
                                 logger.error("Structure does not exist")
 
                             # Create the manual COM
+                            # we do an upsert here. UPDATE/INSERT
                             if structure is not None and prep is not None and person is not None:
-                                try:
+                                
+                                if structure.id in existing_structures:
+                                    print(f'Updating {structure.abbreviation}')
+                                    LayerData.objects.filter(person=person)\
+                                        .filter(input_type_id=MANUAL)\
+                                        .filter(prep=prep)\
+                                        .filter(active=True)\
+                                        .filter(layer='COM')\
+                                        .filter(structure=structure)\
+                                        .update(x=x, y=y, section=z)    
+                                    # now pop off the structure from the existing structures
+                                    existing_structures.discard(structure.id)
+                                else:
+                                    print(f'Inserting {structure.abbreviation}')
                                     LayerData.objects.create(
                                         prep=prep, structure=structure,
                                         layer = 'COM',
                                         active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=z)
-                                except Exception as e:
-                                    logger.error(f'Error inserting manual {structure.abbreviation}', e)
+
+                    # delete any that still exist in the structures
+                    for s in existing_structures:
+                        print(f'deleting {s}')
+                        LayerData.objects.filter(person=person)\
+                        .filter(input_type_id=MANUAL)\
+                        .filter(prep=prep)\
+                        .filter(active=True)\
+                        .filter(layer='COM')\
+                        .filter(structure_id=s)\
+                        .delete()    
 
 
 def get_scales(prep_id):
@@ -247,5 +191,4 @@ def get_scales(prep_id):
         scale_xy = 1
         z_scale = 1
 
-    print('get scales', prep_id, scale_xy, z_scale)
     return scale_xy, z_scale
