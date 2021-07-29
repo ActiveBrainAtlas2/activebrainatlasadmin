@@ -119,6 +119,9 @@ class UrlSerializer(serializers.ModelSerializer):
 
 
     def create(self, validated_data):
+        """
+        This gets called when a user clicks New in Neuroglancer
+        """
         urlModel = UrlModel(
             url=validated_data['url'],
             user_date=validated_data['user_date'],
@@ -144,6 +147,9 @@ class UrlSerializer(serializers.ModelSerializer):
         return urlModel
 
     def update(self, instance, validated_data):
+        """
+        This gets called when a user clicks Save in Neuroglancer
+        """
         instance.url = validated_data.get('url', instance.url)
         instance.user_date = validated_data.get(
             'user_date', instance.user_date)

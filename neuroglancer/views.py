@@ -1,4 +1,3 @@
-from brain.models import ScanRun
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -12,23 +11,16 @@ import string
 import random
 from collections import defaultdict
 import numpy as np
-from scipy.interpolate import UnivariateSpline,splprep, splev
+from scipy.interpolate import splprep, splev
 
 from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import ATLAS_Z_BOX_SCALE, InputType, UrlModel, LayerData, ANNOTATION_ID
+from neuroglancer.models import InputType, UrlModel, LayerData
 
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-class LayerDataViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows centers of mass to be viewed or edited.
-    """
-    queryset = LayerData.objects.order_by('prep_id').all()
-    serializer_class = LayerData
-    permission_classes = [permissions.AllowAny]
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -83,9 +75,12 @@ class Annotation(views.APIView):
     def get(self, request, prep_id, layer_name, input_type_id, format=None):
         data = []
         try:
-            rows = LayerData.objects.filter(prep_id=prep_id).filter(layer=layer_name)\
-                .filter(input_type_id=input_type_id).filter(active=True).order_by('section','id').all()
-        except LayerData.DoesNotExist:
+            rows = LayerData.objects.filter(prep_id=prep_id)\
+            .filter(layer=layer_name)\
+            .filter(input_type_id=input_type_id)\
+            .filter(active=True)\
+            .order_by('section','id').all()
+        except LayerData.DoesNotExist:        
             raise Http404
 
         scale_xy, z_scale = get_scales(prep_id)
@@ -122,7 +117,7 @@ class Annotation(views.APIView):
                         pointA = points[i]
                         try:
                             pointB = points[i+1]
-                        except IndexError as e:
+                        except IndexError:
                             pointB = points[0]
 
                         tmp_dict['id'] = random_string()

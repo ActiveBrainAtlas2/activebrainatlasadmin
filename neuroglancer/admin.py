@@ -1,5 +1,4 @@
-from neuroglancer.atlas import get_centers_dict
-from brain.models import Animal
+from django.db import models
 import json
 from django.conf import settings
 from django.contrib import admin, messages
@@ -7,27 +6,23 @@ from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
-from brain.admin import AtlasAdminModel, ExportCsvMixin
 from pygments import highlight
 from pygments.lexers import JsonLexer
 from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from neuroglancer.models import InputType, LAUREN_ID, LayerData, UrlModel, Structure, Points, Transformation, COL_LENGTH, ATLAS_RAW_SCALE, \
-    ATLAS_Z_BOX_SCALE, Z_LENGTH
-import plotly.express as px
 from plotly.offline import plot
-from django.db import models
-from neuroglancer.dash_view import dash_scatter_view
-from neuroglancer.forms import LayerForm
 import plotly.express as px
-import numpy as np
-import pandas as pd
-from timeit import default_timer as timer
+from plotly.subplots import make_subplots
+
+from brain.admin import AtlasAdminModel, ExportCsvMixin
+from neuroglancer.atlas import get_centers_dict, get_scales
+from brain.models import Animal
+from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, UrlModel, Structure, Points, Transformation
+from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
-from plotly.subplots import make_subplots
-from neuroglancer.models import UrlModel, LayerData,ComBoxplot, LAUREN_ID
-from plotly.subplots import make_subplots
+
+
 
 
 
@@ -213,28 +208,6 @@ class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
     show_hexadecimal.short_description = 'Hexadecimal'
 
 
-
-def atlas_scale_xy(x):
-    """
-    0.325 is the scale for Neurotrace brains
-    This converts the atlas coordinates to neuroglancer XY coordinates
-    :param x: x or y coordinate
-    :return: an integer that is in neuroglancer scale
-    """
-    atlas_box_center = COL_LENGTH // 2
-    result = (atlas_box_center + x) * (ATLAS_RAW_SCALE / 0.325)
-    return int(round(result))
-
-def atlas_scale_section(section):
-    """
-    scales the z (section) to neuroglancer coordinates
-    :param section:
-    :return:
-    """
-    atlas_box_center = Z_LENGTH // 2
-    result = atlas_box_center + section * ATLAS_RAW_SCALE/ATLAS_Z_BOX_SCALE
-    return int(round(result))
-
 def make_inactive(modeladmin, request, queryset):
     queryset.update(active=False)
 make_inactive.short_description = "Mark selected COMs as inactive"
@@ -293,13 +266,13 @@ class InputTypeAdmin(AtlasAdminModel):
 
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
-    list_display = ('prep_id', 'structure','x_f','y_f', 'z_f', 'active','updated', 'input_type')
-    ordering = ['prep', 'layer']
+    list_display = ('prep_id', 'structure', 'layer','x_f','y_f', 'z_f', 'active')
+    ordering = ['prep', 'layer','structure__abbreviation', 'section']
     excluded_fields = ['created', 'updated']
     list_filter = ['created', 'active','input_type']
     search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer']
-    #change_form_template = "add_annotation.html"
-    #form = LayerForm
+    scales = {'dk':0.325, 'md':0.452, 'at':10}
+ 
 
 
     def save_model(self, request, obj, form, change):
@@ -307,24 +280,20 @@ class LayerDataAdmin(AtlasAdminModel):
         super().save_model(request, obj, form, change)
 
     def x_f(self, obj):
-        number = int(obj.x)
-        #if 'atlas' in str(obj.prep_id).lower():
-        #    number = atlas_scale_xy(obj.x)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
+        initial = str(obj.prep_id[0:2]).lower()
+        number = int(round(obj.x / self.scales[initial]))
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
     def y_f(self, obj):
-        number = int(obj.y)
-        #if 'atlas' in str(obj.prep_id).lower():
-        #    number = atlas_scale_xy(obj.y)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
+        initial = str(obj.prep_id[0:2]).lower()
+        number = int(round(obj.y / self.scales[initial]))
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
     def z_f(self, obj):
-        number = int(obj.section)
-        #if 'atlas' in str(obj.prep_id).lower():
-        #    number = atlas_scale_section(obj.section)
-        return format_html(f"<div style='text-align:right;'>{number}</div>")
+        number = int(round(obj.section / 20))
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
 
     x_f.short_description = "X"
     y_f.short_description = "Y"
-    z_f.short_description = "Z"
+    z_f.short_description = "Section"
 
 @admin.register(ComBoxplot)
 class ComBoxplotAdmin(admin.ModelAdmin):

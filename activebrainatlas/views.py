@@ -15,7 +15,7 @@ class SessionVarView(TemplateView):
             if 'firefox' in browser:
                 id = 2
             else:
-                id = 1
+                id = 2
             user = User.objects.get(pk=id) 
             data = {'user_id':user.id, 'username': user.username}
 

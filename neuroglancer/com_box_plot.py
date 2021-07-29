@@ -1,10 +1,8 @@
-from brain.models import ScanRun
-from timeit import default_timer as timer
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from neuroglancer.models import LayerData, Structure
-from neuroglancer.atlas import align_point_sets, get_centers_dict, brain_to_atlas_transform
+from neuroglancer.atlas import get_centers_dict
+from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
 
 
 def get_common_structure(brains):
@@ -32,7 +30,7 @@ def prepare_table_for_plot(atlas_coms, common_structures, brains, person_id, inp
         structures = sorted(brain_com.keys())
         dst_point_set = np.array([atlas_coms[s] for s in structures if s in common_structures]).T
         src_point_set = np.array([brain_com[s] for s in structures if s in common_structures]).T
-        r, t = align_point_sets(src_point_set, dst_point_set)
+        r, t = umeyama(src_point_set, dst_point_set)
 
         offsets = []
         for s in common_structures:
