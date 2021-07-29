@@ -155,11 +155,13 @@ def update_center_of_mass(urlModel):
                                     existing_structures.discard(structure.id)
                                 else:
                                     print(f'Inserting {structure.abbreviation}')
-                                    LayerData.objects.create(
-                                        prep=prep, structure=structure,
-                                        layer = 'COM',
-                                        active=True, person=person, input_type_id=MANUAL,
+                                    try:
+                                        LayerData.objects.create(
+                                            prep=prep, structure=structure,
+                                            layer = 'COM', active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=z)
+                                    except Exception as e:
+                                        logger.error(f'Error inserting manual {structure.abbreviation}', e)
 
                     # delete any that still exist in the structures
                     for s in existing_structures:
