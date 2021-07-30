@@ -212,7 +212,7 @@ class Transformation(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.com_name)
 
-class LayerData(models.Model):
+class Layers(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
                                verbose_name="Url")
@@ -234,6 +234,11 @@ class LayerData(models.Model):
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
 
     class Meta:
+        abstract = True
+
+class LayerData(Layers):
+
+    class Meta:
         managed = False
         db_table = 'layer_data'
         verbose_name = 'Annotation Data'
@@ -241,6 +246,16 @@ class LayerData(models.Model):
 
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
+
+
+
+class LayerDataGroup(Layers):
+    data_count = models.IntegerField()
+    class Meta:
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'Annotation Data Group'
+        verbose_name_plural = 'Annotation Data Groups'
 
 class ComBoxplot(models.Model):
     class Meta:

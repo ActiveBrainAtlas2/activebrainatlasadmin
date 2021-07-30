@@ -2,6 +2,8 @@ from django.db import models
 import json
 from django.conf import settings
 from django.contrib import admin, messages
+from django.db.models import Count
+from django.db.models.query import QuerySet
 from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
@@ -16,9 +18,9 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.atlas import get_centers_dict, get_scales
+from neuroglancer.atlas import get_centers_dict
 from brain.models import Animal
-from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, UrlModel, Structure, Points, Transformation
+from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, LayerDataGroup, UrlModel, Structure, Points
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
 
@@ -216,8 +218,8 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-
-@admin.register(Transformation)
+# This is not being used right now.
+# @admin.register(Transformation)
 class TransformationAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
     ordering = ['com_name']
@@ -294,6 +296,27 @@ class LayerDataAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Section"
+
+
+#@admin.register(LayerDataGroup)
+class LayerDataGroupAdmin(AtlasAdminModel):
+    list_display = ('prep_id', 'layer', 'person_id', 'input_type_id', 'active')
+    ordering = ['prep', 'layer']
+
+    def get_queryset(self, request):
+        #qs = LayerData.objects.annotate(data_count=Count('layer'))
+        return LayerData.objects.annotate(Count('layer'))
+
+
+    def has_add_permission(self, request):
+        return False
+
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 @admin.register(ComBoxplot)
 class ComBoxplotAdmin(admin.ModelAdmin):
