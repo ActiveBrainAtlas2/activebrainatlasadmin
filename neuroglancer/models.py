@@ -250,7 +250,7 @@ class LayerData(Layers):
 
 
 class LayerDataGroup(Layers):
-    data_count = models.IntegerField()
+    #data_count = models.IntegerField()
     class Meta:
         managed = False
         db_table = 'layer_data'

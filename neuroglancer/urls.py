@@ -1,7 +1,7 @@
 from django.urls import path, include
-from neuroglancer import views 
+from neuroglancer import views, ajax_datatable_views 
 from rest_framework import routers
-
+app_name = 'neuroglancer'
 
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'neuroglancer', views.UrlViewSet, basename='neuroglancer')
@@ -13,5 +13,8 @@ urlpatterns = [
     path('annotations', views.Annotations.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
-    path('ajax/load-layers/', views.load_layers, name='ajax_load_layers')
+    path('ajax/load-layers/', views.load_layers, name='ajax_load_layers'),
+    path('showdata', views.index),
+    path('ajax_datatable/layerdata/', ajax_datatable_views.LayerDataView.as_view(), name='datatabletest')
+  
 ]

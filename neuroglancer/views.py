@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -248,3 +249,13 @@ def public_list(request):
     urls = UrlModel.objects.filter(public=True).order_by('comments')
     return render(request, 'public.html', {'urls': urls})
 
+def index(request):
+    data = {'test': 'test',
+        'opts': LayerData._meta,    
+        'change': True,
+        'is_popup': False,
+        'save_as': False,
+        'has_delete_permission': False,
+        'has_add_permission': False,
+        'has_change_permission': False}
+    return render(request, 'layer_data_group.html', data)

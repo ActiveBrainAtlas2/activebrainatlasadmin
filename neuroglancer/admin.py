@@ -2,7 +2,6 @@ from django.db import models
 import json
 from django.conf import settings
 from django.contrib import admin, messages
-from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.forms import TextInput
 from django.urls import reverse, path
@@ -24,6 +23,8 @@ from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, Lay
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
 
+
+from django.db.models import Sum, Count, Max, Q
 
 
 
@@ -298,25 +299,44 @@ class LayerDataAdmin(AtlasAdminModel):
     z_f.short_description = "Section"
 
 
-#@admin.register(LayerDataGroup)
-class LayerDataGroupAdmin(AtlasAdminModel):
-    list_display = ('prep_id', 'layer', 'person_id', 'input_type_id', 'active')
-    ordering = ['prep', 'layer']
 
-    def get_queryset(self, request):
-        #qs = LayerData.objects.annotate(data_count=Count('layer'))
-        return LayerData.objects.annotate(Count('layer'))
+from ajax_datatable.views import AjaxDatatableView
+from django.contrib.auth.models import Permission
+
+@admin.register(LayerDataGroup)
+class LayerDataGroupAdmin(AtlasAdminModel, AjaxDatatableView):
+    change_list_template = 'layer_data_group.html'
+
+    def changelist_view(self, request, extra_context=None):
+            response = super().changelist_view(
+                request,
+                extra_context=extra_context,
+            )
+            qs = response.context_data['cl'].queryset
+            
+            metrics = {
+                'total': Count('id'),
+                'updated': Max('updated')
+            }
+            response.context_data['summary'] = list(
+                qs.values('prep_id','layer', 'person__username', 'input_type__input_type','active')
+                .filter(active=True)
+                .annotate(**metrics)
+                .order_by('prep_id','layer')
+            )
+            
+            return response
 
 
     def has_add_permission(self, request):
         return False
-
 
     def has_change_permission(self, request, obj=None):
         return False
 
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 @admin.register(ComBoxplot)
 class ComBoxplotAdmin(admin.ModelAdmin):
