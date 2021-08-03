@@ -95,13 +95,10 @@ class PointsAdmin(admin.ModelAdmin):
         return points
 
     def show_points(self, obj):
-        display_2dgraph = obj.point_count
         return format_html(
-            '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a> <a href="{}" style="{}";>2D Graph</a>&nbsp; ',
+            '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a>',
             reverse('admin:points-3D-graph', args=[obj.pk]),
-            reverse('admin:points-data', args=[obj.pk]),
-            reverse('admin:points-2D-graph', args=[obj.pk]),
-            display_2dgraph
+            reverse('admin:points-data', args=[obj.pk])
         )
 
     def get_urls(self):
@@ -199,7 +196,8 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-@admin.register(Transformation)
+##### This is not being used right now
+##### @admin.register(Transformation)
 class TransformationAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
     ordering = ['com_name']
@@ -248,13 +246,14 @@ class InputTypeAdmin(AtlasAdminModel):
 
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
+    change_list_template = 'layer_data_group.html'
+    """
     list_display = ('prep_id', 'structure', 'layer','x_f','y_f', 'z_f', 'active')
     ordering = ['prep', 'layer','structure__abbreviation', 'section']
     excluded_fields = ['created', 'updated']
     list_filter = ['created', 'active','input_type']
     search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer']
     scales = {'dk':0.325, 'md':0.452, 'at':10}
-
 
     def save_model(self, request, obj, form, change):
         obj.person = request.user
@@ -275,6 +274,7 @@ class LayerDataAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Section"
+    """
 
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

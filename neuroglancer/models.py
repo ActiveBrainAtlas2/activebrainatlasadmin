@@ -247,6 +247,7 @@ class LayerData(Layers):
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
 
+
 class AlignmentScore(models.Model):
     class Meta:
         managed = False

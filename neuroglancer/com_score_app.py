@@ -10,11 +10,9 @@ from django_plotly_dash import DjangoDash
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = DjangoDash('SimpleExample', external_stylesheets=external_stylesheets)   # replaces dash.Dash
-print('init')
 
 align_score = AlignmentScore()
 fig = align_score.get('box_plot')
-print('app stuff')
 app.layout = html.Div(children=[
     dcc.Graph(id='plot'),
     html.Label('Select plot types'),
