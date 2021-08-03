@@ -15,7 +15,7 @@ class LayerDataView(AjaxDatatableView):
     column_defs = [
         AjaxDatatableView.render_row_tools_column_def(),
         {'name': 'id', 'visible': False, },
-        {'name': 'animal', 'foreign_field': 'prep__prep_id', 'visible': True, },
+        {'name': 'animal', 'foreign_field': 'prep__prep_id', 'visible': True, 'title':'junk'},
         {'name': 'layer', 'visible': True, },
         {'name': 'user', 'foreign_field': 'person__username','visible': True, },
         {'name': 'updated',  'visible': True, 'searchable': False},

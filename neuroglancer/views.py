@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Permission
 from neuroglancer.atlas import align_atlas, get_scales
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import viewsets, views
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
@@ -249,7 +251,14 @@ def public_list(request):
     urls = UrlModel.objects.filter(public=True).order_by('comments')
     return render(request, 'public.html', {'urls': urls})
 
+from django.contrib.auth.decorators import login_required
+
+@login_required
 def index(request):
+    if request.user.is_authenticated:        
+        permission = True
+    else: 
+        permission = False
     data = {'test': 'test',
         'opts': LayerData._meta,    
         'change': True,
@@ -259,3 +268,4 @@ def index(request):
         'has_add_permission': False,
         'has_change_permission': False}
     return render(request, 'layer_data_group.html', data)
+

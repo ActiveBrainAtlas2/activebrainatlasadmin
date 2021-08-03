@@ -21,17 +21,17 @@
     <link href="//cdn.datatables.net/1.10.22/css/jquery.dataTables.min.css" />
 
     <style>
-      table {
-          border: 2px solid #ccc;
+      #datatable table {
+          border: 2px solid #00FF00;
           border-collapse: collapse;
           width: 80%;
       }
-      table th {
-          border: 1px solid #ccc;
-          background-color: #333;
+      #datatable th {
+          border: 1px solid #417690;
+          background-color: #79AEC8;
           color: #fff;
       }
-      table td {
+      #datatable td {
           border: 1px solid #ccc;
       }
       .dataTables_filter input {
@@ -75,7 +75,7 @@
                     processing: false,
                     autoWidth: false,
                     full_row_select: true,
-                    scrollX: false
+                    scrollX: false,
                 }, {
                     // extra_data
                     // ...
@@ -99,7 +99,9 @@
   <!-- Header -->
   <div id="header">
       <div id="branding">
-      {% block branding %}{% endblock %}
+      {% block branding %}
+      <h1 id="site-name"><a href="/admin/">Active Brain Atlas Admin</a></h1>
+      {% endblock %}
       </div>
       {% block usertools %}
       {% if has_permission %}
@@ -141,7 +143,6 @@
   <div class="main shifted" id="main">
     {% if not is_popup and is_nav_sidebar_enabled %}
       {% block nav-sidebar %}
-      <p>are we here</p>
         {% include "admin/nav_sidebar.html" %}
       {% endblock %}
     {% endif %}
