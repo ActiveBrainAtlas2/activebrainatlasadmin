@@ -247,21 +247,7 @@ class LayerData(Layers):
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
 
-<<<<<<< HEAD
 class AlignmentScore(models.Model):
-=======
-
-
-class LayerDataGroup(Layers):
-    #data_count = models.IntegerField()
-    class Meta:
-        managed = False
-        db_table = 'layer_data'
-        verbose_name = 'Annotation Data Group'
-        verbose_name_plural = 'Annotation Data Groups'
-
-class ComBoxplot(models.Model):
->>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
     class Meta:
         managed = False
         db_table = 'layer_data'
