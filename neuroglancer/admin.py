@@ -15,26 +15,11 @@ from django.contrib.auth import get_user_model
 from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-<<<<<<< HEAD
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, LayerData, UrlModel, Structure, Points, Transformation
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import app
 from neuroglancer.test import test
-=======
-from neuroglancer.atlas import get_centers_dict
-from brain.models import Animal
-from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, LayerDataGroup, UrlModel, Structure, Points
-from neuroglancer.dash_view import dash_scatter_view
-from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
-
-
-from django.db.models import Sum, Count, Max, Q
-
-
-
-
->>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -214,12 +199,7 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-<<<<<<< HEAD
 @admin.register(Transformation)
-=======
-# This is not being used right now.
-# @admin.register(Transformation)
->>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 class TransformationAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
     ordering = ['com_name']
@@ -274,7 +254,6 @@ class LayerDataAdmin(AtlasAdminModel):
     list_filter = ['created', 'active','input_type']
     search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer']
     scales = {'dk':0.325, 'md':0.452, 'at':10}
- 
 
 
     def save_model(self, request, obj, form, change):
@@ -297,40 +276,9 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Section"
 
-<<<<<<< HEAD
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
     change_list_template = "alignment_score.html"
-=======
-
-
-from ajax_datatable.views import AjaxDatatableView
-from django.contrib.auth.models import Permission
-
-@admin.register(LayerDataGroup)
-class LayerDataGroupAdmin(AtlasAdminModel, AjaxDatatableView):
-    change_list_template = 'layer_data_group.html'
-
-    def changelist_view(self, request, extra_context=None):
-            response = super().changelist_view(
-                request,
-                extra_context=extra_context,
-            )
-            qs = response.context_data['cl'].queryset
-            
-            metrics = {
-                'total': Count('id'),
-                'updated': Max('updated')
-            }
-            response.context_data['summary'] = list(
-                qs.values('prep_id','layer', 'person__username', 'input_type__input_type','active')
-                .filter(active=True)
-                .annotate(**metrics)
-                .order_by('prep_id','layer')
-            )
-            
-            return response
-
 
     def has_add_permission(self, request):
         return False
@@ -340,54 +288,3 @@ class LayerDataGroupAdmin(AtlasAdminModel, AjaxDatatableView):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-@admin.register(ComBoxplot)
-class ComBoxplotAdmin(admin.ModelAdmin):
-    change_list_template = "alignment.html"
->>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    # def changelist_view(self, request, extra_context=None):
-    #     INPUT_TYPE_MANUAL = 1
-    #     INPUT_TYPE_CORRECTED = 2
-    #     brains = list(LayerData.objects.filter(active=True)\
-    #         .filter(input_type__id=INPUT_TYPE_CORRECTED)\
-    #         .filter(layer='COM')\
-    #         .filter(active=True)\
-    #         .exclude(prep_id__in=['Atlas'])\
-    #         .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-    #     atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
-    #     common_structures = get_common_structure(brains)
-    #     fig = make_subplots(
-    #         rows=1, cols=1,
-    #         subplot_titles=("Rigid Alignment Error on Original COMs", "Rigid Alignment Error After Correction"))
-    #     df1 = prepare_table_for_plot(atlas_centers, common_structures,
-    #         brains,
-    #         person_id=2,
-    #         input_type_id=INPUT_TYPE_MANUAL)
-    #     add_scatter_trace(df1,fig,1)
-    #     fig.update_xaxes(tickangle=45, showticklabels = True)
-    #     fig.update_layout(
-    #         autosize=False,
-    #         width=800,
-    #         height=500,
-    #         margin=dict(l=10, r=10, b=10, t=10, pad=4),
-    #         paper_bgcolor="LightSteelBlue",
-    #     )  
-    #     gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
-    #     title = 'Rigid Alignment Error for ' + ", ".join(brains)
-    #     extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
-
-    #     # Call the superclass changelist_view to render the page
-    #     return super().changelist_view(request, extra_context=extra_context)
-
-

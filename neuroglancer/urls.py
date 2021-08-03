@@ -1,5 +1,5 @@
 from django.urls import path, include
-from neuroglancer import views, ajax_datatable_views 
+from neuroglancer import views 
 from rest_framework import routers
 app_name = 'neuroglancer'
 
@@ -13,12 +13,8 @@ urlpatterns = [
     path('annotations', views.Annotations.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
-    path('ajax/load-layers/', views.load_layers, name='ajax_load_layers'),
-<<<<<<< HEAD
-    path('django_plotly_dash/', include('django_plotly_dash.urls')),
-=======
+    # path('ajax/load-layers/', views.load_layers, name='ajax_load_layers'),
     path('showdata', views.index),
-    path('ajax_datatable/layerdata/', ajax_datatable_views.LayerDataView.as_view(), name='datatabletest')
+    # path('ajax_datatable/layerdata/', ajax_datatable_views.LayerDataView.as_view(), name='datatabletest')
   
->>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 ]
