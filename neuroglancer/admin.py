@@ -13,22 +13,14 @@ from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
 from plotly.offline import plot
 import plotly.express as px
-from plotly.subplots import make_subplots
-
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.atlas import get_centers_dict, get_scales
 from brain.models import Animal
-from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, UrlModel, Structure, Points, Transformation
+from neuroglancer.models import AlignmentScore, InputType, LayerData, UrlModel, Structure, Points, Transformation
 from neuroglancer.dash_view import dash_scatter_view
-from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
-
-
-
-
-
+from neuroglancer.com_score_app import app
+from neuroglancer.test import test
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
-
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
@@ -93,19 +85,16 @@ class PointsAdmin(admin.ModelAdmin):
     search_fields = ['comments']
     list_filter = ['created', 'updated','vetted']
 
-
     def created_display(self, obj):
         return datetime_format(obj.created)
-    created_display.short_description = 'Created'    
+    created_display.short_description = 'Created'  
 
     def get_queryset(self, request):
         points = Points.objects.filter(url__layers__contains={'type':'annotation'})
         return points
 
-
     def show_points(self, obj):
         display_2dgraph = obj.point_count
-
         return format_html(
             '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a> <a href="{}" style="{}";>2D Graph</a>&nbsp; ',
             reverse('admin:points-3D-graph', args=[obj.pk]),
@@ -113,7 +102,6 @@ class PointsAdmin(admin.ModelAdmin):
             reverse('admin:points-2D-graph', args=[obj.pk]),
             display_2dgraph
         )
-
 
     def get_urls(self):
         urls = super().get_urls()
@@ -123,7 +111,6 @@ class PointsAdmin(admin.ModelAdmin):
             path('points-data/<id>', self.view_points_data, name='points-data'),
         ]
         return custom_urls + urls
-
 
     def view_points_3Dgraph(self, request, id, *args, **kwargs):
         """
@@ -150,10 +137,7 @@ class PointsAdmin(admin.ModelAdmin):
                 margin=dict(r=0, l=0, b=0, t=0))
             fig.update_traces(marker=dict(size=2),
                               selector=dict(mode='markers'))
-
             plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-
-
         context = dict(
             self.admin_site.each_context(request),
             title=urlModel.comments,
@@ -188,7 +172,6 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-
 @admin.register(Structure)
 class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
@@ -207,7 +190,6 @@ class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     show_hexadecimal.short_description = 'Hexadecimal'
 
-
 def make_inactive(modeladmin, request, queryset):
     queryset.update(active=False)
 make_inactive.short_description = "Mark selected COMs as inactive"
@@ -215,7 +197,6 @@ make_inactive.short_description = "Mark selected COMs as inactive"
 def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
-
 
 @admin.register(Transformation)
 class TransformationAdmin(AtlasAdminModel):
@@ -295,9 +276,9 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Section"
 
-@admin.register(ComBoxplot)
-class ComBoxplotAdmin(admin.ModelAdmin):
-    change_list_template = "alignment.html"
+@admin.register(AlignmentScore)
+class AlignmentScoreAdmin(admin.ModelAdmin):
+    change_list_template = "alignment_score.html"
 
     def has_add_permission(self, request):
         return False
@@ -308,43 +289,38 @@ class ComBoxplotAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def changelist_view(self, request, extra_context=None):
-        INPUT_TYPE_MANUAL = 1
-        INPUT_TYPE_CORRECTED = 2
-        brains = list(LayerData.objects.filter(active=True)\
-            .filter(input_type__id=INPUT_TYPE_CORRECTED)\
-            .filter(layer='COM')\
-            .filter(active=True)\
-            .exclude(prep_id__in=['Atlas'])\
-            .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-        atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
-        common_structures = get_common_structure(brains)
+    # def changelist_view(self, request, extra_context=None):
+    #     INPUT_TYPE_MANUAL = 1
+    #     INPUT_TYPE_CORRECTED = 2
+    #     brains = list(LayerData.objects.filter(active=True)\
+    #         .filter(input_type__id=INPUT_TYPE_CORRECTED)\
+    #         .filter(layer='COM')\
+    #         .filter(active=True)\
+    #         .exclude(prep_id__in=['Atlas'])\
+    #         .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
+    #     atlas_centers = get_centers_dict('atlas', input_type_id=INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
+    #     common_structures = get_common_structure(brains)
+    #     fig = make_subplots(
+    #         rows=1, cols=1,
+    #         subplot_titles=("Rigid Alignment Error on Original COMs", "Rigid Alignment Error After Correction"))
+    #     df1 = prepare_table_for_plot(atlas_centers, common_structures,
+    #         brains,
+    #         person_id=2,
+    #         input_type_id=INPUT_TYPE_MANUAL)
+    #     add_scatter_trace(df1,fig,1)
+    #     fig.update_xaxes(tickangle=45, showticklabels = True)
+    #     fig.update_layout(
+    #         autosize=False,
+    #         width=800,
+    #         height=500,
+    #         margin=dict(l=10, r=10, b=10, t=10, pad=4),
+    #         paper_bgcolor="LightSteelBlue",
+    #     )  
+    #     gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
+    #     title = 'Rigid Alignment Error for ' + ", ".join(brains)
+    #     extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
 
-        fig = make_subplots(
-            rows=1, cols=1,
-            subplot_titles=("Rigid Alignment Error on Original COMs", "Rigid Alignment Error After Correction"))
-        
-        df1 = prepare_table_for_plot(atlas_centers, common_structures,
-            brains,
-            person_id=2,
-            input_type_id=INPUT_TYPE_MANUAL)
-        #print(df1.query("structure == '10N_L'").head())
-        
-        
-        add_trace(df1,fig,1)
-        fig.update_xaxes(tickangle=45, showticklabels = True)
-        fig.update_layout(
-            autosize=False,
-            width=800,
-            height=500,
-            margin=dict(l=10, r=10, b=10, t=10, pad=4),
-            paper_bgcolor="LightSteelBlue",
-        )  
-        gantt_div = plot(fig, output_type='div', include_plotlyjs=False)
-        title = 'Rigid Alignment Error for ' + ", ".join(brains)
-        extra_context = extra_context or {"gantt_div": gantt_div, 'title':title}
-
-        # Call the superclass changelist_view to render the page
-        return super().changelist_view(request, extra_context=extra_context)
+    #     # Call the superclass changelist_view to render the page
+    #     return super().changelist_view(request, extra_context=extra_context)
 
 

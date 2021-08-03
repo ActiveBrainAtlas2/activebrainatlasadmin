@@ -13,5 +13,6 @@ urlpatterns = [
     path('annotations', views.Annotations.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
-    path('ajax/load-layers/', views.load_layers, name='ajax_load_layers')
+    path('ajax/load-layers/', views.load_layers, name='ajax_load_layers'),
+    path('django_plotly_dash/', include('django_plotly_dash.urls')),
 ]

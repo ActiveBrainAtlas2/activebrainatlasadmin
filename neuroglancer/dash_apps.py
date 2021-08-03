@@ -1,13 +1,11 @@
 '''Dash charts for Django
 '''
-
 import dash_core_components as dcc
 import plotly.graph_objs as go
 from django_plotly_dash import DjangoDash
 import pandas as pd
 from dash.dependencies import Input, Output
 import dash_html_components as html
-
 
 app_name = "ScatterBrain"
 styles = {
@@ -39,7 +37,6 @@ scatter_points.layout = html.Div(id='main', children=[
     [Input('section-slider', 'value')])
 
 def callback_initial(section, *args, **kwargs):
-
     comments = kwargs['session_state']['comments']
     animal = kwargs['session_state']['animal']
     dfjson = kwargs['session_state']['df']
@@ -55,7 +52,6 @@ def callback_initial(section, *args, **kwargs):
     df = df.loc[ df['Section'] == section]
     section = str(section).zfill(3)
     source = f"https://activebrainatlas.ucsd.edu/data/{animal}/www/{section}.png"
-
     fig = go.FigureWidget([go.Scatter(y=df['Y'], x=df['X'], mode='markers')])
     fig.add_layout_image(
         dict(

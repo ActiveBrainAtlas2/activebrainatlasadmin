@@ -5,7 +5,6 @@ This program allows the user to view annotations per section, make selections
 and place those selected annotations into an editable and exportable datatable, (spreadsheet)
 Make sure this app is imported into the admin.py app
 """
-
 import dash_core_components as dcc
 import plotly.graph_objs as go
 from django_plotly_dash import DjangoDash
@@ -13,7 +12,6 @@ import pandas as pd
 import dash_table
 from dash.dependencies import Input, Output, State
 import dash_html_components as html
-
 
 styles = {
     'slider': {
@@ -25,13 +23,10 @@ styles = {
 }
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
 app_name = "ScatterBrain"
 dashboard_name = 'DashPointTable'
 point_table = DjangoDash(name=dashboard_name,
-                         external_stylesheets=external_stylesheets
-                         )
-
+                         external_stylesheets=external_stylesheets)
 tablecols = ['area', 'x', 'y', 'section']
 point_table.layout = html.Div(id='main', children=[
     html.Div(id='graph-div'),
@@ -46,7 +41,6 @@ point_table.layout = html.Div(id='main', children=[
     export_headers='display',
     style_table=styles['table']
 )
-
 ])
 ])
 @point_table.expanded_callback(
@@ -59,8 +53,6 @@ def callback_initial(section, *args, **kwargs):
     if section is None:
         section = df['Section'].min()
     return section
-
-
 
 @point_table.callback(
     Output(component_id='graph-div', component_property='children'),

@@ -3,7 +3,6 @@ from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
-
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
@@ -12,15 +11,12 @@ import random
 from collections import defaultdict
 import numpy as np
 from scipy.interpolate import splprep, splev
-
 from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
     AnimalInputSerializer, IdSerializer
 from neuroglancer.models import InputType, UrlModel, LayerData
-
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
 
 class UrlViewSet(viewsets.ModelViewSet):
     """

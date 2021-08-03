@@ -242,12 +242,12 @@ class LayerData(models.Model):
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
 
-class ComBoxplot(models.Model):
+class AlignmentScore(models.Model):
     class Meta:
         managed = False
         db_table = 'layer_data'
-        verbose_name = 'center of mass boxplot'
-        verbose_name_plural = 'center of mass boxplots'
+        verbose_name = 'Alignment Score'
+        verbose_name_plural = 'Alignment Scores'
 
     def __str__(self):
         return u'{}'.format(self.prep_id)
