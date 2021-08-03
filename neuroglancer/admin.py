@@ -2,6 +2,7 @@ from django.db import models
 import json
 from django.conf import settings
 from django.contrib import admin, messages
+from django.db.models.query import QuerySet
 from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
@@ -14,11 +15,26 @@ from django.contrib.auth import get_user_model
 from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
+<<<<<<< HEAD
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, LayerData, UrlModel, Structure, Points, Transformation
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import app
 from neuroglancer.test import test
+=======
+from neuroglancer.atlas import get_centers_dict
+from brain.models import Animal
+from neuroglancer.models import ComBoxplot, InputType, LAUREN_ID, LayerData, LayerDataGroup, UrlModel, Structure, Points
+from neuroglancer.dash_view import dash_scatter_view
+from neuroglancer.com_box_plot import prepare_table_for_plot,add_trace,get_common_structure
+
+
+from django.db.models import Sum, Count, Max, Q
+
+
+
+
+>>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -198,7 +214,12 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
+<<<<<<< HEAD
 @admin.register(Transformation)
+=======
+# This is not being used right now.
+# @admin.register(Transformation)
+>>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 class TransformationAdmin(AtlasAdminModel):
     list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
     ordering = ['com_name']
@@ -276,9 +297,55 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Section"
 
+<<<<<<< HEAD
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
     change_list_template = "alignment_score.html"
+=======
+
+
+from ajax_datatable.views import AjaxDatatableView
+from django.contrib.auth.models import Permission
+
+@admin.register(LayerDataGroup)
+class LayerDataGroupAdmin(AtlasAdminModel, AjaxDatatableView):
+    change_list_template = 'layer_data_group.html'
+
+    def changelist_view(self, request, extra_context=None):
+            response = super().changelist_view(
+                request,
+                extra_context=extra_context,
+            )
+            qs = response.context_data['cl'].queryset
+            
+            metrics = {
+                'total': Count('id'),
+                'updated': Max('updated')
+            }
+            response.context_data['summary'] = list(
+                qs.values('prep_id','layer', 'person__username', 'input_type__input_type','active')
+                .filter(active=True)
+                .annotate(**metrics)
+                .order_by('prep_id','layer')
+            )
+            
+            return response
+
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ComBoxplot)
+class ComBoxplotAdmin(admin.ModelAdmin):
+    change_list_template = "alignment.html"
+>>>>>>> c09dcf4eba4a77b5d1018fd5c0b6a9c9d58bd64a
 
     def has_add_permission(self, request):
         return False
