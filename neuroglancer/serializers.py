@@ -117,17 +117,16 @@ class UrlSerializer(serializers.ModelSerializer):
         fields = '__all__'
         ordering = ['-created']
 
-
     def create(self, validated_data):
         """
         This gets called when a user clicks New in Neuroglancer
         """
         urlModel = UrlModel(
-            url=validated_data['url'],
-            user_date=validated_data['user_date'],
-            comments=validated_data['comments'],
-            public=False,
-            vetted=False,
+            url = validated_data['url'],
+            user_date = validated_data['user_date'],
+            comments = validated_data['comments'],
+            public = False,
+            vetted = False,
         )
         if 'person_id' in validated_data:
             try:
@@ -135,14 +134,11 @@ class UrlSerializer(serializers.ModelSerializer):
                 urlModel.person = authUser
             except:
                 logger.error('Person was not in validated data')
-
         try:
             urlModel.save()
         except:
             logger.error('Could not save url model')
-
         update_center_of_mass(urlModel)
-
         urlModel.url = None
         return urlModel
 
@@ -154,21 +150,17 @@ class UrlSerializer(serializers.ModelSerializer):
         instance.user_date = validated_data.get(
             'user_date', instance.user_date)
         instance.comments = validated_data.get('comments', instance.comments)
-
         if 'person_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['person_id'])
                 instance.person = authUser
             except:
                 logger.error('Person was not in validated data')
-
         try:
             instance.save()
         except:
             logger.error('Could not save url model')
-
         update_center_of_mass(instance)
-
         instance.url = None
         return instance
 
