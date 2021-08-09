@@ -13,7 +13,7 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 MANUAL = 1
-
+CORRECTED = 2
 
 def align_atlas(animal, input_type_id=None, person_id=None):
     """
@@ -50,10 +50,7 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         t = np.zeros((3,1))
     return R, t
 
-
-
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
-
     rows = LayerData.objects.filter(prep__prep_id=prep_id)\
         .filter(active=True).filter(layer='COM')\
             .order_by('structure', 'updated')
@@ -61,8 +58,6 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
-
-    
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
@@ -73,9 +68,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         abbreviation = structure_dict[structure_id]
         # do transform here.
         row_dict[abbreviation] = [row.x, row.y, row.section]
-
     return row_dict
-
 
 def update_center_of_mass(urlModel):
     """
@@ -93,19 +86,16 @@ def update_center_of_mass(urlModel):
     :return: nothing
     """
     json_txt = urlModel.url
-
     try:
         person = User.objects.get(pk=urlModel.person.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
-
     try:
         prep = Animal.objects.get(pk=urlModel.animal)
     except Animal.DoesNotExist:
         logger.error("Animal does not exist")
         return
-
     if 'layers' in json_txt:
         layers = json_txt['layers']
         for layer in layers:
@@ -114,7 +104,7 @@ def update_center_of_mass(urlModel):
                 if layer_name == 'COM':
                     existing_structures = set()
                     existing_layer_data = LayerData.objects.filter(person=person)\
-                        .filter(input_type_id=MANUAL)\
+                        .filter(input_type_id=CORRECTED)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .filter(layer='COM')\
@@ -136,15 +126,13 @@ def update_center_of_mass(urlModel):
                             except Structure.DoesNotExist:
                                 print(f'Structure {abbreviation} does not exist')
                                 logger.error("Structure does not exist")
-
                             # Create the manual COM
                             # we do an upsert here. UPDATE/INSERT
                             if structure is not None and prep is not None and person is not None:
-                                
                                 if structure.id in existing_structures:
                                     print(f'Updating {structure.abbreviation}')
                                     LayerData.objects.filter(person=person)\
-                                        .filter(input_type_id=MANUAL)\
+                                        .filter(input_type_id=CORRECTED)\
                                         .filter(prep=prep)\
                                         .filter(active=True)\
                                         .filter(layer='COM')\
@@ -157,22 +145,20 @@ def update_center_of_mass(urlModel):
                                     try:
                                         LayerData.objects.create(
                                             prep=prep, structure=structure,
-                                            layer = 'COM', active=True, person=person, input_type_id=MANUAL,
+                                            layer = 'COM', active=True, person=person, input_type_id=CORRECTED,
                                             x=x, y=y, section=z)
                                     except Exception as e:
                                         logger.error(f'Error inserting manual {structure.abbreviation}', e)
-
                     # delete any that still exist in the structures
                     for s in existing_structures:
                         print(f'deleting {s}')
                         LayerData.objects.filter(person=person)\
-                        .filter(input_type_id=MANUAL)\
+                        .filter(input_type_id=CORRECTED)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .filter(layer='COM')\
                         .filter(structure_id=s)\
                         .delete()    
-
 
 def get_scales(prep_id):
     """
@@ -183,7 +169,6 @@ def get_scales(prep_id):
         query_set = ScanRun.objects.filter(prep_id=prep_id)
     except ScanRun.DoesNotExist:
         scan_run = None
-
     if query_set is not None and len(query_set) > 0:
         scan_run = query_set[0]
         scale_xy = scan_run.resolution
@@ -191,5 +176,4 @@ def get_scales(prep_id):
     else:
         scale_xy = 1
         z_scale = 1
-
     return scale_xy, z_scale
