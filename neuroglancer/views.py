@@ -145,7 +145,7 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True).filter(input_type_id__in=[1,2,5]).filter(layer__isnull=False)\
+            .filter(active=True).filter(input_type_id__in=[1,2,4,5]).filter(layer__isnull=False)\
             .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
         for layer in layers:
             data.append({
