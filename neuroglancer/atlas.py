@@ -70,12 +70,14 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         row_dict[abbreviation] = [row.x, row.y, row.section]
     return row_dict
 
+
 def update_center_of_mass(urlModel):
     """
     This method checks if there is center of mass data. If there is,
-    then it first find the center of mass rows for that person/input_type/animal/active combination.
-    If data already exists for that combination above, it all gets set to inactive.
-    Then the new data gets inserted. No updates!
+    then it first find the center of mass rows for that
+    person/input_type/animal/active combination.
+    If data already exists for that combination above, it all gets set to
+    inactive. Then the new data gets inserted. No updates!
     It does lots of checks to make sure it is in the correct format,
     including:
         layer must be named COM
@@ -111,7 +113,7 @@ def update_center_of_mass(urlModel):
 
                     for s in existing_layer_data:
                         existing_structures.add(s.structure.id)
-                    
+
                     scale_xy, z_scale = get_scales(prep.prep_id)
                     annotation = layer['annotations']
                     for com in annotation:
@@ -130,7 +132,6 @@ def update_center_of_mass(urlModel):
                             # we do an upsert here. UPDATE/INSERT
                             if structure is not None and prep is not None and person is not None:
                                 if structure.id in existing_structures:
-                                    print(f'Updating {structure.abbreviation}')
                                     LayerData.objects.filter(person=person)\
                                         .filter(input_type_id=CORRECTED)\
                                         .filter(prep=prep)\
@@ -138,10 +139,10 @@ def update_center_of_mass(urlModel):
                                         .filter(layer='COM')\
                                         .filter(structure=structure)\
                                         .update(x=x, y=y, section=z)    
-                                    # now pop off the structure from the existing structures
+                                    # now pop off the structure from
+                                    # the existing structures
                                     existing_structures.discard(structure.id)
                                 else:
-                                    print(f'Inserting {structure.abbreviation}')
                                     try:
                                         LayerData.objects.create(
                                             prep=prep, structure=structure,
@@ -151,14 +152,14 @@ def update_center_of_mass(urlModel):
                                         logger.error(f'Error inserting manual {structure.abbreviation}', e)
                     # delete any that still exist in the structures
                     for s in existing_structures:
-                        print(f'deleting {s}')
                         LayerData.objects.filter(person=person)\
-                        .filter(input_type_id=CORRECTED)\
-                        .filter(prep=prep)\
-                        .filter(active=True)\
-                        .filter(layer='COM')\
-                        .filter(structure_id=s)\
-                        .delete()    
+                                                    .filter(input_type_id=CORRECTED)\
+                                                    .filter(prep=prep)\
+                                                    .filter(active=True)\
+                                                    .filter(layer='COM')\
+                                                    .filter(structure_id=s)\
+                                                    .delete()
+
 
 def get_scales(prep_id):
     """

@@ -10,7 +10,7 @@ class LayerDataView(AjaxDatatableView):
     title = 'Ajax Annotations'
     initial_order = [["animal", "asc"],["layer","asc"],["structure", "asc"], ["user", "asc"],["input_type", "asc"] ]
     length_menu = [[10, 20, 50, 100, -1], [10, 20, 50, 100, 'all']]
-    search_values_separator = '+'
+    search_values_separator = ' '
 
     column_defs = [
         AjaxDatatableView.render_row_tools_column_def(),
@@ -18,9 +18,9 @@ class LayerDataView(AjaxDatatableView):
         {'name': 'animal', 'foreign_field': 'prep__prep_id', 'visible': True, 'title':'Animal'},
         {'name': 'layer', 'visible': True, },
         {'name': 'structure', 'foreign_field': 'structure__abbreviation','visible': True, },
-        {'name': 'x_f', 'visible': True, 'placeholder':True, 'title': 'X', 'sort_field':'x' },
-        {'name': 'y_f', 'visible': True, 'placeholder':True, 'title': 'Y', 'sort_field':'y'  },
-        {'name': 'z_f', 'visible': True, 'placeholder':True, 'title': 'Section', 'sort_field':'section' },
+        {'name': 'x_f', 'visible': True, 'placeholder':True, 'title': 'X', 'sort_field':'x', 'searchable': False },
+        {'name': 'y_f', 'visible': True, 'placeholder':True, 'title': 'Y', 'sort_field':'y', 'searchable': False  },
+        {'name': 'z_f', 'visible': True, 'placeholder':True, 'title': 'Section', 'sort_field':'section', 'searchable': False},
         {'name': 'user', 'foreign_field': 'person__username','visible': True, },
         {'name': 'input_type', 'foreign_field': 'input_type__input_type', 'visible': True, },
         {'name': 'updated',  'visible': True, 'searchable': False},
