@@ -1,7 +1,6 @@
 from neuroglancer.models import LayerData
 from ajax_datatable.views import AjaxDatatableView
-from django.utils.html import format_html, escape
-
+from django.utils.html import format_html
 
 
 class LayerDataView(AjaxDatatableView):
@@ -45,11 +44,3 @@ class LayerDataView(AjaxDatatableView):
         row['z_f'] = format_html(f"<div style='text-align:left;'>{znumber:,}</div>")
         return
 
-
-
-
-
-    """
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
-    """
