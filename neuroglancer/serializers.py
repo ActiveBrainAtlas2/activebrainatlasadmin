@@ -11,11 +11,14 @@ from django.contrib.auth.models import User
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
+
 class AnimalInputSerializer(serializers.Serializer):
     animal = serializers.CharField()
 
+
 class IdSerializer(serializers.Serializer):
     id = serializers.IntegerField()
+
 
 class AnnotationSerializer(serializers.Serializer):
     """
@@ -25,6 +28,7 @@ class AnnotationSerializer(serializers.Serializer):
     point = serializers.ListField()
     type = serializers.CharField()
     description = serializers.CharField()
+
 
 class LineSerializer(serializers.Serializer):
     """
@@ -36,6 +40,7 @@ class LineSerializer(serializers.Serializer):
     type = serializers.CharField()
     description = serializers.CharField()
 
+
 class AnnotationsSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
@@ -45,17 +50,20 @@ class AnnotationsSerializer(serializers.Serializer):
     input_type = serializers.CharField()
     input_type_id = serializers.IntegerField()
 
+
 class StructureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Structure
         fields = '__all__'
 
+
 class LayerDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LayerData
         fields = '__all__'
+
 
 class CenterOfMassSerializer(serializers.ModelSerializer):
     """Takes care of entering a set of points"""
@@ -84,7 +92,7 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
         try:
             prep = Animal.objects.get(prep_id=validated_data['prep'])
             com.prep = prep
-        except:
+        except Animal.DoesNotExist:
             logger.error('Error with animal')
         try:
             com.save()
@@ -93,6 +101,7 @@ class CenterOfMassSerializer(serializers.ModelSerializer):
 
         return com
 
+
 class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
@@ -100,11 +109,13 @@ class RotationModelSerializer(serializers.ModelSerializer):
         model = LayerData
         fields = ['prep_id', 'input_type_id', 'person_id', 'username']
 
+
 class RotationSerializer(serializers.Serializer):
     prep_id = serializers.CharField()
     input_type = serializers.CharField()
     person_id = serializers.IntegerField()
     username = serializers.CharField()
+
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
@@ -122,21 +133,21 @@ class UrlSerializer(serializers.ModelSerializer):
         This gets called when a user clicks New in Neuroglancer
         """
         urlModel = UrlModel(
-            url = validated_data['url'],
-            user_date = validated_data['user_date'],
-            comments = validated_data['comments'],
-            public = False,
-            vetted = False,
+            url=validated_data['url'],
+            user_date=validated_data['user_date'],
+            comments=validated_data['comments'],
+            public=False,
+            vetted=False,
         )
         if 'person_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['person_id'])
                 urlModel.person = authUser
-            except:
+            except User.DoesNotExist:
                 logger.error('Person was not in validated data')
         try:
             urlModel.save()
-        except:
+        except APIException:
             logger.error('Could not save url model')
         update_center_of_mass(urlModel)
         urlModel.url = None
@@ -154,15 +165,12 @@ class UrlSerializer(serializers.ModelSerializer):
             try:
                 authUser = User.objects.get(pk=validated_data['person_id'])
                 instance.person = authUser
-            except:
+            except User.DoesNotExist:
                 logger.error('Person was not in validated data')
         try:
             instance.save()
-        except:
+        except APIException:
             logger.error('Could not save url model')
         update_center_of_mass(instance)
         instance.url = None
         return instance
-
-
-

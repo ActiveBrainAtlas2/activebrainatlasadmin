@@ -5,7 +5,7 @@ from neuroglancer.atlas import get_centers_dict
 from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
 from plotly.subplots import make_subplots
 from neuroglancer.models import LAUREN_ID, LayerData
-import plotly.express as px
+
 
 class AlignmentScore:
     def __init__(self):
@@ -13,7 +13,7 @@ class AlignmentScore:
         self.INPUT_TYPE_CORRECTED = 2
         self.person_id = 2
         self.brains = list(LayerData.objects.filter(active=True)\
-            .filter(input_type__id=self.INPUT_TYPE_CORRECTED)\
+            .filter(input_type__id=self.INPUT_TYPE_MANUAL)\
             .filter(layer='COM')\
             .filter(active=True)\
             .exclude(prep_id__in=['Atlas'])\
@@ -29,7 +29,6 @@ class AlignmentScore:
         return fig
 
     def get_fig(self,trace_adder):
-        INPUT_TYPE_MANUAL = 1
         fig = make_subplots(
             rows=1, cols=1,
             subplot_titles=("Rigid Alignment Error on Original COMs", "Rigid Alignment Error After Correction"))
@@ -63,7 +62,6 @@ class AlignmentScore:
         for brain in self.brains:
             brain_com = get_centers_dict(prep_id=brain,  person_id=2,input_type_id=2)
             if len(brain_com) == 0:
-                print('defaulting back to default for ', brain)
                 brain_com = get_centers_dict(prep_id=brain,  person_id=self.person_id,input_type_id=1)
 
             structures = sorted(brain_com.keys())
