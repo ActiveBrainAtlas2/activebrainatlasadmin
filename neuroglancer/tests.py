@@ -6,10 +6,6 @@ from django.contrib.auth.models import User
 # Create your tests here.
 from neuroglancer.models import UrlModel
 
-
-
-
-
 class TestUrlModel(TransactionTestCase):
     client = Client()
 
@@ -35,53 +31,10 @@ class TestUrlModel(TransactionTestCase):
             'person_id': "18888888888"
         }
 
-
-    def test_create_invalid(self):
-        """
-        should be a failed insert
-        test inserting bad data
-        :return:
-        """
-        response = self.client.post(
-            reverse('neuroglancer-list'),
-            data=json.dumps(self.bad_serializer_data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_valid(self):
-        """
-        1st insert
-        test inserting good data
-        :return:
-        """
-        response = self.client.post(
-            reverse('neuroglancer-list'),
-            data=json.dumps(self.serializer_data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-
-
-    def test_update_valid(self):
-        """
-        just an update, no insert
-        Test update/put
-        :return:
-        """
-        response = self.client.put(
-            reverse('neuroglancer-detail', kwargs={'pk': self.urlModel.id}),
-            data=json.dumps(self.serializer_data),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
     def test_neuroglancer_url(self):
             response = self.client.get("/neuroglancer")
             request = response.wsgi_request
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-
 
     def test_rotations_url(self):
             response = self.client.get("/rotations")
@@ -101,8 +54,4 @@ class TestUrlModel(TransactionTestCase):
 
     def test_annotation_Atlas_url(self):
             response = self.client.get("/annotation/Atlas/COM/1")
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_annotation_atlas_url(self):
-            response = self.client.get("/annotation/atlas/COM/1")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
