@@ -19,7 +19,7 @@ import random
 if settings.DEBUG:
     from abakit.utilities.file_location import FileLocationManager
     from abakit.utilities.shell_tools import workernoshell
-    from abakit.utilities.bioformats import get_czi_metadata, get_fullres_series_indices
+    from abakit.utilities.czi_tools import get_czi_metadata, get_fullres_series_indices
 
     SCALING_FACTOR = 0.03125
     PROGRESS_STATE = 'PROGRESS'
