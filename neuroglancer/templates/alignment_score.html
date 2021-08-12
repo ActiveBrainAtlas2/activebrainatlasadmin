@@ -33,7 +33,11 @@
 {% block content %}
   <div id="content-main">
 
-    {% plotly_app name="AlignmentPlot" ratio=1 %}
+    
+        <div class="{% plotly_class name="AlignmentPlot" %} card">
+            {% plotly_app name="AlignmentPlot" ratio=1 %}
+        </div>
+
 
 
   </div>
