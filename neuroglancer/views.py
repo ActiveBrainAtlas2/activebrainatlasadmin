@@ -1,8 +1,5 @@
-from django.contrib.auth.models import Permission
 from neuroglancer.atlas import align_atlas, get_scales
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.models import Permission, User
-from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
@@ -14,12 +11,14 @@ import random
 from collections import defaultdict
 import numpy as np
 from scipy.interpolate import splprep, splev
-from neuroglancer.serializers import AnnotationSerializer, AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer,  \
+from neuroglancer.serializers import AnnotationSerializer, \
+    AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
 from neuroglancer.models import InputType, UrlModel, LayerData
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -28,6 +27,7 @@ class UrlViewSet(viewsets.ModelViewSet):
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
+
 
 class AlignAtlasView(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
@@ -47,10 +47,11 @@ class AlignAtlasView(views.APIView):
         data['translation'] = tl
 
         return JsonResponse(data)
-# from urldata request, take the ID of the URL model and return all data in escaped format
+
 
 class UrlDataView(views.APIView):
-    """This will be run when a a ID is sent to https://site.com/activebrainatlas/urldata?id=999
+    """This will be run when a a ID is sent to:
+    https://site.com/activebrainatlas/urldata?id=999
     Where 999 is the primary key of the url model"""
 
     def get(self, request, *args, **kwargs):
@@ -61,10 +62,12 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
+
 class Annotation(views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DKXX/premotor/2
+    url is of the the form
+    https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DKXX/premotor/2
     Where:
          DKXX is the animal,
          premotor is the layer name,
@@ -75,22 +78,23 @@ class Annotation(views.APIView):
         data = []
         try:
             rows = LayerData.objects.filter(prep_id=prep_id)\
-            .filter(layer=layer_name)\
-            .filter(input_type_id=input_type_id)\
-            .filter(active=True)\
-            .order_by('section','id').all()
-        except LayerData.DoesNotExist:        
+                        .filter(layer=layer_name)\
+                        .filter(input_type_id=input_type_id)\
+                        .filter(active=True)\
+                        .order_by('section', 'id').all()
+        except LayerData.DoesNotExist:
             raise Http404
 
         scale_xy, z_scale = get_scales(prep_id)
 
         if input_type_id != 5:
-            for row  in rows:
+            for row in rows:
                 point_dict = {}
                 point_dict['id'] = random_string()
-                point_dict['point'] = [row.x/scale_xy, row.y/scale_xy, row.section/z_scale]
+                point_dict['point'] = \
+                    [row.x/scale_xy, row.y/scale_xy, row.section/z_scale]
                 point_dict['type'] = 'point'
-                            
+
                 if 'COM' in layer_name:
                     point_dict['description'] = row.structure.abbreviation
                 else:
@@ -104,7 +108,7 @@ class Annotation(views.APIView):
                 x = row.x / scale_xy
                 y = row.y / scale_xy
                 section = row.section / z_scale
-                data_dict[(id,section)].append((x,y))
+                data_dict[(id, section)].append((x, y))
 
             for (k,section), points in data_dict.items():
                 lp = len(points)
@@ -128,15 +132,17 @@ class Annotation(views.APIView):
 
             serializer = LineSerializer(data, many=True)
 
-
         return Response(serializer.data)
+
 
 class Annotations(views.APIView):
     """
-    Fetch UrlModel and return a set of two dictionaries. One is from the layer_data
+    Fetch UrlModel and return a set of two dictionaries. 
+    One is from the layer_data
     table and the other is the COMs that have been set as transformations.
     {'id': 213, 'description': 'DK39 COM Test', 'layer_name': 'COM'}
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
+    url is of the the form:
+    https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """
 
     def get(self, request, format=None):
@@ -145,8 +151,10 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True).filter(input_type_id__in=[1,2,3,4,5]).filter(layer__isnull=False)\
-            .values('prep_id', 'layer','input_type__input_type','input_type_id').distinct()
+            .filter(active=True).filter(input_type_id__in=[1, 3, 5])\
+            .filter(layer__isnull=False)\
+            .values('prep_id', 'layer','input_type__input_type','input_type_id')\
+            .distinct()
         for layer in layers:
             data.append({
                 "prep_id":layer['prep_id'],
@@ -171,7 +179,8 @@ class Rotation(views.APIView):
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
-        R, t = align_atlas(prep_id, input_type_id=input_type_id, person_id=person_id)
+        R, t = align_atlas(prep_id, input_type_id=input_type_id, 
+                           person_id=person_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
 
@@ -187,7 +196,7 @@ class Rotations(views.APIView):
         data = []
         coms = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
             .filter(layer='COM').filter(person_id=2)\
-            .filter(active=True).filter(input_type__input_type__in=['corrected'])\
+            .filter(active=True).filter(input_type__input_type__in=['manual'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
         for com in coms:
             data.append({
@@ -199,6 +208,7 @@ class Rotations(views.APIView):
         
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
+
 
 def interpolate(points, new_len):
     points = np.array(points)
@@ -248,20 +258,3 @@ def public_list(request):
     return render(request, 'public.html', {'urls': urls})
 
 from django.contrib.auth.decorators import login_required
-
-@login_required
-def index(request):
-    if request.user.is_authenticated:        
-        permission = True
-    else: 
-        permission = False
-    data = {'test': 'test',
-        'opts': LayerData._meta,    
-        'change': True,
-        'is_popup': False,
-        'save_as': False,
-        'has_delete_permission': False,
-        'has_add_permission': False,
-        'has_change_permission': False}
-    return render(request, 'layer_data_group.html', data)
-

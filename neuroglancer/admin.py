@@ -2,14 +2,11 @@ from django.db import models
 import json
 from django.conf import settings
 from django.contrib import admin, messages
-from django.db.models.query import QuerySet
 from django.forms import TextInput
 from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
 from pygments import highlight
-from pygments.lexers import JsonLexer
-from pygments.formatters import HtmlFormatter
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
 from plotly.offline import plot
@@ -18,8 +15,7 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, LayerData, UrlModel, Structure, Points, Transformation
 from neuroglancer.dash_view import dash_scatter_view
-from neuroglancer.com_score_app import app
-from neuroglancer.test import test
+from neuroglancer.com_score_app import alignmentPlot
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -246,8 +242,7 @@ class InputTypeAdmin(AtlasAdminModel):
 
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
-    change_list_template = 'layer_data_group.html'
-    """
+    # change_list_template = 'layer_data_group.html'
     list_display = ('prep_id', 'structure', 'layer','x_f','y_f', 'z_f', 'active')
     ordering = ['prep', 'layer','structure__abbreviation', 'section']
     excluded_fields = ['created', 'updated']
@@ -274,7 +269,7 @@ class LayerDataAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Section"
-    """
+    
 
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

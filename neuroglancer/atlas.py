@@ -6,7 +6,8 @@ so we can resuse them througout the code.
 import numpy as np
 from django.contrib.auth.models import User
 
-from neuroglancer.models import Structure, LayerData, LAUREN_ID, ATLAS_Z_BOX_SCALE
+from neuroglancer.models import Structure, LayerData, LAUREN_ID, \
+    ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
@@ -15,19 +16,25 @@ logger = logging.getLogger(__name__)
 MANUAL = 1
 CORRECTED = 2
 
+
 def align_atlas(animal, input_type_id=None, person_id=None):
     """
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
-    :param input_type_id: the int defining what type of input. Taken from the com_type table with 
-    column=id
-    :param person_id: the int defining the person. Taken from the auth_user table column=id
+    :param input_type_id: the int defining what type of input. Taken from the
+    com_type table with  column=id
+    :param person_id: the int defining the person. Taken from the auth_user
+    table column=id
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
-    atlas_centers = get_centers_dict('atlas', input_type_id=MANUAL, person_id=LAUREN_ID)
-    reference_centers = get_centers_dict(animal, input_type_id=input_type_id, person_id=person_id)
+    atlas_centers = get_centers_dict('atlas',
+                                     input_type_id=MANUAL,
+                                     person_id=LAUREN_ID)
+    reference_centers = get_centers_dict(animal,
+                                         input_type_id=input_type_id,
+                                         person_id=person_id)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -106,7 +113,7 @@ def update_center_of_mass(urlModel):
                 if layer_name == 'COM':
                     existing_structures = set()
                     existing_layer_data = LayerData.objects.filter(person=person)\
-                        .filter(input_type_id=CORRECTED)\
+                        .filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .filter(layer='COM')\
@@ -133,7 +140,7 @@ def update_center_of_mass(urlModel):
                             if structure is not None and prep is not None and person is not None:
                                 if structure.id in existing_structures:
                                     LayerData.objects.filter(person=person)\
-                                        .filter(input_type_id=CORRECTED)\
+                                        .filter(input_type_id=MANUAL)\
                                         .filter(prep=prep)\
                                         .filter(active=True)\
                                         .filter(layer='COM')\
@@ -146,14 +153,14 @@ def update_center_of_mass(urlModel):
                                     try:
                                         LayerData.objects.create(
                                             prep=prep, structure=structure,
-                                            layer = 'COM', active=True, person=person, input_type_id=CORRECTED,
+                                            layer = 'COM', active=True, person=person, input_type_id=MANUAL,
                                             x=x, y=y, section=z)
                                     except Exception as e:
                                         logger.error(f'Error inserting manual {structure.abbreviation}', e)
                     # delete any that still exist in the structures
                     for s in existing_structures:
                         LayerData.objects.filter(person=person)\
-                                                    .filter(input_type_id=CORRECTED)\
+                                                    .filter(input_type_id=MANUAL)\
                                                     .filter(prep=prep)\
                                                     .filter(active=True)\
                                                     .filter(layer='COM')\
