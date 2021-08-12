@@ -7,24 +7,31 @@ from django.urls import reverse, path
 from django.utils.html import format_html, escape
 from django.template.response import TemplateResponse
 from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import JsonLexer
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
 from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
-from neuroglancer.models import AlignmentScore, InputType, LayerData, UrlModel, Structure, Points, Transformation
+from neuroglancer.models import AlignmentScore, InputType, LayerData, \
+    UrlModel,  Structure, Points
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
+
+
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
+
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size':'100'})},
+        models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
-    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'person', 'updated')
+    list_display = ('animal', 'open_neuroglancer', 'open_multiuser',
+                    'person', 'updated')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
@@ -32,23 +39,22 @@ class UrlModelAdmin(admin.ModelAdmin):
     search_fields = ['url', 'comments']
 
     def pretty_url(self, instance):
-            """Function to display pretty version of our data"""
+        """Function to display pretty version of our data"""
 
-            # Convert the data to sorted, indented JSON
-            response = json.dumps(instance.url, sort_keys=True, indent=2)
-            # Truncate the data. Alter as needed
-            #response = response[:5000]
-            # Get the Pygments formatter
-            formatter = HtmlFormatter(style='colorful')
-            # Highlight the data
-            response = highlight(response, JsonLexer(), formatter)
-            # Get the stylesheet
-            style = "<style>" + formatter.get_style_defs() + "</style><br>"
-            # Safe the output
-            return mark_safe(style + response)
+        # Convert the data to sorted, indented JSON
+        response = json.dumps(instance.url, sort_keys=True, indent=2)
+        # Truncate the data. Alter as needed
+        # response = response[:5000]
+        # Get the Pygments formatter
+        formatter = HtmlFormatter(style='colorful')
+        # Highlight the data
+        response = highlight(response, JsonLexer(), formatter)
+        # Get the stylesheet
+        style = "<style>" + formatter.get_style_defs() + "</style><br>"
+        # Safe the output
+        return mark_safe(style + response)
 
-    pretty_url.short_description = 'Formatted URL'    
-
+    pretty_url.short_description = 'Formatted URL'
 
     def open_neuroglancer(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng"
@@ -68,12 +74,12 @@ class UrlModelAdmin(admin.ModelAdmin):
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
         return format_html(links)
 
-
     open_neuroglancer.short_description = 'Neuroglancer'
     open_neuroglancer.allow_tags = True
     open_multiuser.short_description = 'Multi-User'
     open_multiuser.allow_tags = True
- 
+
+
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
     list_display = ('animal', 'comments', 'person','show_points', 'updated')
