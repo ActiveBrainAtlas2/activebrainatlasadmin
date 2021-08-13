@@ -215,14 +215,15 @@ def interpolate(points, new_len):
     pu = points.astype(int)
     indexes = np.unique(pu, axis=0, return_index=True)[1]
     points = np.array([points[index] for index in sorted(indexes)])
-    addme = points[0].reshape(1,2)
-    points = np.concatenate((points,addme), axis=0)
+    addme = points[0].reshape(1, 2)
+    points = np.concatenate((points, addme), axis=0)
 
-    tck, u = splprep(points.T, u=None, s=3, per=1) 
+    tck, u = splprep(points.T, u=None, s=3, per=1)
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
-    arr_2d = np.concatenate([x_array[:,None],y_array[:,None]], axis=1)
+    arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
     return list(map(tuple, arr_2d))
+
 
 def get_input_type_id(input_type):
     input_type_id = 0
