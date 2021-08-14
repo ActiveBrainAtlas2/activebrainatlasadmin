@@ -14,7 +14,7 @@ from scipy.interpolate import splprep, splev
 from neuroglancer.serializers import AnnotationSerializer, \
     AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, LayerData
+from neuroglancer.models import InputType, UrlModel, LayerData, Structure
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -259,3 +259,10 @@ def public_list(request):
     return render(request, 'public.html', {'urls': urls})
 
 from django.contrib.auth.decorators import login_required
+
+def get_landmark_list(request):
+    list_of_landmarks = Structure.objects.all().filter(active = True).all()
+    list_of_landmarks = [i.abbreviation for i in list_of_landmarks]
+    data = {}
+    data['land_marks'] = list_of_landmarks
+    return JsonResponse(data)
