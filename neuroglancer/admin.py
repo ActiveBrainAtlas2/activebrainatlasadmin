@@ -249,7 +249,7 @@ class InputTypeAdmin(AtlasAdminModel):
 @admin.register(LayerData)
 class LayerDataAdmin(AtlasAdminModel):
     # change_list_template = 'layer_data_group.html'
-    list_display = ('prep_id', 'structure', 'layer', 'x_f', 'y_f', 'z_f', 'active')
+    list_display = ('prep_id', 'structure', 'layer', 'person', 'x_f', 'y_f', 'z_f', 'active')
     ordering = ['prep', 'layer','structure__abbreviation', 'section']
     excluded_fields = ['created', 'updated']
     list_filter = ['created', 'active','input_type']

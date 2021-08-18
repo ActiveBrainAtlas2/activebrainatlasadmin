@@ -64,7 +64,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     if input_type_id > 0:
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
-        rows = rows.filter(createdby=person_id)
+        rows = rows.filter(person_id=person_id)
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
@@ -153,13 +153,13 @@ def update_center_of_mass(urlModel):
                                     try:
                                         LayerData.objects.create(
                                             prep=prep, structure=structure, created=datetime.datetime.now(),
-                                            layer = 'COM', active=True, createdby=loggedInUser, input_type_id=MANUAL,
+                                            layer = 'COM', active=True, person=loggedInUser, input_type_id=MANUAL,
                                             x=x, y=y, section=z)
                                     except Exception as e:
                                         logger.error(f'Error inserting manual {structure.abbreviation}', e)
                     # delete any that still exist in the structures
                     for s in existing_structures:
-                        LayerData.objects.filter(createdby=loggedInUser)\
+                        LayerData.objects.filter(person=loggedInUser)\
                                                     .filter(input_type_id=MANUAL)\
                                                     .filter(prep=prep)\
                                                     .filter(active=True)\
