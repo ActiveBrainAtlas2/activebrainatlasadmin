@@ -5,7 +5,7 @@ so we can resuse them througout the code.
 """
 import numpy as np
 from django.contrib.auth.models import User
-
+import datetime
 from neuroglancer.models import Structure, LayerData, LAUREN_ID, \
     ATLAS_Z_BOX_SCALE
 from brain.models import Animal, ScanRun
@@ -96,7 +96,7 @@ def update_center_of_mass(urlModel):
     """
     json_txt = urlModel.url
     try:
-        person = User.objects.get(pk=urlModel.person.id)
+        loggedInUser = User.objects.get(pk=urlModel.person.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -112,8 +112,7 @@ def update_center_of_mass(urlModel):
                 layer_name = str(layer['name']).upper().strip()
                 if layer_name == 'COM':
                     existing_structures = set()
-                    existing_layer_data = LayerData.objects.filter(person=person)\
-                        .filter(input_type_id=MANUAL)\
+                    existing_layer_data = LayerData.objects.filter(input_type_id=MANUAL)\
                         .filter(prep=prep)\
                         .filter(active=True)\
                         .filter(layer='COM')\
@@ -137,29 +136,30 @@ def update_center_of_mass(urlModel):
                                 logger.error("Structure does not exist")
                             # Create the manual COM
                             # we do an upsert here. UPDATE/INSERT
-                            if structure is not None and prep is not None and person is not None:
+                            if structure is not None and prep is not None and loggedInUser is not None:
                                 if structure.id in existing_structures:
-                                    LayerData.objects.filter(person=person)\
-                                        .filter(input_type_id=MANUAL)\
+                                    LayerData.objects.filter(input_type_id=MANUAL)\
                                         .filter(prep=prep)\
                                         .filter(active=True)\
                                         .filter(layer='COM')\
                                         .filter(structure=structure)\
-                                        .update(x=x, y=y, section=z)    
+                                        .update(x=x, y=y, section=z, 
+                                                updatedby=loggedInUser, 
+                                                updated=datetime.datetime.now())    
                                     # now pop off the structure from
                                     # the existing structures
                                     existing_structures.discard(structure.id)
                                 else:
                                     try:
                                         LayerData.objects.create(
-                                            prep=prep, structure=structure,
-                                            layer = 'COM', active=True, person=person, input_type_id=MANUAL,
+                                            prep=prep, structure=structure, created=datetime.datetime.now(),
+                                            layer = 'COM', active=True, createdby=loggedInUser, input_type_id=MANUAL,
                                             x=x, y=y, section=z)
                                     except Exception as e:
                                         logger.error(f'Error inserting manual {structure.abbreviation}', e)
                     # delete any that still exist in the structures
                     for s in existing_structures:
-                        LayerData.objects.filter(person=person)\
+                        LayerData.objects.filter(createdby=loggedInUser)\
                                                     .filter(input_type_id=MANUAL)\
                                                     .filter(prep=prep)\
                                                     .filter(active=True)\
