@@ -220,7 +220,7 @@ class Layers(models.Model):
     
     structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
                                verbose_name="Structure")
-    createdby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
+    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
                                verbose_name="Creator", blank=False, null=False, related_name="creator")
     updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="updated_by",
                                verbose_name="Updater", blank=True, null=True, related_name="updater")
