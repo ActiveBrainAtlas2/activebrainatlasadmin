@@ -12,7 +12,7 @@ class AlignmentScore:
     def __init__(self):
         self.INPUT_TYPE_MANUAL = 1
         self.INPUT_TYPE_CORRECTED = 2
-        self.person_id = 2
+        self.createdby = 2
         self.brains = list(LayerData.objects.filter(active=True)\
             .filter(input_type__id=self.INPUT_TYPE_MANUAL)\
             .filter(layer='COM')\

@@ -64,7 +64,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     if input_type_id > 0:
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
-        rows = rows.filter(person_id=person_id)
+        rows = rows.filter(createdby=person_id)
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
