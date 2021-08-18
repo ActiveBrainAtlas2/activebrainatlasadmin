@@ -220,8 +220,10 @@ class Layers(models.Model):
     
     structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
                                verbose_name="Structure")
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
-                               verbose_name="User", blank=False, null=False)
+    createdby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
+                               verbose_name="Creator", blank=False, null=False, related_name="creator")
+    updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="updated_by",
+                               verbose_name="Updater", blank=True, null=True, related_name="updater")
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
                                verbose_name="Input", blank=False, null=False)
     layer = models.CharField(max_length=255)
@@ -230,7 +232,7 @@ class Layers(models.Model):
     section = models.FloatField()
     segment_id = models.IntegerField(blank=True, null=True)
     active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=False)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
 
     class Meta:
