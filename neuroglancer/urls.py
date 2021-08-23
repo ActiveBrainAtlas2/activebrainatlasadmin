@@ -14,6 +14,7 @@ urlpatterns = [
     path('annotations', views.Annotations.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
-    path('landmark_list',views.get_landmark_list)
+    path('landmark_list',views.LandmarkList.as_view())
+
     # path('ajax_datatable/layerdata/', ajax_datatable_views.LayerDataView.as_view(), name='datatabletest')
 ]

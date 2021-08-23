@@ -92,7 +92,7 @@ class Annotation(views.APIView):
                 point_dict = {}
                 point_dict['id'] = random_string()
                 point_dict['point'] = \
-                    [row.x/scale_xy, row.y/scale_xy, row.section/z_scale]
+                    [int(round(row.x/scale_xy)), int(round(row.y/scale_xy)), int(round(row.section/z_scale))]
                 point_dict['type'] = 'point'
 
                 if 'COM' in layer_name:
@@ -260,9 +260,12 @@ def public_list(request):
 
 from django.contrib.auth.decorators import login_required
 
-def get_landmark_list(request):
-    list_of_landmarks = Structure.objects.all().filter(active = True).all()
-    list_of_landmarks = [i.abbreviation for i in list_of_landmarks]
-    data = {}
-    data['land_marks'] = list_of_landmarks
-    return JsonResponse(data)
+class LandmarkList(views.APIView):
+
+    def get(self, request, format=None):
+
+        list_of_landmarks = Structure.objects.all().filter(active = True).all()
+        list_of_landmarks = [i.abbreviation for i in list_of_landmarks]
+        data = {}
+        data['land_marks'] = list_of_landmarks
+        return JsonResponse(data)
