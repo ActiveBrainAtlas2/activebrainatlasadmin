@@ -269,7 +269,7 @@ class LayerDataAdmin(AtlasAdminModel):
         number = int(round(obj.y / self.scales[initial]))
         return format_html(f"<div style='text-align:left;'>{number:,}</div>")
     def z_f(self, obj):
-        number = int(round(obj.section / 20))
+        number = int(obj.section / 20)
         return format_html(f"<div style='text-align:left;'>{number:,}</div>")
 
     x_f.short_description = "X"
