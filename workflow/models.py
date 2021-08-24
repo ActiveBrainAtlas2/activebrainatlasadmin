@@ -22,30 +22,6 @@ class WorkflowModel(models.Model):
 
 
 
-class Roles(WorkflowModel):
-    name = models.CharField('Name', max_length=30, blank=True)
-    def __str__(self):
-        return u'{}'.format(self.name)
-
-    class Meta:
-        managed = False
-        db_table = 'task_roles'
-        verbose_name = 'Role'
-        verbose_name_plural = 'Roles'
-
-
-class Resource(WorkflowModel):
-    # Fields
-    first_name = models.CharField(('first name'), max_length=30, blank=True)
-    last_name = models.CharField(('last name'), max_length=30, blank=True)
-    role = models.ForeignKey('Roles', null=True, blank=True, on_delete=models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'resource'
-    def __str__(self):
-        return u'{} {}'.format(self.first_name, self.last_name)
-
 
 class ProgressLookup(WorkflowModel):
     description = models.TextField()
@@ -68,7 +44,6 @@ class Task(WorkflowModel):
     lookup = models.ForeignKey(ProgressLookup, models.CASCADE, related_name='lookup')
     prep = models.ForeignKey(Animal, models.CASCADE, related_name='animal')
     completed = models.BooleanField()
-    #resources = models.ManyToManyField('Resource', blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
 
@@ -109,6 +84,7 @@ class Problem(WorkflowModel):
         verbose_name_plural = 'Problem Categories'
     def __str__(self):
         return u'{}'.format(self.problem_category)
+
 
 class Journal(WorkflowModel):
     prep = models.ForeignKey(Animal, models.DO_NOTHING, null=True)
@@ -183,5 +159,18 @@ class FileLog(WorkflowModel):
     def __str__(self):
         return u'{} {} {}'.format(self.prep.prep_id, self.progress.description, self.filename)
 
+
+class TableMetadata(WorkflowModel):
+    tablename = models.CharField(blank=False, max_length=100, db_column='table_name')
+    entry = models.TextField(blank=False, verbose_name='Table description')
+
+    class Meta:
+        managed = False
+        db_table = 'table_metadata'
+        verbose_name = 'Table metadata'
+        verbose_name_plural = 'Table metadata'
+
+    def __str__(self):
+        return u'{} {}'.format(self.tablename, self.entry[0:50])
 
 
