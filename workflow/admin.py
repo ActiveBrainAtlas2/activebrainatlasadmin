@@ -9,7 +9,8 @@ from plotly.offline import plot
 import plotly.graph_objects as go
 from neuroglancer.models import UrlModel
 from brain.models import Animal
-from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog
+from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog,\
+    TableMetadata
 
 from workflow.forms import PipelineForm
 from celery import chain
@@ -211,6 +212,12 @@ class JournalAdmin(WorkflowAdminModel):
 @admin.register(Problem)
 class ProblemAdmin(admin.ModelAdmin):
     list_display = ('problem_category', 'active', 'created')
+
+
+@admin.register(TableMetadata)
+class TableMetadataAdmin(admin.ModelAdmin):
+    list_display = ('tablename', 'entry', 'created')
+
 
 @admin.register(FileLog)
 class FileLogAdmin(admin.ModelAdmin):
