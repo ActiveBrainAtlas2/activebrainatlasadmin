@@ -337,27 +337,31 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 @admin.register(admin.models.LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
     # to have a date-based drilldown navigation in the admin page
     date_hierarchy = 'action_time'
 
     # to filter the resultes by users, content types and action flags
-    list_filter = ['action_time','action_flag']
-    # when searching the user will be able to search in both object_repr and change_message
-    search_fields = ['object_repr','change_message']
-    list_display = ['action_time','user','content_type','action_flag',]
+    list_filter = ['action_time', 'action_flag']
+    search_fields = ['object_repr', 'change_message']
+    list_display = ['action_time', 'user', 'content_type', 'action_flag']
+
     def has_add_permission(self, request):
         return False
+
     def has_change_permission(self, request, obj=None):
         return False
+
     def has_delete_permission(self, request, obj=None):
         return False
+
     def has_view_permission(self, request, obj=None):
         return request.user.is_superuser
+
 
 admin.site.site_header = 'Active Brain Atlas Admin'
 admin.site.site_title = "Active Brain Atlas"
 admin.site.index_title = "Welcome to Active Brain Atlas Portal"
-admin.site.site_url = "https://github.com/ActiveBrainAtlasPipeline/neuroglancer/wiki"
-
+admin.site.site_url = "https://github.com/ActiveBrainAtlas2"
