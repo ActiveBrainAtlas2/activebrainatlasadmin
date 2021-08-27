@@ -20,10 +20,8 @@ from neuroglancer.models import AlignmentScore, InputType, LayerData, \
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 
-
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
-
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
@@ -78,7 +76,6 @@ class UrlModelAdmin(admin.ModelAdmin):
     open_neuroglancer.allow_tags = True
     open_multiuser.short_description = 'Multi-User'
     open_multiuser.allow_tags = True
-
 
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
@@ -276,7 +273,6 @@ class LayerDataAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Section"
     
-
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
     change_list_template = "alignment_score.html"
