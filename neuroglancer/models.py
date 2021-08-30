@@ -7,6 +7,7 @@ import pandas as pd
 from enum import Enum
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
+from django_mysql.models import EnumField
 
 COL_LENGTH = 1000
 ROW_LENGTH = 1000
@@ -214,8 +215,8 @@ class Transformation(models.Model):
 
 class Layers(models.Model):
     id = models.BigAutoField(primary_key=True)
-    url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
-                               verbose_name="Url")
+    # url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
+    #                            verbose_name="Url")
     prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     
     structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
@@ -226,11 +227,12 @@ class Layers(models.Model):
                                verbose_name="Updater", blank=True, null=True, related_name="updater")
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
                                verbose_name="Input", blank=False, null=False)
+    vetted = EnumField(choices=['yes','no'], blank=True, null=True)
     layer = models.CharField(max_length=255)
     x = models.FloatField()
     y = models.FloatField()
     section = models.FloatField()
-    segment_id = models.IntegerField(blank=True, null=True)
+    # segment_id = models.IntegerField(blank=True, null=True)
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=False)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
