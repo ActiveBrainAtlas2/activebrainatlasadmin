@@ -250,7 +250,7 @@ class LayerDataAdmin(AtlasAdminModel):
     ordering = ['prep', 'layer','structure__abbreviation', 'section']
     excluded_fields = ['created', 'updated']
     list_filter = ['created', 'active','input_type']
-    search_fields = ['prep__prep_id', 'structure__abbreviation','layer']
+    search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer', 'person__username']
     scales = {'dk':0.325, 'md':0.452, 'at':10}
 
     def save_model(self, request, obj, form, change):
