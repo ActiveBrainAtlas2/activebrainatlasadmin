@@ -163,7 +163,14 @@ class FileLog(WorkflowModel):
 class TableMetadata(WorkflowModel):
     tablename = models.CharField(blank=False, max_length=100, db_column='table_name')
     entry = models.TextField(blank=False, verbose_name='Table description')
-
+    category = models.CharField(max_length=25, 
+                                choices=[
+                                    ('admin', 'admin'), 
+                                    ('animal', 'animal'), 
+                                    ('cvat', 'cvat'), 
+                                    ('neuroglancer', 'neuroglancer'),
+                                    ('pipeline', 'pipeline'),
+                                    ])
     class Meta:
         managed = False
         db_table = 'table_metadata'
