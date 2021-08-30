@@ -4,13 +4,14 @@ from django.db import models
 from django.urls import path
 from django.template.response import TemplateResponse
 from django.db.models import Count
-
+from django.utils.html import strip_tags
 from plotly.offline import plot
 import plotly.graph_objects as go
+
 from neuroglancer.models import UrlModel
 from brain.models import Animal
-from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, Problem, FileLog,\
-    TableMetadata
+from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, \
+    Problem, FileLog, TableMetadata
 
 from workflow.forms import PipelineForm
 from celery import chain
@@ -216,7 +217,19 @@ class ProblemAdmin(admin.ModelAdmin):
 
 @admin.register(TableMetadata)
 class TableMetadataAdmin(admin.ModelAdmin):
-    list_display = ('tablename', 'entry', 'created')
+    list_display = ('tablename', 'category', 'created')
+    readonly_fields = ['pretty_entry']
+    exclude = ['entry'] 
+    list_filter = ['category']
+
+    def pretty_entry(self, obj):
+        return strip_tags(obj.entry)
+
+    pretty_entry.short_description = 'Formatted Metadata'
+    
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(FileLog)
