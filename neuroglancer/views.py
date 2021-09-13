@@ -28,7 +28,6 @@ class UrlViewSet(viewsets.ModelViewSet):
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
 
-
 class AlignAtlasView(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
     It will return the json rotation and translation matrix"""
@@ -48,7 +47,6 @@ class AlignAtlasView(views.APIView):
 
         return JsonResponse(data)
 
-
 class UrlDataView(views.APIView):
     """This will be run when a a ID is sent to:
     https://site.com/activebrainatlas/urldata?id=999
@@ -62,7 +60,6 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-
 class Annotation(views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
@@ -73,7 +70,6 @@ class Annotation(views.APIView):
          premotor is the layer name,
          2 is the input type ID
     """
-
     def get(self, request, prep_id, layer_name, input_type_id, format=None):
         data = []
         try:
@@ -84,9 +80,7 @@ class Annotation(views.APIView):
                         .order_by('section', 'id').all()
         except LayerData.DoesNotExist:
             raise Http404
-
         scale_xy, z_scale = get_scales(prep_id)
-
         if input_type_id != 5:
             for row in rows:
                 point_dict = {}
@@ -94,8 +88,7 @@ class Annotation(views.APIView):
                 point_dict['point'] = \
                     [int(round(row.x/scale_xy)), int(round(row.y/scale_xy)), int(round(row.section/z_scale))]
                 point_dict['type'] = 'point'
-
-                if 'COM' in layer_name:
+                if 'COM' or 'Rough Alignment' in layer_name:
                     point_dict['description'] = row.structure.abbreviation
                 else:
                     point_dict['description'] = ""
@@ -109,7 +102,6 @@ class Annotation(views.APIView):
                 y = row.y / scale_xy
                 section = row.section / z_scale
                 data_dict[(id, section)].append((x, y))
-
             for (k,section), points in data_dict.items():
                 lp = len(points)
                 if lp > 3:
@@ -122,18 +114,14 @@ class Annotation(views.APIView):
                             pointB = points[i+1]
                         except IndexError:
                             pointB = points[0]
-
                         tmp_dict['id'] = random_string()
                         tmp_dict['pointA'] = [pointA[0], pointA[1], section]
                         tmp_dict['pointB'] = [pointB[0], pointB[1], section]
                         tmp_dict['type'] = 'line'
                         tmp_dict['description'] = ""
                         data.append(tmp_dict)
-
             serializer = LineSerializer(data, many=True)
-
         return Response(serializer.data)
-
 
 class Annotations(views.APIView):
     """
@@ -151,7 +139,7 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7])\
+            .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7,4])\
             .filter(layer__isnull=False)\
             .values('prep_id', 'layer','input_type__input_type','input_type_id')\
             .distinct()
@@ -194,21 +182,30 @@ class Rotations(views.APIView):
 
     def get(self, request, format=None):
         data = []
-        coms = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+        com_manual = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
             .filter(layer='COM').filter(person_id=2)\
             .filter(active=True).filter(input_type__input_type__in=['manual'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
-        for com in coms:
+        com_detected = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+            .filter(layer='COM').filter(person_id=23)\
+            .filter(active=True).filter(input_type__input_type__in=['detected'])\
+            .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
+        for com in com_manual:
             data.append({
                 "prep_id":com['prep_id'],
                 "input_type":com['input_type__input_type'],
                 "person_id":com['person_id'],
                 "username":com['person__username'],
                 })
-        
+        for com in com_detected:
+            data.append({
+                "prep_id":com['prep_id'],
+                "input_type":com['input_type__input_type'],
+                "person_id":com['person_id'],
+                "username":com['person__username'],
+                })
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
-
 
 def interpolate(points, new_len):
     points = np.array(points)
@@ -223,7 +220,6 @@ def interpolate(points, new_len):
     x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
     return list(map(tuple, arr_2d))
-
 
 def get_input_type_id(input_type):
     input_type_id = 0
