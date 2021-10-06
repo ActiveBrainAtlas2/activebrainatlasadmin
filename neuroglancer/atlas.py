@@ -65,6 +65,7 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
+    print(prep_id, len(rows))
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:

@@ -17,6 +17,7 @@ class AlignmentScore:
             .filter(input_type__id=self.INPUT_TYPE_MANUAL)\
             .filter(layer='COM')\
             .filter(active=True)\
+            # .filter(prep_id__in=['MD585','MD589','MD594'])\
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
         self.atlas_centers = get_centers_dict('atlas', input_type_id=self.INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
