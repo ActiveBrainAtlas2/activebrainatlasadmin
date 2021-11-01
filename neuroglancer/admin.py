@@ -34,7 +34,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
     list_filter = ['updated', 'created', 'vetted',UrlFilter,]
-    search_fields = ['url', 'comments']
+    search_fields = ['comments']
 
     def pretty_url(self, instance):
         """Function to display pretty version of our data"""
