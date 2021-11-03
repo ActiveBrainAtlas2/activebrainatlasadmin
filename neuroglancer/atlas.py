@@ -48,7 +48,6 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         common_keys = atlas_centers.keys() & reference_centers.keys()
         dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
         src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
-
         R, t = umeyama(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T # production version
 
@@ -65,7 +64,6 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         rows = rows.filter(input_type_id=input_type_id)
     if person_id is not None:
         rows = rows.filter(person_id=person_id)
-    print(prep_id, len(rows))
     structure_dict = {}
     structures = Structure.objects.filter(active=True).all()
     for structure in structures:
