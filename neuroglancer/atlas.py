@@ -78,11 +78,12 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         row_dict[abbreviation] = [row.x, row.y, row.section]
     return row_dict
 
-def get_existing_structures(prep,layer='COM'):
+def get_existing_structures(prep,loggedInUser,layer='COM',):
     existing_structures = set()
     existing_layer_data = LayerData.objects.filter(input_type_id=MANUAL)\
         .filter(prep=prep)\
         .filter(active=True)\
+        .filter(person = loggedInUser)\
         .filter(layer=layer)\
 
     for s in existing_layer_data:
@@ -139,8 +140,6 @@ def update_or_insert_annotations(prep,layer,loggedInUser,existing_structures,lay
         z = com['point'][2] * z_scale
         if 'description' in com:
             structure = get_com_structure(com)
-            print((structure,loggedInUser,prep))
-            print(structure.id in existing_structures)
             if structure is not None and prep is not None and loggedInUser is not None:
                 if structure.id in existing_structures:
                     update_com(prep,(x,y,z),structure,loggedInUser,layer_name)
@@ -183,8 +182,7 @@ def update_center_of_mass(urlModel):
                 layer_name = str(layer['name']).upper().strip()
                 if layer_name in monitored_layer_names:
                     layer_name = monitored_layer_names[layer_name]
-                    print(layer_name)
-                    existing_structures = get_existing_structures(prep,layer_name)
+                    existing_structures = get_existing_structures(prep,loggedInUser,layer_name)
                     remaining_structures = update_or_insert_annotations(prep,layer,loggedInUser,existing_structures,layer_name)
                     for structure in remaining_structures:
                         delete_com(prep,structure,loggedInUser,layer_name)
