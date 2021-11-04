@@ -19,7 +19,7 @@ from neuroglancer.models import AlignmentScore, InputType, LayerData, \
     UrlModel,  Structure, Points
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
-
+from neuroglancer.url_filter import UrlFilter
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -33,8 +33,8 @@ class UrlModelAdmin(admin.ModelAdmin):
     ordering = ['-vetted', '-updated']
     readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
-    list_filter = ['updated', 'created', 'vetted']
-    search_fields = ['url', 'comments']
+    list_filter = ['updated', 'created', 'vetted',UrlFilter,]
+    search_fields = ['comments']
 
     def pretty_url(self, instance):
         """Function to display pretty version of our data"""

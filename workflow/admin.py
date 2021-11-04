@@ -178,7 +178,7 @@ class LogAdmin(admin.ModelAdmin):
     ordering = ['prep_id', 'created']
     list_filter = ['created', 'level']
     list_display_links = None
-    search_fields = ['prep_id', 'msg']
+    search_fields = ['prep__prep_id', 'msg']
 
 
     def has_add_permission(self, request):

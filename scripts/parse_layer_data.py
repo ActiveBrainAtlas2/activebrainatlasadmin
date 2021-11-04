@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 
 HOME = os.path.expanduser("~")
-PATH = os.path.join(HOME, 'programming/activebrainatlas')
+PATH = os.path.join(HOME, 'programming/activebrainatlasadmin')
 sys.path.append(PATH)
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "activebrainatlas.settings")
