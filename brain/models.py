@@ -191,7 +191,8 @@ class ScanRun(AtlasModel):
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     machine = EnumField(choices=['Invitrogen','Sigma','Thermo-Fisher'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
-    resolution = models.FloatField()
+    resolution = models.FloatField(verbose_name="XY Resolution (um)")
+    zresolution = models.FloatField(verbose_name="Z Resolution (um)")
     number_of_slides = models.IntegerField()
     scan_date = models.DateField(blank=True, null=True)
     file_type = EnumField(choices=['CZI','JPEG2000','NDPI','NGR'], blank=True, null=True)
@@ -202,8 +203,10 @@ class ScanRun(AtlasModel):
     ch_3_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
     ch_4_filter_set = EnumField(choices=['68','47','38','46','63','64','50'], blank=True, null=True)
 
-    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(80000)], default=0)
-    height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], default=0)
+    width = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(80000)], 
+                                default=0, verbose_name="Width (pixels)")
+    height = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(75000)], 
+                                 default=0, verbose_name="Height (pixels)")
     rotation = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(3)], default=0)
     flip = EnumField(choices=['none','flip','flop'], blank=False, null=False, default='none')
 
