@@ -77,116 +77,6 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
         row_dict[abbreviation] = [row.x, row.y, row.section]
     return row_dict
 
-def get_existing_structures(prep,loggedInUser,layer='COM',):
-    existing_structures = set()
-    existing_layer_data = LayerData.objects.filter(input_type_id=MANUAL)\
-        .filter(prep=prep)\
-        .filter(active=True)\
-        .filter(person = loggedInUser)\
-        .filter(layer=layer)\
-
-    for s in existing_layer_data:
-        existing_structures.add(s.structure.id)
-    return existing_structures
-
-def get_com_structure(com):
-    abbreviation = str(com['description']).replace('\n', '').strip()
-    structure = None
-    try:
-        structure = Structure.objects.get(abbreviation=abbreviation)
-    except Structure.DoesNotExist:
-        print(f'Structure {abbreviation} does not exist')
-        logger.error("Structure does not exist")
-    return structure
-
-def update_com(prep,coordinates,structure,loggedInUser,layer = 'COM'):
-    x,y,z = coordinates
-    LayerData.objects.filter(input_type_id=MANUAL)\
-        .filter(prep=prep)\
-        .filter(active=True)\
-        .filter(layer=layer)\
-        .filter(structure=structure)\
-        .update(x=x, y=y, section=z, 
-                updatedby=loggedInUser, 
-                updated=datetime.datetime.now())    
-
-def add_com(prep,structure,coordinates,loggedInUser,layer = 'COM'):
-    print(f'adding {structure}' )
-    x,y,z = coordinates
-    try:
-        LayerData.objects.create(
-            prep=prep, structure=structure, created=datetime.datetime.now(),
-            layer = layer, active=True, person=loggedInUser, input_type_id=MANUAL,
-            x=x, y=y, section=z)
-    except Exception as e:
-        logger.error(f'Error inserting manual {structure.abbreviation}', e)
-
-def delete_com(prep,structure,loggedInUser,layer = 'COM'):
-    LayerData.objects.filter(person=loggedInUser)\
-    .filter(input_type_id=MANUAL)\
-    .filter(prep=prep)\
-    .filter(active=True)\
-    .filter(layer=layer)\
-    .filter(structure_id=structure)\
-    .delete()
-
-def update_or_insert_annotations(prep,layer,loggedInUser,existing_structures,layer_name = 'COM'):
-    scale_xy, z_scale = get_scales(prep.prep_id)
-    annotation = layer['annotations']
-    for com in annotation:
-        x = com['point'][0] * scale_xy
-        y = com['point'][1] * scale_xy
-        z = com['point'][2] * z_scale
-        if 'description' in com:
-            structure = get_com_structure(com)
-            if structure is not None and prep is not None and loggedInUser is not None:
-                if structure.id in existing_structures:
-                    update_com(prep,(x,y,z),structure,loggedInUser,layer_name)
-                    existing_structures.discard(structure.id)
-                else:
-                    add_com(prep,structure,(x,y,z),loggedInUser,layer_name)
-    return existing_structures
-
-def update_center_of_mass(urlModel):
-    """
-    This method checks if there is center of mass data. If there is,
-    then it first find the center of mass rows for that
-    person/input_type/animal/active combination.
-    If data already exists for that combination above, it all gets set to
-    inactive. Then the new data gets inserted. No updates!
-    It does lots of checks to make sure it is in the correct format,
-    including:
-        layer must be named COM
-        structure name must be in the description field
-        structures must exactly match the structure names in the database,
-        though this script does strip line breaks, white space off.
-    :param urlModel: the long url from neuroglancer
-    :return: nothing
-    """
-    json_txt = urlModel.url
-    try:
-        loggedInUser = User.objects.get(pk=urlModel.person.id)
-    except User.DoesNotExist:
-        logger.error("User does not exist")
-        return
-    try:
-        prep = Animal.objects.get(pk=urlModel.animal)
-    except Animal.DoesNotExist:
-        logger.error("Animal does not exist")
-        return
-    if 'layers' in json_txt:
-        layers = json_txt['layers']
-        for layer in layers:
-            if 'annotations' in layer:
-                layer_name = str(layer['name']).upper().strip()
-                if layer_name in monitored_layer_names:
-                    layer_name = monitored_layer_names[layer_name]
-                    existing_structures = get_existing_structures(prep,loggedInUser,layer_name)
-                    remaining_structures = update_or_insert_annotations(prep,layer,loggedInUser,existing_structures,layer_name)
-                    for structure in remaining_structures:
-                        delete_com(prep,structure,loggedInUser,layer_name)
-
-
 def get_scales(prep_id):
     """
     A generic method to safely query and return resolutions
@@ -199,7 +89,7 @@ def get_scales(prep_id):
     if query_set is not None and len(query_set) > 0:
         scan_run = query_set[0]
         scale_xy = scan_run.resolution
-        z_scale = ATLAS_Z_BOX_SCALE
+        z_scale = scan_run.zresolution
     else:
         scale_xy = 1
         z_scale = 1
