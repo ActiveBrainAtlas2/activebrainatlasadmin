@@ -261,3 +261,13 @@ class AlignmentScore(models.Model):
 
     def __str__(self):
         return u'{}'.format(self.prep_id)
+
+class AtlasToBeth(models.Model):
+    class Meta:
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'Aligned Atlas to Beth'
+        verbose_name_plural = 'Aligned Atlas to Beth'
+
+    def __str__(self):
+        return u'{}'.format(self.prep_id)

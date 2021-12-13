@@ -1,14 +1,13 @@
-from neuroglancer.com_difference.AlignmentScore import AlignmentScore
+from neuroglancer.com_difference.TransformedAtlasToBeth import TransformedAtlasToBeth
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
 from django_plotly_dash import DjangoDash
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-alignmentPlot = DjangoDash('AlignmentPlot',
-                           external_stylesheets=external_stylesheets)
+atlas_to_beth_app = DjangoDash('AtlasToBeth',external_stylesheets=external_stylesheets)
 
-alignmentPlot.layout = html.Div(children=[
+atlas_to_beth_app.layout = html.Div(children=[
     dcc.Graph(id='plot'),
     html.Label('Select plot type'),
     dcc.RadioItems(id='plottype',
@@ -21,10 +20,10 @@ alignmentPlot.layout = html.Div(children=[
 ])
 
 
-@alignmentPlot.expanded_callback(
+@atlas_to_beth_app.expanded_callback(
     Output('plot', 'figure'),
     [Input('plottype', 'value')])
 def update_figure(figure_type):
-    align_score = AlignmentScore()
+    align_score = TransformedAtlasToBeth()
     fig = align_score.get(figure_type)
     return fig
