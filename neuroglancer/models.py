@@ -32,7 +32,7 @@ class AnnotationChoice(str, Enum):
 
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
-    url = models.JSONField()
+    url = models.JSONField(verbose_name="Neuroglancer State")
     person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
@@ -119,8 +119,8 @@ class UrlModel(models.Model):
 
     class Meta:
         managed = False
-        verbose_name = "Url"
-        verbose_name_plural = "Urls"
+        verbose_name = "Neuroglancer state"
+        verbose_name_plural = "Neuroglancer states"
         ordering = ('comments', 'created')
         db_table = 'neuroglancer_urls'
 
