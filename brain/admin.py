@@ -91,8 +91,6 @@ class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
         ]
         return my_urls + urls
 
-
-
 @admin.register(Histology)
 class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'label', 'performance_center')
@@ -140,7 +138,6 @@ class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'performance_center', 'machine','comments', 'created')
     search_fields = ('prep__prep_id',)
     ordering = ['prep_id', 'performance_center', 'machine','comments', 'created']
-
 
 class TifInline(admin.TabularInline):
     model = SlideCziToTif

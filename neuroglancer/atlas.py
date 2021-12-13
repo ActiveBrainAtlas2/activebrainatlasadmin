@@ -58,6 +58,9 @@ def align_atlas(animal, input_type_id=None, person_id=None):
     return R, t
 
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
+    return get_layer_data_row(prep_id,input_type_id,person_id)
+
+def get_layer_data_row(prep_id, input_type_id=0, person_id=None,layer = 'COM'):
     rows = LayerData.objects.filter(prep__prep_id=prep_id)\
         .filter(active=True).filter(layer='COM')\
             .order_by('structure', 'updated')
@@ -73,9 +76,9 @@ def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     for row in rows:
         structure_id = row.structure_id
         abbreviation = structure_dict[structure_id]
-        # do transform here.
         row_dict[abbreviation] = [row.x, row.y, row.section]
     return row_dict
+
 
 def get_existing_structures(prep,loggedInUser,layer='COM',):
     existing_structures = set()
