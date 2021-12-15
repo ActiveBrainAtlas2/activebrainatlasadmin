@@ -86,7 +86,7 @@ class Annotation(views.APIView):
                 point_dict = {}
                 point_dict['id'] = random_string()
                 point_dict['point'] = \
-                    [int(round(row.x/scale_xy)), int(round(row.y/scale_xy)), int(round(row.section/z_scale))]
+                    [int(round(row.x/scale_xy)), int(round(row.y/scale_xy)), int(round(row.section/z_scale))+0.5]
                 point_dict['type'] = 'point'
                 if 'COM' or 'Rough Alignment' in layer_name:
                     point_dict['description'] = row.structure.abbreviation
@@ -98,9 +98,9 @@ class Annotation(views.APIView):
             data_dict = defaultdict(list)
             for row in rows:
                 id = row.segment_id
-                x = row.x / scale_xy
-                y = row.y / scale_xy
-                section = row.section / z_scale
+                x = np.floor(row.x / scale_xy)
+                y = np.floor(row.y / scale_xy)
+                section = np.floor(row.section / z_scale)+0.5
                 data_dict[(id, section)].append((x, y))
             for (k,section), points in data_dict.items():
                 lp = len(points)
