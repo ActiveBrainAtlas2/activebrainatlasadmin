@@ -385,3 +385,4 @@ class Virus(AtlasModel):
 
     def __str__(self):
         return self.virus_name
+

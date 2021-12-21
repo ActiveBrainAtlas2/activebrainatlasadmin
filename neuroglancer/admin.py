@@ -16,7 +16,7 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, LayerData, \
-    UrlModel,  Structure, Points, AtlasToBeth
+    UrlModel,  Structure, Points, AtlasToBeth,AnnotationStatus
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
@@ -299,3 +299,22 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# @admin.register(AnnotationStatus)
+# class AnnotationStatusAdmin(admin.ModelAdmin):
+#     list_display = ('DK39')
+
+#     def has_add_permission(self, request):
+#         return False
+
+#     def has_change_permission(self, request, obj=None):
+#         return False
+
+#     def has_delete_permission(self, request, obj=None):
+#         return False
+
+@admin.register(AnnotationStatusAdmin)
+class AnnotationStatusAdmin(admin.ModelAdmin):
+    change_form_template = 'annotation_status.html'
+    custom_admin_site.register(models.Template, TemplateAdmin)
