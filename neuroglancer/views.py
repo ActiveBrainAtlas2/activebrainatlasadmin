@@ -266,21 +266,26 @@ class LandmarkList(views.APIView):
         data['land_marks'] = list_of_landmarks
         return JsonResponse(data)
 
-class AnnotationStatus(views.APIViews):
+class AnnotationStatus(views.APIView):
     def get(self,request,format = None):
         list_of_landmarks = Structure.objects.all().filter(active = True).all()
-        list_of_landmarks = [i.id for i in list_of_landmarks]
+        list_of_landmarks_id = [i.id for i in list_of_landmarks]
+        list_of_landmarks_name = [i.abbreviation for i in list_of_landmarks]
         list_of_animals = ['DK39','DK41','DK43','DK46','DK52','DK54','DK55','DK61',\
             'DK62','DK63']
-        n_landmarks = len(list_of_landmarks)
+        n_landmarks = len(list_of_landmarks_id)
         n_animals = len(list_of_animals)
-        has_annotation = np.zeros(n_animals,n_landmarks)
+        has_annotation = np.zeros([n_landmarks,n_animals])
         for animali in range(n_animals):
             for landmarki in range(n_landmarks):
                 prep_id = list_of_animals[animali]
-                structure = list_of_landmarks[landmarki]
+                structure = list_of_landmarks_id[landmarki]
 
-                has_annotation[animai,landmarki] = \
+                has_annotation[landmarki,animali] = \
                     LayerData.objects.all().filter(active = True).filter(prep = prep_id)\
                         .filter(layer='COM').filter(structure=structure).exists()
-        return HttpResponse(has_annotation)
+                counts = has_annotation.sum(axis = 0)
+        return render(request, 'annotation_status.html', {'has_annotation': has_annotation,'animals' : list_of_animals,\
+            'structures' : list_of_landmarks_name,'counts' : counts})
+        
+        # return HttpResponse(has_annotation)

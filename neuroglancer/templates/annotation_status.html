@@ -1,1 +1,49 @@
-AnnotationStatusAdmin
+{% load multifor %}
+
+<!DOCTYPE html>
+<html>
+<style>
+table, th, td {
+  border:1px solid black;
+}
+</style>
+<body>
+
+<h2>Annotation Status</h2>
+<table style="width:100%">
+    <tr>
+        <th>Structures</th>
+        {% for animal in animals %}
+            <th>{{animal}}</th>
+        {% endfor %}
+    </tr>
+
+    {% for row in has_annotation; structurei in structures %}
+    <tr>
+        
+    <th>{{ structurei }}</th>
+    {% for entry in row %}
+        <th>{{ entry }}</th>
+    {% endfor %}
+    </tr>
+    {% endfor %}
+
+    
+</table>
+<h2>Summary</h2>
+<table style="width:100%">
+    <tr>
+        <th></th>
+        {% for animal in animals %}
+            <th>{{animal}}</th>
+        {% endfor %}
+    </tr>
+    <tr>
+        <th>Count</th>
+        {% for count in counts %}
+        <th>{{count}}</th>
+    {% endfor %}
+    </tr>
+</table>
+</body>
+</html>

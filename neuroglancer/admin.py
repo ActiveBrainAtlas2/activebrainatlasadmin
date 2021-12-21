@@ -16,11 +16,13 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, LayerData, \
-    UrlModel,  Structure, Points, AtlasToBeth,AnnotationStatus
+    UrlModel,  Structure, Points, AtlasToBeth
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
 from neuroglancer.url_filter import UrlFilter
+import numpy as np
+
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -314,7 +316,22 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
 #     def has_delete_permission(self, request, obj=None):
 #         return False
 
-@admin.register(AnnotationStatusAdmin)
-class AnnotationStatusAdmin(admin.ModelAdmin):
-    change_form_template = 'annotation_status.html'
-    custom_admin_site.register(models.Template, TemplateAdmin)
+# # @admin.register(AnnotationStatusAdmin)
+# class AnnotationStatusAdmin(admin.ModelAdmin):
+#     change_form_template = 'annotation_status.html'
+#     list_of_landmarks = Structure.objects.all().filter(active = True).all()
+#     list_of_landmarks = [i.id for i in list_of_landmarks]
+#     list_of_animals = ['DK39','DK41','DK43','DK46','DK52','DK54','DK55','DK61',\
+#         'DK62','DK63']
+#     n_landmarks = len(list_of_landmarks)
+#     n_animals = len(list_of_animals)
+#     has_annotation = np.zeros(n_animals,n_landmarks)
+#     for animali in range(n_animals):
+#         for landmarki in range(n_landmarks):
+#             prep_id = list_of_animals[animali]
+#             structure = list_of_landmarks[landmarki]
+
+#             has_annotation[animali,landmarki] = \
+#                 LayerData.objects.all().filter(active = True).filter(prep = prep_id)\
+#                     .filter(layer='COM').filter(structure=structure).exists()
+#     return render(request, 'path to template',{'username' :username , 'email'.email})
