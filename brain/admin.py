@@ -1,13 +1,11 @@
 import os
 
 from django.contrib import admin
-#from django.contrib.admin.models import  LogEntry
 from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
 import csv
 from django.http import HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.urls import path
 from django.template.response import TemplateResponse
@@ -42,7 +40,6 @@ class AtlasAdminModel(admin.ModelAdmin):
         models.CharField: {'widget': Select(attrs={'size':'250'})},
         models.CharField: {'widget': TextInput(attrs={'size':'20'})},
         models.DateTimeField: {'widget': DateInput(attrs={'size':'20'})},
-        # models.DateField: {'widget': DateTimeInput(attrs={'size':'20','type':'date'})},
         models.DateField: {'widget': AdminDateWidget(attrs={'size':'20'})},
         models.IntegerField: {'widget': NumberInput(attrs={'size':'20'})},
         models.TextField: {'widget': Textarea(attrs={'rows':4, 'cols':40})},

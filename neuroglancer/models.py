@@ -186,32 +186,11 @@ class InputType(models.Model):
     class Meta:
         managed = False
         db_table = 'com_type'
-        verbose_name = 'COM Type'
-        verbose_name_plural = 'COM Types'
+        verbose_name = 'Input Type'
+        verbose_name_plural = 'Input Types'
 
     def __str__(self):
         return u'{}'.format(self.input_type)
-
-class Transformation(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
-                               verbose_name="User", blank=False, null=False)
-    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
-                               verbose_name="Input", blank=False, null=False)
-    com_name = models.CharField(max_length=50, null=False, blank=False, verbose_name="Name")
-    active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
-
-    class Meta:
-        managed = False
-        db_table = 'transformation'
-        verbose_name = 'Transformation'
-        verbose_name_plural = 'Transformations'
-
-    def __str__(self):
-        return u'{} {}'.format(self.prep.prep_id, self.com_name)
 
 class Layers(models.Model):
     id = models.BigAutoField(primary_key=True)
