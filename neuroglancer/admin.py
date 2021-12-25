@@ -21,7 +21,6 @@ from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
 from neuroglancer.url_filter import UrlFilter
-import numpy as np
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")

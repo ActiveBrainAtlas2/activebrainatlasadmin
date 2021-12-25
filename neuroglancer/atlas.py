@@ -4,11 +4,9 @@ There are constants defined in the models.py script and imported here
 so we can resuse them througout the code.
 """
 import numpy as np
-from django.contrib.auth.models import User
-import datetime
 from neuroglancer.models import Structure, LayerData, LAUREN_ID, \
     ATLAS_Z_BOX_SCALE
-from brain.models import Animal, ScanRun
+from brain.models import ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
 logging.basicConfig()
@@ -24,7 +22,7 @@ def align_atlas(animal, input_type_id=None, person_id=None):
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
     :param input_type_id: the int defining what type of input. Taken from the
-    com_type table with  column=id
+    input_type table with  column=id
     :param person_id: the int defining the person. Taken from the auth_user
     table column=id
     :return: a 3x3 matrix and a 1x3 matrix
