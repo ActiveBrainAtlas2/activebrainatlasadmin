@@ -15,5 +15,5 @@ urlpatterns = [
     path('rotation/<str:prep_id>/<str:input_type>/<int:person_id>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
     path('landmark_list',views.LandmarkList.as_view()),
-    path('annotation_status',views.AnnotationStatus.as_view())
+    path('annotation_status',views.AnnotationStatus.as_view(),name = 'status')
 ]
