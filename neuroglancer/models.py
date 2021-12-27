@@ -250,3 +250,13 @@ class AtlasToBeth(models.Model):
 
     def __str__(self):
         return u'{}'.format(self.prep_id)
+
+class AnnotationStatus(models.Model):
+    class Meta:
+        managed = False
+        db_table = 'layer_data'
+        verbose_name = 'Annotation Status'
+        verbose_name_plural = 'Annotation Status'
+
+    def __str__(self):
+        return u'{}'.format(self.prep_id)
