@@ -11,6 +11,7 @@ Automat==20.2.0
 av==8.0.2
 backcall==0.2.0
 beautifulsoup4==4.8.2
+bioformats
 bootstrap4
 bleach==3.3.0
 Brotli==1.0.9
