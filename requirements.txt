@@ -48,6 +48,7 @@ django-cors-headers
 django-debug-toolbar
 django-filter==2.3.0
 django-mysql==3.3.0
+django_mysql
 django-multiforloop
 django-plotly-dash==1.4.2
 django_plotly_dash
