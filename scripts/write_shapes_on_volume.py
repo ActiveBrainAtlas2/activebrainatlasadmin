@@ -1,8 +1,7 @@
 """
-This program takes an animal as an argument, queries the database for width, height and all structures,
-and then reads a pandas dataframe to create the structures. It uses the alignment data from elastix
-to align the structures. It then uses cloud-volume to create a precomputed volume for use in neuroglancer.
-Authors, Edward and Litao
+This program will query CVAT and create filled polygons
+on the appropriate sections. It then creates a numpy volume and
+then creates the precomputed volume for neuroglancer.
 """
 import argparse
 import os
