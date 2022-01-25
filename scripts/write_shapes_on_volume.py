@@ -27,6 +27,7 @@ import django
 from django.db import connection
 django.setup()
 
+from brain.models import Animal, ScanRun
 
 
 def interpolate(points, new_len):
@@ -48,6 +49,8 @@ def create_layer(animal, id, start, debug):
     This is the important method called from main. This does all the work.
     Args:
         animal: string to identify the animal/stack
+        id: this is the CVAT task ID. you'll have to manually get it from looking at CVAT
+        start: very important, this should be the number of the first section that was annotated
 
     Returns:
         Nothing, creates a directory of the precomputed volume. Copy this directory somewhere apache can read it. e.g.,
@@ -56,8 +59,8 @@ def create_layer(animal, id, start, debug):
 
 
     # Set all relevant directories
-    INPUT = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/DK52/preps/CH3/thumbnail_aligned'
-    OUTPUT = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/DK52/preps/CH3/shapes'
+    INPUT = f'/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/preps/CH3/thumbnail_aligned'
+    OUTPUT = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/preps/CH3/shapes'
     PRECOMPUTE_PATH = f'/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/neuroglancer_data/shapes'
     ATLAS_DIR = '/net/birdstore/Active_Atlas_Data/data_root/atlas_data'
     outpath = os.path.join(ATLAS_DIR, 'shapes', animal)
@@ -72,7 +75,9 @@ def create_layer(animal, id, start, debug):
     height = midfile.shape[0]
     width = midfile.shape[1]
     structures = set()
-    colors = {'infrahypoglossal': 200, 'perifacial': 210, 'suprahypoglossal': 220}
+    # the dictionary below should be set from the SQL. I hard coded it here to make it easy.
+    colors = {'Trigeminal': 200}
+    scan_run = ScanRun.objects.get(prep=animal)
 
     aligned_shape = np.array((width, height))
 
@@ -97,9 +102,9 @@ def create_layer(animal, id, start, debug):
         vertices = np.concatenate((vertices,addme), axis=0)
         lp = vertices.shape[0]
         if lp > 2:
-          new_len = max(lp, 100)
-          vertices = interpolate(vertices, new_len)
-          section_structure_vertices[section][structure] = vertices
+            new_len = max(lp, 100)
+            vertices = interpolate(vertices, new_len)
+            section_structure_vertices[section][structure] = vertices
 
 
     ##### Alignment of annotation coordinates
@@ -109,27 +114,32 @@ def create_layer(animal, id, start, debug):
         template = np.zeros((aligned_shape[1], aligned_shape[0]), dtype=np.uint8)
         for structure in section_structure_vertices[section]:
             points = section_structure_vertices[section][structure]
-            print(section, structure, points.shape, np.amax(points), np.amin(points))
+            points = (points).astype(np.int32) // 8 #TODO what is the proper scaling for the data!!!!!!
+            
+            # template = cv2.polylines(template, [points], isClosed=True, color=1, thickness=1)
+            cv2.fillPoly(template, pts=[points], color=colors[structure])
+            print(section, structure, points.shape, np.unique(template), template.shape, np.amax(points), np.amin(points))
 
-            cv2.fillPoly(template, [points.astype(np.int32)],  colors[structure])
-        outfile = str(section).zfill(3) + ".tif"
-        imgpath = os.path.join(OUTPUT, outfile)
-        cv2.imwrite(imgpath, template)
+            #template = cv2.fillPoly(template, [points.astype(np.int32)],  colors[structure])
+        # outfile = str(section).zfill(3) + ".tif"
+        # imgpath = os.path.join(OUTPUT, outfile)
+        # cv2.imwrite(imgpath, template)
         volume[:, :, section - 1] = template
 
-    print(colors)
-    sys.exit()
-    volume_filepath = os.path.join(outpath, f'{animal}_shapes.npy')
+    # volume_filepath = os.path.join(outpath, f'{animal}_shapes.npy')
 
     volume = np.swapaxes(volume, 0, 1)
-    print('Saving:', volume_filepath, 'with shape', volume.shape)
+    ids = np.unique(volume)
+
+    print('Volume info:', volume.shape, volume.dtype, 'ids:',ids)
     #with open(volume_filepath, 'wb') as file:
     #    np.save(file, volume)
+    
+    SCALING_FACTOR = 0.03125
+    resolution = int(scan_run.resolution * 1000 / SCALING_FACTOR)
 
-
-    # now use 9-1 notebook to convert to a precomputed.
-    # Voxel resolution in nanometer (how much nanometer each element in numpy array represent)
-    resol = (14464, 14464, 20000)
+    scales = (resolution, resolution, int(scan_run.zresolution*1000))
+    print('scales', scales)
     # Voxel offset
     offset = (0, 0, 0)
     # Layer type
@@ -139,7 +149,9 @@ def create_layer(animal, id, start, debug):
     # segmentation properties in the format of [(number1, label1), (number2, label2) ...]
     # where number is an integer that is in the volume and label is a string that describes that segmenetation
 
-    segmentation_properties = [(len(structures) + index + 1, structure) for index, structure in enumerate(structures)]
+    # segmentation_properties = [(len(structures) + index + 1, structure) for index, structure in enumerate(structures)]
+    segmentation_properties = [(v,k) for k,v in colors.items()]
+    print('seg', segmentation_properties)
 
     cloudpath = f'file://{PRECOMPUTE_PATH}'
     info = CloudVolume.create_new_info(
@@ -147,7 +159,7 @@ def create_layer(animal, id, start, debug):
         layer_type = layer_type,
         data_type = str(volume.dtype), # Channel images might be 'uint8'
         encoding = 'raw', # raw, jpeg, compressed_segmentation, fpzip, kempressed
-        resolution = resol, # Voxel scaling, units are in nanometers
+        resolution = scales, # Voxel scaling, units are in nanometers
         voxel_offset = offset, # x,y,z offset in voxels from the origin
         chunk_size = [64, 64, 64], # units are voxels
         volume_size = volume.shape, # e.g. a cubic millimeter dataset
