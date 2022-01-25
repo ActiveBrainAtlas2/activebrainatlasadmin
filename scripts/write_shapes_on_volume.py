@@ -9,7 +9,6 @@ import sys
 import json
 from cloudvolume import CloudVolume
 from collections import defaultdict
-import random
 import cv2
 import numpy as np
 from skimage import io
@@ -26,7 +25,7 @@ import django
 from django.db import connection
 django.setup()
 
-from brain.models import Animal, ScanRun
+from brain.models import ScanRun
 
 
 def interpolate(points, new_len):
@@ -43,7 +42,7 @@ def interpolate(points, new_len):
 
 
 
-def create_layer(animal, id, start, debug):
+def create_layer(animal, id, start):
     """
     This is the important method called from main. This does all the work.
     Args:
@@ -113,26 +112,17 @@ def create_layer(animal, id, start, debug):
         template = np.zeros((aligned_shape[1], aligned_shape[0]), dtype=np.uint8)
         for structure in section_structure_vertices[section]:
             points = section_structure_vertices[section][structure]
-            points = (points).astype(np.int32) // 8 #TODO what is the proper scaling for the data!!!!!!
-            
-            # template = cv2.polylines(template, [points], isClosed=True, color=1, thickness=1)
+            points = (points).astype(np.int32) // 4 #TODO what is the proper scaling for the data!!!!!!
+            # cv2.polylines(template, [points], isClosed=True, color=1, thickness=1)
             cv2.fillPoly(template, pts=[points], color=colors[structure])
             print(section, structure, points.shape, np.unique(template), template.shape, np.amax(points), np.amin(points))
 
-            #template = cv2.fillPoly(template, [points.astype(np.int32)],  colors[structure])
-        # outfile = str(section).zfill(3) + ".tif"
-        # imgpath = os.path.join(OUTPUT, outfile)
-        # cv2.imwrite(imgpath, template)
         volume[:, :, section - 1] = template
-
-    # volume_filepath = os.path.join(outpath, f'{animal}_shapes.npy')
-
+        
     volume = np.swapaxes(volume, 0, 1)
     ids = np.unique(volume)
 
     print('Volume info:', volume.shape, volume.dtype, 'ids:',ids)
-    #with open(volume_filepath, 'wb') as file:
-    #    np.save(file, volume)
     
     SCALING_FACTOR = 0.03125
     resolution = int(scan_run.resolution * 1000 / SCALING_FACTOR)
@@ -145,10 +135,6 @@ def create_layer(animal, id, start, debug):
     layer_type = 'segmentation'
     # number of channels
     num_channels = 1
-    # segmentation properties in the format of [(number1, label1), (number2, label2) ...]
-    # where number is an integer that is in the volume and label is a string that describes that segmenetation
-
-    # segmentation_properties = [(len(structures) + index + 1, structure) for index, structure in enumerate(structures)]
     segmentation_properties = [(v,k) for k,v in colors.items()]
     print('seg', segmentation_properties)
 
@@ -189,14 +175,25 @@ def create_layer(animal, id, start, debug):
     with open(os.path.join(segment_properties_path, 'info'), 'w') as file:
         json.dump(info, file, indent=2)
 
-
     # Setting parallel to a number > 1 hangs the script. It still runs fast with parallel=1
     tq = LocalTaskQueue(parallel=1)
     tasks = tc.create_downsampling_tasks(cloudpath, compress=True) # Downsample the volumes
     tq.insert(tasks)
     tq.execute()
+    
+    tq = LocalTaskQueue(parallel=1)
+    tasks = tc.create_meshing_tasks(cloudpath, mip=0, compress=True) # The first phase of creating mesh
+    tq.insert(tasks)
+    tq.execute()
+
+    # It should be able to incoporated to above tasks, but it will give a weird bug. Don't know the reason
+    tasks = tc.create_mesh_manifest_tasks(cloudpath) # The second phase of creating mesh
+    tq.insert(tasks)
+    tq.execute()
+
+    
+    
     print('Finished')
-    # delete tasks
 
 
 if __name__ == '__main__':
@@ -204,13 +201,11 @@ if __name__ == '__main__':
     parser.add_argument('--animal', help='Enter animal', required=True)
     parser.add_argument('--id', help='Enter ID', required=True)
     parser.add_argument('--start', help='Enter start', required=True)
-    parser.add_argument('--debug', help='Enter debug True|False', required=False, default='false')
 
     args = parser.parse_args()
     animal = args.animal
     id = int(args.id)
     start = int(args.start)
-    debug = bool({'true': True, 'false': False}[str(args.debug).lower()])
-    create_layer(animal, id, start, debug)
+    create_layer(animal, id, start)
 
 
