@@ -41,6 +41,7 @@ django-bootstrap4==1.1.1
 django-cacheops==5.0.1
 django-compressor==2.4
 django-filter==2.3.0
+django-multiforloop
 django-mysql==3.3.0
 django-plotly-dash==1.4.2
 django-redis==4.12.1
