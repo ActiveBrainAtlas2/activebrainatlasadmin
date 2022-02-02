@@ -4,4 +4,6 @@
 1. cd activebrainatlas
 1. source ~/.virtualenvs/activebrainatlas/bin/activate
 1. pip install -r requirements.txt
-1. as root install libmysqlclient-dev and 
+1. as root install libmysqlclient-dev 
+
+run python manage.py runserver, debug and install packages as needed
