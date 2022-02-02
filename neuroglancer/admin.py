@@ -318,7 +318,3 @@ class AnnotationStatusAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-<<<<<<< HEAD
-=======
-
->>>>>>> 70419cb3212304ba57347046d99977269a2cc386
