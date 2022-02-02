@@ -283,7 +283,7 @@ class AnnotationStatus(views.APIView):
 
                 has_annotation[landmarki,animali] = \
                     LayerData.objects.all().filter(active = True).filter(prep = prep_id)\
-                        .filter(layer='COM').filter(structure=structure).exists()
+                        .filter(layer='COM').filter(structure=structure).exists() 
                 counts = has_annotation.sum(axis = 0)
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation,'animals' : list_of_animals,\
             'structures' : list_of_landmarks_name,'counts' : counts})
