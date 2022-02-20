@@ -1,4 +1,4 @@
-from neuroglancer.annotations_controller import update_annotation_data
+from neuroglancer.tasks import update_annotation_data
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
