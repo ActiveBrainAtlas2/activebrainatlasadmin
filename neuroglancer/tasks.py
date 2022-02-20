@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 import datetime
-from neuroglancer.models import Structure, LayerData
+from neuroglancer.models import Structure, AnnotationPoints, AnnotationPointArchive
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
@@ -17,112 +17,10 @@ LINE = 5
 POINT_ID = 52
 LINE_ID = 53
 
-def update_annotation_data_old_method(urlModel):
-    """
-    This method checks if there is center of mass data. If there is,
-    then it first find the center of mass rows for that
-    person/input_type/animal/active combination.
-    If data already exists for that combination above, it all gets set to
-    inactive. Then the new data gets inserted. No updates!
-    It does lots of checks to make sure it is in the correct format,
-    including:
-        layer must be named COM
-        structure name must be in the description field
-        structures must exactly match the structure names in the database,
-        though this script does strip line breaks, white space off.
-    :param urlModel: the long url from neuroglancer
-    :return: nothing
-    """
-    json_txt = urlModel.url
-    try:
-        loggedInUser = User.objects.get(pk=urlModel.person.id)
-    except User.DoesNotExist:
-        logger.error("User does not exist")
-        return
-    try:
-        prep = Animal.objects.get(pk=urlModel.animal)
-    except Animal.DoesNotExist:
-        logger.error("Animal does not exist")
-        return
-    if 'layers' in json_txt:
-        layers = json_txt['layers']
-        for layer in layers:
-            if 'annotations' in layer:
-                layer_name = str(layer['name']).strip()
-                if layer_name != 'annotation':
-                    print('layer=', layer_name)
-                    existing_structures = get_existing_structures(prep, loggedInUser, layer_name)
-                    remaining_structures = update_or_insert_annotations(prep, layer, loggedInUser, existing_structures, layer_name)
-                    for structure in remaining_structures:
-                        delete_annotation(prep, structure, loggedInUser, layer_name)
-
-def update_or_insert_annotations(prep, layer, loggedInUser, existing_structures, layer_name):
-    scale_xy, z_scale = get_scales(prep.prep_id)
-    annotations = layer['annotations']
-    for annotation in annotations:
-        x = annotation['point'][0] * scale_xy
-        y = annotation['point'][1] * scale_xy
-        z = annotation['point'][2] * z_scale
-        if 'description' in annotation:
-            structure = get_structure(annotation)
-            if structure is not None and prep is not None and loggedInUser is not None:
-                if structure.id in existing_structures:
-                    update_annotation(prep, (x, y, z), structure, loggedInUser, layer_name)
-                    existing_structures.discard(structure.id)
-                else:
-                    add_annotation(prep, structure, (x, y, z), loggedInUser, layer_name)
-    return existing_structures
-
-
-def add_annotation(prep, structure, coordinates, loggedInUser, layer):
-    print(f'adding {structure}')
-    x, y, z = coordinates
-    try:
-        LayerData.objects.create(
-            prep=prep, structure=structure, created=datetime.datetime.now(),
-            layer=layer, active=True, person=loggedInUser, input_type_id=MANUAL,
-            x=x, y=y, section=z)
-    except Exception as e:
-        logger.error(f'Error inserting manual {structure.abbreviation}', e)
-
-
-def update_annotation(prep, coordinates, structure, loggedInUser, layer):
-    x, y, z = coordinates
-    LayerData.objects.filter(input_type_id=MANUAL)\
-        .filter(prep=prep)\
-        .filter(active=True)\
-        .filter(layer=layer)\
-        .filter(structure=structure)\
-        .update(x=x, y=y, section=z,
-                updatedby=loggedInUser,
-                updated=datetime.datetime.now())    
-
-
-def delete_annotation(prep, structure, loggedInUser, layer):
-    LayerData.objects.filter(person=loggedInUser)\
-    .filter(input_type_id=MANUAL)\
-    .filter(prep=prep)\
-    .filter(active=True)\
-    .filter(layer=layer)\
-    .filter(structure_id=structure)\
-    .delete()
-
-
-def get_existing_structures(prep, loggedInUser, layer):
-    existing_structures = set()
-    existing_layer_data = LayerData.objects.filter(input_type_id=MANUAL)\
-        .filter(prep=prep)\
-        .filter(active=True)\
-        .filter(person=loggedInUser)\
-        .filter(layer=layer)\
-
-    for s in existing_layer_data:
-        existing_structures.add(s.structure.id)
-    return existing_structures
-
 def update_annotation_data(neuroglancerModel):
     """
-    This is the method from brainsharer_portal
+    This is the method from brainsharer_portal. It will spawn off the 
+    SQL insert intensive bits to the background.
     """    
     start = timer()
     json_txt = neuroglancerModel.url
@@ -132,20 +30,21 @@ def update_annotation_data(neuroglancerModel):
         logger.error("User does not exist")
         return
     try:
-        prep = Animal.objects.get(pk=neuroglancerModel.animal)
+        animal = Animal.objects.get(pk=neuroglancerModel.animal)
     except Animal.DoesNotExist:
         logger.error("Animal does not exist")
         return
     if 'layers' in json_txt:
-        layers = json_txt['layers']
-        for layer in layers:
-            if 'annotations' in layer:
-                layer_name = str(layer['name']).strip()
-                if prep is not None and loggedInUser is not None and \
-                    layer_name != 'annotation':
-                    inactivate_annotations(prep, loggedInUser, layer_name)
-                    bulk_annotations(neuroglancerModel.animal, layer, 
-                                     neuroglancerModel.person.id, layer_name, 
+        state_layers = json_txt['layers']
+        for state_layer in state_layers:
+            if 'annotations' in state_layer:
+                label = str(state_layer['name']).strip()
+                if animal is not None and loggedInUser is not None and \
+                    label != 'annotation':
+                    inactivate_annotations(animal, label)
+                    move_annotations(animal, label)
+                    bulk_annotations(neuroglancerModel.animal, state_layer, 
+                                     neuroglancerModel.person.id, label, 
                                      verbose_name="Bulk annotation insert", 
                                      creator=loggedInUser)
                 
@@ -153,19 +52,53 @@ def update_annotation_data(neuroglancerModel):
     print(f'Updating all annotations took {end - start} seconds')
 
 
-def inactivate_annotations(prep, loggedInUser, layer_name):
+def inactivate_annotations(animal, label):
     """
     Update the existing annotations that are manual, prep, active 
-    set them to inactive
+    set them to inactive. Updates are fast, so this does not 
+    need to be backgrounded. In fact, it really needs to be done right away.
     """
-    LayerData.objects.filter(input_type_id=MANUAL)\
-    .filter(prep=prep)\
+    AnnotationPoints.objects.filter(input_type_id=MANUAL)\
+    .filter(animal=animal)\
     .filter(active=True)\
-    .filter(layer=layer_name)\
-    .update(active=False, updatedby=loggedInUser)
+    .filter(label=label)\
+    .update(active=False)
 
-@background(schedule=60)
-def bulk_annotations(prep_id, layer, person_id, layer_name):
+@background(schedule=0)
+def move_annotations(prep_id, label):
+    '''
+    Move existing annotations into the archive. First we get the existing
+    rows and then we insert those into the archive table. This is rather
+    expensive operation to perform as we're doing:
+        1. a select of the existing rows.
+        2. bulk inserts of those rows
+        3. deleting those rows from the primary table
+    :param animal: animal object
+    :param label: char of label name
+    TODO, we need to get the FK from the archive table, insert
+    an appropriate parent in archive_set
+    '''    
+    try:
+        animal = Animal.objects.get(pk=prep_id)
+    except Animal.DoesNotExist:
+        logger.error("Animal does not exist")
+        return
+    rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
+        .filter(animal=animal)\
+        .filter(label=label)
+        
+    bulk_mgr = BulkCreateManager(chunk_size=100)
+    for row in rows:
+        bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
+            label=row.label, owner=row.owner, input_type=row.input_type,
+            x=row.x, y=row.y, z=row.z))
+    bulk_mgr.done()
+    # now delete them as they are no longer useful in the original table.
+    rows.delete()
+
+
+@background(schedule=10)
+def bulk_annotations(prep_id, layer, person_id, label):
     start = timer()
     try:
         loggedInUser = User.objects.get(pk=person_id)
@@ -173,11 +106,11 @@ def bulk_annotations(prep_id, layer, person_id, layer_name):
         logger.error("User does not exist")
         return
     try:
-        prep = Animal.objects.get(pk=prep_id)
+        animal = Animal.objects.get(pk=prep_id)
     except Animal.DoesNotExist:
         logger.error("Animal does not exist")
         return
-    bulk_mgr = BulkCreateManager(chunk_size=200)
+    bulk_mgr = BulkCreateManager(chunk_size=100)
     scale_xy, z_scale = get_scales(prep_id)
     annotations = layer['annotations']
     line_structure = Structure.objects.get(pk=LINE_ID)
@@ -188,8 +121,8 @@ def bulk_annotations(prep_id, layer, person_id, layer_name):
             z1 = annotation['point'][2] * z_scale
             structure = get_structure(annotation)
             if structure is not None:
-                bulk_mgr.add(LayerData(prep=prep, structure=structure, created=datetime.datetime.now(),
-                layer=layer_name, active=True, person=loggedInUser, input_type_id=MANUAL,
+                bulk_mgr.add(AnnotationPoints(prep=animal, structure=structure,
+                label=label, active=True, person=loggedInUser, input_type_id=MANUAL,
                 x=x1, y=y1, section=z1))
         if 'parentAnnotationId' in annotation and 'pointA' in annotation and 'pointB' in annotation:
             xa = annotation['pointA'][0] * scale_xy
@@ -199,13 +132,13 @@ def bulk_annotations(prep_id, layer, person_id, layer_name):
             xb = annotation['pointB'][0] * scale_xy
             yb = annotation['pointB'][1] * scale_xy
             zb = annotation['pointB'][2] * z_scale
-            bulk_mgr.add(LayerData(prep=prep, structure=line_structure, created=datetime.datetime.now(),
-            layer=layer_name, active=True, person=loggedInUser, input_type_id=LINE,
+            bulk_mgr.add(AnnotationPoints(prep=animal, structure=line_structure, created=datetime.datetime.now(),
+            label=label, person=loggedInUser, input_type_id=LINE,
             x=xa, y=ya, section=za))
             if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
                 print('adding', xa, xb)
-                bulk_mgr.add(LayerData(prep=prep, structure=line_structure, created=datetime.datetime.now(),
-                layer=layer_name, active=True, person=loggedInUser, input_type_id=LINE,
+                bulk_mgr.add(AnnotationPoints(prep=animal, structure=line_structure, created=datetime.datetime.now(),
+                label=label, person=loggedInUser, input_type_id=LINE,
                 x=xb, y=yb, section=zb))
     bulk_mgr.done()
     end = timer()

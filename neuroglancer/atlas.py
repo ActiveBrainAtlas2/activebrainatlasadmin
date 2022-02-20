@@ -4,7 +4,7 @@ There are constants defined in the models.py script and imported here
 so we can resuse them througout the code.
 """
 import numpy as np
-from neuroglancer.models import Structure, LayerData, LAUREN_ID, \
+from neuroglancer.models import Structure, AnnotationPoints, LAUREN_ID, \
     ATLAS_Z_BOX_SCALE
 from brain.models import ScanRun
 from abakit.registration.algorithm import umeyama
@@ -58,9 +58,9 @@ def align_atlas(animal, input_type_id=None, person_id=None):
 def get_centers_dict(prep_id, input_type_id=0, person_id=None):
     return get_layer_data_row(prep_id,input_type_id,person_id)
 
-def get_layer_data_row(prep_id, input_type_id=0, person_id=None,layer = 'COM'):
-    rows = LayerData.objects.filter(prep__prep_id=prep_id)\
-        .filter(active=True).filter(layer='COM')\
+
+def get_layer_data_row(prep_id, input_type_id=0, person_id=None, layer='COM'):
+    rows = AnnotationPoints.objects.filter(prep__prep_id=prep_id).filter(layer='COM')\
             .order_by('structure', 'updated')
     if input_type_id > 0:
         rows = rows.filter(input_type_id=input_type_id)
@@ -76,6 +76,7 @@ def get_layer_data_row(prep_id, input_type_id=0, person_id=None,layer = 'COM'):
         abbreviation = structure_dict[structure_id]
         row_dict[abbreviation] = [row.x, row.y, row.section]
     return row_dict
+
 
 def get_scales(prep_id):
     """

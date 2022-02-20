@@ -1,6 +1,5 @@
 from django.urls import path, include
 from neuroglancer import views
-#from neuroglancer import ajax_datatable_views
 from rest_framework import routers
 app_name = 'neuroglancer'
 

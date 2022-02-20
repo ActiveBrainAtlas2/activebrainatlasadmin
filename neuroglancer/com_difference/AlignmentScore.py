@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from neuroglancer.atlas import get_centers_dict
 from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
 from plotly.subplots import make_subplots
-from neuroglancer.models import LAUREN_ID, LayerData
+from neuroglancer.models import LAUREN_ID, AnnotationPoints
 from neuroglancer.com_difference.DifferencePlot import DifferencePlot
 
 class AlignmentScore(DifferencePlot):
@@ -14,10 +14,8 @@ class AlignmentScore(DifferencePlot):
         self.INPUT_TYPE_MANUAL = 1
         self.INPUT_TYPE_CORRECTED = 2
         self.person_id = 2
-        self.brains = list(LayerData.objects.filter(active=True)\
-            .filter(input_type__id=self.INPUT_TYPE_MANUAL)\
+        self.brains = list(AnnotationPoints.objects.filter(input_type__id=self.INPUT_TYPE_MANUAL)\
             .filter(layer='COM')\
-            .filter(active=True)\
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
         self.atlas_centers = get_centers_dict('atlas', input_type_id=self.INPUT_TYPE_MANUAL, person_id=LAUREN_ID)

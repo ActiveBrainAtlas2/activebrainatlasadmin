@@ -2,9 +2,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from neuroglancer.atlas import get_layer_data_row
-from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
 from plotly.subplots import make_subplots
-from neuroglancer.models import LAUREN_ID, LayerData
 from neuroglancer.com_difference.DifferencePlot import DifferencePlot
 import os
 import pickle 
