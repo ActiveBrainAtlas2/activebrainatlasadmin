@@ -10,12 +10,14 @@ import string
 import random
 from collections import defaultdict
 import numpy as np
+from statistics import mode
 from scipy.interpolate import splprep, splev
 from neuroglancer.serializers import AnnotationSerializer, \
     AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
 from neuroglancer.models import InputType, UrlModel, LayerData, Structure
 import logging
+from scipy import interpolate
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,7 @@ class UrlViewSet(viewsets.ModelViewSet):
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
+
 
 class AlignAtlasView(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
@@ -47,6 +50,7 @@ class AlignAtlasView(views.APIView):
 
         return JsonResponse(data)
 
+
 class UrlDataView(views.APIView):
     """This will be run when a a ID is sent to:
     https://site.com/activebrainatlas/urldata?id=999
@@ -60,6 +64,7 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
+
 class Annotation(views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
@@ -70,6 +75,7 @@ class Annotation(views.APIView):
          premotor is the layer name,
          2 is the input type ID
     """
+
     def get(self, request, prep_id, layer_name, input_type_id, format=None):
         data = []
         try:
@@ -77,7 +83,7 @@ class Annotation(views.APIView):
                         .filter(layer=layer_name)\
                         .filter(input_type_id=input_type_id)\
                         .filter(active=True)\
-                        .order_by('section', 'id').all()
+                        .order_by('id').all()
         except LayerData.DoesNotExist:
             raise Http404
         scale_xy, z_scale = get_scales(prep_id)
@@ -86,7 +92,7 @@ class Annotation(views.APIView):
                 point_dict = {}
                 point_dict['id'] = random_string()
                 point_dict['point'] = \
-                    [int(round(row.x/scale_xy)), int(round(row.y/scale_xy)), int(round(row.section/z_scale))+0.5]
+                    [int(round(row.x / scale_xy)), int(round(row.y / scale_xy)), int(round(row.section / z_scale)) + 0.5]
                 point_dict['type'] = 'point'
                 if 'COM' or 'Rough Alignment' in layer_name:
                     point_dict['description'] = row.structure.abbreviation
@@ -95,33 +101,31 @@ class Annotation(views.APIView):
                 data.append(point_dict)
             serializer = AnnotationSerializer(data, many=True)
         else:
-            data_dict = defaultdict(list)
-            for row in rows:
-                id = row.segment_id
-                x = np.floor(row.x / scale_xy)
-                y = np.floor(row.y / scale_xy)
-                section = np.floor(row.section / z_scale)+0.5
-                data_dict[(id, section)].append((x, y))
-            for (k,section), points in data_dict.items():
-                lp = len(points)
-                if lp > 3:
-                    new_len = max(lp, 200)
-                    points = interpolate(points, new_len)
-                    for i in range(new_len):
-                        tmp_dict = {}
-                        pointA = points[i]
-                        try:
-                            pointB = points[i+1]
-                        except IndexError:
-                            pointB = points[0]
-                        tmp_dict['id'] = random_string()
-                        tmp_dict['pointA'] = [pointA[0], pointA[1], section]
-                        tmp_dict['pointB'] = [pointB[0], pointB[1], section]
-                        tmp_dict['type'] = 'line'
-                        tmp_dict['description'] = ""
-                        data.append(tmp_dict)
+            orig_points = []
+            bigger_points = []
+            section = mode([int(round(row.section / z_scale)) for row in rows])
+            for i, row in enumerate(rows):
+                x = row.x / scale_xy
+                y = row.y / scale_xy
+                orig_points.append((x,y))
+            n = 50
+            bigger_points = interpolate(orig_points, n)
+            for i in range(n):
+                tmp_dict = {}
+                pointA = bigger_points[i]
+                try:
+                    pointB = bigger_points[i + 1]
+                except IndexError:
+                    pointB = bigger_points[0]
+                tmp_dict['id'] = random_string()
+                tmp_dict['pointA'] = [pointA[0], pointA[1], section]
+                tmp_dict['pointB'] = [pointB[0], pointB[1], section]
+                tmp_dict['type'] = 'line'
+                tmp_dict['description'] = ""
+                data.append(tmp_dict)
             serializer = LineSerializer(data, many=True)
         return Response(serializer.data)
+
 
 class Annotations(views.APIView):
     """
@@ -139,20 +143,21 @@ class Annotations(views.APIView):
         """
         data = []
         layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
-            .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7,4,11])\
+            .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
             .filter(layer__isnull=False)\
-            .values('prep_id', 'layer','input_type__input_type','input_type_id')\
+            .values('prep_id', 'layer', 'input_type__input_type', 'input_type_id')\
             .distinct()
         for layer in layers:
             data.append({
                 "prep_id":layer['prep_id'],
                 "layer":layer['layer'],
                 "input_type":layer['input_type__input_type'],
-                "input_type_id":layer['input_type_id'],                
+                "input_type_id":layer['input_type_id'],
                 })
 
         serializer = AnnotationsSerializer(data, many=True)
         return Response(serializer.data)
+
 
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
@@ -167,12 +172,13 @@ class Rotation(views.APIView):
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
-        R, t = align_atlas(prep_id, input_type_id=input_type_id, 
+        R, t = align_atlas(prep_id, input_type_id=input_type_id,
                            person_id=person_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
 
         return JsonResponse(data)
+
 
 class Rotations(views.APIView):
     """
@@ -207,6 +213,7 @@ class Rotations(views.APIView):
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
 
+
 def interpolate(points, new_len):
     points = np.array(points)
     pu = points.astype(int)
@@ -221,6 +228,7 @@ def interpolate(points, new_len):
     arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
     return list(map(tuple, arr_2d))
 
+
 def get_input_type_id(input_type):
     input_type_id = 0
     try:
@@ -234,8 +242,10 @@ def get_input_type_id(input_type):
 
     return input_type_id
 
+
 def random_string():
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
+
         
 def load_layers(request):
     layers = []
@@ -244,6 +254,7 @@ def load_layers(request):
     if urlModel.layers is not None:
         layers = urlModel.layers
     return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
+
 
 def public_list(request):
     """
@@ -254,38 +265,42 @@ def public_list(request):
     urls = UrlModel.objects.filter(public=True).order_by('comments')
     return render(request, 'public.html', {'urls': urls})
 
+
 from django.contrib.auth.decorators import login_required
+
 
 class LandmarkList(views.APIView):
 
     def get(self, request, format=None):
 
-        list_of_landmarks = Structure.objects.all().filter(active = True).all()
+        list_of_landmarks = Structure.objects.all().filter(active=True).all()
         list_of_landmarks = [i.abbreviation for i in list_of_landmarks]
         data = {}
         data['land_marks'] = list_of_landmarks
         return JsonResponse(data)
 
+
 class AnnotationStatus(views.APIView):
-    def get(self,request,format = None):
-        list_of_landmarks = Structure.objects.all().filter(active = True).all()
+
+    def get(self, request, format=None):
+        list_of_landmarks = Structure.objects.all().filter(active=True).all()
         list_of_landmarks_id = [i.id for i in list_of_landmarks]
         list_of_landmarks_name = [i.abbreviation for i in list_of_landmarks]
-        list_of_animals = ['DK39','DK41','DK43','DK46','DK52','DK54','DK55','DK61',\
-            'DK62','DK63']
+        list_of_animals = ['DK39', 'DK41', 'DK43', 'DK46', 'DK52', 'DK54', 'DK55', 'DK61', \
+            'DK62', 'DK63']
         n_landmarks = len(list_of_landmarks_id)
         n_animals = len(list_of_animals)
-        has_annotation = np.zeros([n_landmarks,n_animals])
+        has_annotation = np.zeros([n_landmarks, n_animals])
         for animali in range(n_animals):
             for landmarki in range(n_landmarks):
                 prep_id = list_of_animals[animali]
                 structure = list_of_landmarks_id[landmarki]
 
-                has_annotation[landmarki,animali] = \
-                    LayerData.objects.all().filter(active = True).filter(prep = prep_id)\
+                has_annotation[landmarki, animali] = \
+                    LayerData.objects.all().filter(active=True).filter(prep=prep_id)\
                         .filter(layer='COM').filter(structure=structure).exists() 
-                counts = has_annotation.sum(axis = 0)
-        return render(request, 'annotation_status.html', {'has_annotation': has_annotation,'animals' : list_of_animals,\
-            'structures' : list_of_landmarks_name,'counts' : counts})
+                counts = has_annotation.sum(axis=0)
+        return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals, \
+            'structures': list_of_landmarks_name, 'counts': counts})
         
         # return HttpResponse(has_annotation)

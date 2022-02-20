@@ -192,7 +192,7 @@ class InputType(models.Model):
     def __str__(self):
         return u'{}'.format(self.input_type)
 
-class Layers(models.Model):
+class LayersXXX(models.Model):
     id = models.BigAutoField(primary_key=True)
     # url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
     #                            verbose_name="Url")
@@ -219,7 +219,7 @@ class Layers(models.Model):
     class Meta:
         abstract = True
 
-class LayerData(Layers):
+class LayerDataXXX(LayersXXX):
 
     class Meta:
         managed = False
@@ -229,6 +229,62 @@ class LayerData(Layers):
 
     def __str__(self):
         return u'{} {}'.format(self.prep, self.layer)
+
+# new models for th eannotation data
+
+class AnnotationAbstract(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_animal_id", verbose_name="Animal")
+    brain_region = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="FK_structure_id",
+                               verbose_name="Structure")
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_owner_id",
+                               verbose_name="Owner", blank=False, null=False)
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
+                               verbose_name="Input", blank=False, null=False)
+    label = models.CharField(max_length=255)
+    x = models.FloatField(verbose_name="X (um)")
+    y = models.FloatField(verbose_name="Y (um)")
+    z = models.FloatField(verbose_name="Z (um)")
+
+    class Meta:
+        abstract = True
+
+class ArchiveSet(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created = models.DateTimeField(auto_now_add=True)
+    parent =  models.IntegerField(db_column='FK_parent')
+    updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, 
+                               verbose_name="Updated by", blank=False, null=False, 
+                               db_column='FK_update_user_id')
+    class Meta:
+        managed = True
+        db_table = 'archive_set'
+        verbose_name = 'Archive set'
+        verbose_name_plural = 'Archive sets'
+
+class AnnotationPoints(AnnotationAbstract):
+
+    class Meta:
+        managed = True
+        db_table = 'annotations_points'
+        verbose_name = 'Annotation Point'
+        verbose_name_plural = 'Annotation Points'
+
+    def __str__(self):
+        return u'{} {}'.format(self.animal, self.label)
+
+
+class AnnotationPointArchive(AnnotationAbstract):
+    archive = models.ForeignKey(ArchiveSet, models.CASCADE, 
+                               verbose_name="Archive Set", blank=True, null=True, 
+                               db_column='FK_archive_set_id')
+
+    class Meta:
+        managed = True
+        db_table = 'annotations_point_archive'
+        verbose_name = 'Annotation Point Archive'
+        verbose_name_plural = 'Annotation Points Archive'
+
 
 
 class AlignmentScore(models.Model):
