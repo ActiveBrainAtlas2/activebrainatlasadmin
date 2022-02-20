@@ -234,7 +234,7 @@ class LayerDataXXX(LayersXXX):
 
 class AnnotationAbstract(models.Model):
     id = models.BigAutoField(primary_key=True)
-    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_animal_id", verbose_name="Animal")
+    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     brain_region = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="FK_structure_id",
                                verbose_name="Structure")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_owner_id",
@@ -263,6 +263,7 @@ class ArchiveSet(models.Model):
         verbose_name_plural = 'Archive sets'
 
 class AnnotationPoints(AnnotationAbstract):
+    active = models.BooleanField(default = True, db_column='active')
 
     class Meta:
         managed = True

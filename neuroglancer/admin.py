@@ -15,7 +15,8 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
-from neuroglancer.models import AlignmentScore, InputType, LayerData, \
+from neuroglancer.models import AlignmentScore, InputType, \
+    AnnotationPoints, AnnotationPointArchive, \
     UrlModel,  Structure, Points, AtlasToBeth,AnnotationStatus
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
@@ -211,12 +212,12 @@ class TransformationAdmin(AtlasAdminModel):
             kwargs["queryset"] = Animal.objects.filter(layerdata__active=True).distinct().order_by()
         if db_field.name == "person":
             UserModel = get_user_model()
-            com_users = LayerData.objects.values_list('person', flat=True).distinct().order_by()
+            com_users = AnnotationPoints.objects.values_list('person', flat=True).distinct().order_by()
             kwargs["queryset"] = UserModel.objects.filter(id__in=com_users)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def com_count(self, obj):
-        count = LayerData.objects.filter(prep_id=obj.prep_id)\
+        count = AnnotationPoints.objects.filter(prep_id=obj.prep_id)\
             .filter(input_type=obj.input_type).filter(layer='COM')\
             .filter(person_id=obj.person_id).filter(active=True).count()
         return count
@@ -225,7 +226,7 @@ class TransformationAdmin(AtlasAdminModel):
 
     def save_model(self, request, obj, form, change):
         obj.user = request.user
-        count = LayerData.objects.filter(prep=obj.prep)\
+        count = AnnotationPoints.objects.filter(prep=obj.prep)\
             .filter(input_type=obj.input_type).filter(layer='COM')\
             .filter(person=obj.person).filter(active=True).count()        
         if count < 1:
@@ -233,7 +234,7 @@ class TransformationAdmin(AtlasAdminModel):
             return
         else:
             super().save_model(request, obj, form, change)
-            LayerData.objects.filter(prep=obj.prep)\
+            AnnotationPoints.objects.filter(prep=obj.prep)\
                 .filter(input_type=obj.input_type).filter(layer='COM')\
                 .filter(person=obj.person).filter(active=True).update(transformation=obj)
 
@@ -245,35 +246,34 @@ class InputTypeAdmin(AtlasAdminModel):
     list_filter = ['created', 'active']
     search_fields = ['input_type', 'description']
 
-@admin.register(LayerData)
-class LayerDataAdmin(AtlasAdminModel):
+@admin.register(AnnotationPoints)
+class AnnotationPointsAdmin(AtlasAdminModel):
     # change_list_template = 'layer_data_group.html'
-    list_display = ('prep_id', 'structure', 'layer', 'person', 'x_f', 'y_f', 'z_f', 'active')
-    ordering = ['prep', 'layer','structure__abbreviation', 'section']
-    excluded_fields = ['created', 'updated']
-    list_filter = ['created', 'active','input_type']
-    search_fields = ['prep__prep_id', 'structure__abbreviation', 'layer', 'person__username']
-    scales = {'dk':0.325, 'md':0.452, 'at':10}
+    list_display = ('animal', 'brain_region', 'label', 'owner', 'x_f', 'y_f', 'z_f')
+    ordering = ['animal', 'label','brain_region__abbreviation', 'z']
+    list_filter = ['input_type']
+    search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
+    scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
 
     def save_model(self, request, obj, form, change):
         obj.person = request.user
         super().save_model(request, obj, form, change)
 
     def x_f(self, obj):
-        initial = str(obj.prep_id[0:2]).lower()
+        initial = str(obj.animal.prep_id[0:2]).lower()
         number = int(round(obj.x / self.scales[initial]))
         return format_html(f"<div style='text-align:left;'>{number:,}</div>")
     def y_f(self, obj):
-        initial = str(obj.prep_id[0:2]).lower()
+        initial = str(obj.animal.prep_id[0:2]).lower()
         number = int(round(obj.y / self.scales[initial]))
         return format_html(f"<div style='text-align:left;'>{number:,}</div>")
     def z_f(self, obj):
-        number = int(obj.section / 20)
+        number = int(obj.z / 20)
         return format_html(f"<div style='text-align:left;'>{number:,}</div>")
 
     x_f.short_description = "X"
     y_f.short_description = "Y"
-    z_f.short_description = "Section"
+    z_f.short_description = "Z"
     
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

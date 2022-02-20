@@ -15,7 +15,7 @@ from scipy.interpolate import splprep, splev
 from neuroglancer.serializers import AnnotationSerializer, \
     AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, LayerData, Structure
+from neuroglancer.models import InputType, UrlModel, AnnotationPoints, Structure
 import logging
 from scipy import interpolate
 logging.basicConfig()
@@ -76,15 +76,15 @@ class Annotation(views.APIView):
          2 is the input type ID
     """
 
-    def get(self, request, prep_id, layer_name, input_type_id, format=None):
+    def get(self, request, prep_id, label, input_type_id, format=None):
         data = []
         try:
-            rows = LayerData.objects.filter(prep_id=prep_id)\
-                        .filter(layer=layer_name)\
+            rows = AnnotationPoints.objects.filter(animal=prep_id)\
+                        .filter(label=label)\
                         .filter(input_type_id=input_type_id)\
                         .filter(active=True)\
                         .order_by('id').all()
-        except LayerData.DoesNotExist:
+        except AnnotationPoints.DoesNotExist:
             raise Http404
         scale_xy, z_scale = get_scales(prep_id)
         if input_type_id != 5:
@@ -94,7 +94,7 @@ class Annotation(views.APIView):
                 point_dict['point'] = \
                     [int(round(row.x / scale_xy)), int(round(row.y / scale_xy)), int(round(row.section / z_scale)) + 0.5]
                 point_dict['type'] = 'point'
-                if 'COM' or 'Rough Alignment' in layer_name:
+                if 'COM' or 'Rough Alignment' in label:
                     point_dict['description'] = row.structure.abbreviation
                 else:
                     point_dict['description'] = ""
@@ -142,10 +142,10 @@ class Annotations(views.APIView):
         This will get the layer_data
         """
         data = []
-        layers = LayerData.objects.order_by('prep_id', 'layer', 'input_type_id')\
+        layers = AnnotationPoints.objects.order_by('prep_id', 'layer', 'input_type_id')\
             .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
-            .filter(layer__isnull=False)\
-            .values('prep_id', 'layer', 'input_type__input_type', 'input_type_id')\
+            .filter(label__isnull=False)\
+            .values('prep_id', 'label', 'input_type__input_type', 'input_type_id')\
             .distinct()
         for layer in layers:
             data.append({
@@ -188,11 +188,11 @@ class Rotations(views.APIView):
 
     def get(self, request, format=None):
         data = []
-        com_manual = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+        com_manual = AnnotationPoints.objects.order_by('prep_id', 'person_id', 'input_type_id')\
             .filter(layer='COM').filter(person_id=2)\
             .filter(active=True).filter(input_type__input_type__in=['manual'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
-        com_detected = LayerData.objects.order_by('prep_id', 'person_id', 'input_type_id')\
+        com_detected = AnnotationPoints.objects.order_by('prep_id', 'person_id', 'input_type_id')\
             .filter(layer='COM').filter(person_id=23)\
             .filter(active=True).filter(input_type__input_type__in=['detected'])\
             .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
@@ -297,7 +297,7 @@ class AnnotationStatus(views.APIView):
                 structure = list_of_landmarks_id[landmarki]
 
                 has_annotation[landmarki, animali] = \
-                    LayerData.objects.all().filter(active=True).filter(prep=prep_id)\
+                    AnnotationPoints.objects.all().filter(active=True).filter(prep=prep_id)\
                         .filter(layer='COM').filter(structure=structure).exists() 
                 counts = has_annotation.sum(axis=0)
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals, \

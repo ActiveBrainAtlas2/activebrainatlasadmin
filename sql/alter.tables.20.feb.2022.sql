@@ -56,7 +56,6 @@ ALTER TABLE annotations_point_archive ADD FK_archive_set_id INT;
 
 
 DELETE FROM annotations_points wHERE active = 0;
-ALTER TABLE annotations_points DROP COLUMN active;
 ALTER TABLE annotations_points DROP COLUMN updated_by;
 ALTER TABLE annotations_points DROP COLUMN created;
 ALTER TABLE annotations_points DROP COLUMN updated;

@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
 
-from neuroglancer.models import LayerData, Structure, UrlModel
+from neuroglancer.models import AnnotationPoints, Structure, UrlModel
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -56,10 +56,10 @@ class StructureSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class LayerDataSerializer(serializers.ModelSerializer):
+class AnnotationPointsSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = LayerData
+        model = AnnotationPoints
         fields = '__all__'
 
 
@@ -67,8 +67,8 @@ class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
     class Meta:
-        model = LayerData
-        fields = ['prep_id', 'input_type_id', 'person_id', 'username']
+        model = AnnotationPoints
+        fields = ['animal', 'input_type_id', 'person_id', 'username']
 
 
 class RotationSerializer(serializers.Serializer):
