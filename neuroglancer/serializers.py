@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
 
-from neuroglancer.models import AnnotationPoints, Structure, UrlModel
+from neuroglancer.models import AnnotationPoints, BrainRegion, UrlModel
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -43,16 +43,16 @@ class AnnotationsSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
-    prep_id = serializers.CharField()
-    layer = serializers.CharField()
+    animal = serializers.CharField()
+    label = serializers.CharField()
     input_type = serializers.CharField()
     input_type_id = serializers.IntegerField()
 
 
-class StructureSerializer(serializers.ModelSerializer):
+class BrainRegionSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Structure
+        model = BrainRegion
         fields = '__all__'
 
 
@@ -72,9 +72,9 @@ class RotationModelSerializer(serializers.ModelSerializer):
 
 
 class RotationSerializer(serializers.Serializer):
-    prep_id = serializers.CharField()
+    animal = serializers.CharField()
     input_type = serializers.CharField()
-    person_id = serializers.IntegerField()
+    owner_id = serializers.IntegerField()
     username = serializers.CharField()
 
 

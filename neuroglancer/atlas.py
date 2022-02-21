@@ -4,9 +4,9 @@ There are constants defined in the models.py script and imported here
 so we can resuse them througout the code.
 """
 import numpy as np
-from neuroglancer.models import Structure, AnnotationPoints, LAUREN_ID, \
+from neuroglancer.models import BrainRegion, AnnotationPoints, LAUREN_ID, \
     ATLAS_Z_BOX_SCALE
-from brain.models import ScanRun
+from brain.models import Animal, ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
 logging.basicConfig()
@@ -16,24 +16,24 @@ CORRECTED = 2
 
 monitored_layer_names = {'COM':'COM','ADDITIONAL MANUAL ANNOTATIONS':'COM_addition'}
 
-def align_atlas(animal, input_type_id=None, person_id=None):
+def align_atlas(animal, input_type_id=None, owner_id=None):
     """
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
     :param input_type_id: the int defining what type of input. Taken from the
     input_type table with  column=id
-    :param person_id: the int defining the person. Taken from the auth_user
+    :param owner_id: the int defining the person. Taken from the auth_user
     table column=id
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
     atlas_centers = get_centers_dict('atlas',
                                      input_type_id=MANUAL,
-                                     person_id=LAUREN_ID)
+                                     owner_id=LAUREN_ID)
     reference_centers = get_centers_dict(animal,
                                          input_type_id=input_type_id,
-                                         person_id=person_id)
+                                         owner_id=owner_id)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -42,11 +42,11 @@ def align_atlas(animal, input_type_id=None, person_id=None):
     if len(reference_centers) > 2 and scanRun is not None:
         resolution = scanRun.resolution
         reference_scales = (resolution, resolution, ATLAS_Z_BOX_SCALE)
-        structures = sorted(reference_centers.keys())
+        brain_regions = sorted(reference_centers.keys())
         # align animal to atlas
         common_keys = atlas_centers.keys() & reference_centers.keys()
-        dst_point_set = np.array([atlas_centers[s] for s in structures if s in common_keys]).T
-        src_point_set = np.array([reference_centers[s] for s in structures if s in common_keys]).T
+        dst_point_set = np.array([atlas_centers[s] for s in brain_regions if s in common_keys]).T
+        src_point_set = np.array([reference_centers[s] for s in brain_regions if s in common_keys]).T
         R, t = umeyama(src_point_set, dst_point_set)
         t = t / np.array([reference_scales]).T # production version
 
@@ -55,26 +55,31 @@ def align_atlas(animal, input_type_id=None, person_id=None):
         t = np.zeros((3,1))
     return R, t
 
-def get_centers_dict(prep_id, input_type_id=0, person_id=None):
-    return get_layer_data_row(prep_id,input_type_id,person_id)
+def get_centers_dict(prep_id, input_type_id=0, owner_id=None):
+    return get_layer_data_row(prep_id,input_type_id,owner_id)
 
 
-def get_layer_data_row(prep_id, input_type_id=0, person_id=None, layer='COM'):
-    rows = AnnotationPoints.objects.filter(prep__prep_id=prep_id).filter(layer='COM')\
-            .order_by('structure', 'updated')
+def get_layer_data_row(prep_id, input_type_id=0, owner_id=None, label='COM'):
+    row_dict = {}
+    try:
+        animal = Animal.objects.get(pk=prep_id)
+    except Animal.DoesNotExist:
+        return row_dict
+    
+    rows = AnnotationPoints.objects.filter(animal=animal).filter(label='COM')\
+            .order_by('brain_region')
     if input_type_id > 0:
         rows = rows.filter(input_type_id=input_type_id)
-    if person_id is not None:
-        rows = rows.filter(person_id=person_id)
-    structure_dict = {}
-    structures = Structure.objects.filter(active=True).all()
-    for structure in structures:
-        structure_dict[structure.id] = structure.abbreviation
-    row_dict = {}
+    if owner_id is not None:
+        rows = rows.filter(owner_id=owner_id)
+    brain_region_dict = {}
+    brain_regions = BrainRegion.objects.filter(active=True).all()
+    for brain_region in brain_regions:
+        brain_region_dict[brain_region.id] = brain_region.abbreviation
     for row in rows:
-        structure_id = row.structure_id
-        abbreviation = structure_dict[structure_id]
-        row_dict[abbreviation] = [row.x, row.y, row.section]
+        brain_region_id = row.brain_region_id
+        abbreviation = brain_region_dict[brain_region_id]
+        row_dict[abbreviation] = [row.x, row.y, row.z]
     return row_dict
 
 

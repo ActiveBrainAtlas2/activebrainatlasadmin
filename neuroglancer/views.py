@@ -8,14 +8,13 @@ from django.utils.html import escape
 from django.http import Http404
 import string
 import random
-from collections import defaultdict
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
 from neuroglancer.serializers import AnnotationSerializer, \
     AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, AnnotationPoints, Structure
+from neuroglancer.models import InputType, UrlModel, AnnotationPoints, BrainRegion
 import logging
 from scipy import interpolate
 logging.basicConfig()
@@ -72,7 +71,7 @@ class Annotation(views.APIView):
     https://activebrainatlas.ucsd.edu/activebrainatlas/annotation/DKXX/premotor/2
     Where:
          DKXX is the animal,
-         premotor is the layer name,
+         premotor is the label,
          2 is the input type ID
     """
 
@@ -132,7 +131,7 @@ class Annotations(views.APIView):
     Fetch UrlModel and return a set of two dictionaries. 
     One is from the layer_data
     table and the other is the COMs that have been set as transformations.
-    {'id': 213, 'description': 'DK39 COM Test', 'layer_name': 'COM'}
+    {'id': 213, 'description': 'DK39 COM Test', 'label': 'COM'}
     url is of the the form:
     https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """
@@ -142,17 +141,17 @@ class Annotations(views.APIView):
         This will get the layer_data
         """
         data = []
-        layers = AnnotationPoints.objects.order_by('prep_id', 'layer', 'input_type_id')\
+        state_layers = AnnotationPoints.objects.order_by('animal__prep_id', 'label', 'input_type_id')\
             .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
             .filter(label__isnull=False)\
-            .values('prep_id', 'label', 'input_type__input_type', 'input_type_id')\
+            .values('animal__prep_id', 'label', 'input_type__input_type', 'input_type_id')\
             .distinct()
-        for layer in layers:
+        for state_layer in state_layers:
             data.append({
-                "prep_id":layer['prep_id'],
-                "layer":layer['layer'],
-                "input_type":layer['input_type__input_type'],
-                "input_type_id":layer['input_type_id'],
+                "animal":state_layer['animal__prep_id'],
+                "label":state_layer['label'],
+                "input_type":state_layer['input_type__input_type'],
+                "input_type_id":state_layer['input_type_id'],
                 })
 
         serializer = AnnotationsSerializer(data, many=True)
@@ -162,18 +161,18 @@ class Annotations(views.APIView):
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
     It will return the json rotation and translation matrix
-    Fetch center of mass for the prep_id, input_type and person_id.
+    Fetch center of mass for the prep_id, input_type and owner_id.
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/DK39/manual/2
-    Where DK39 is the prep_id, manual is the input_type and 2 is the person_id
+    Where DK39 is the prep_id, manual is the input_type and 2 is the owner_id
     """
 
-    def get(self, request, prep_id, input_type, person_id, format=None):
+    def get(self, request, prep_id, input_type, owner_id, format=None):
 
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id, input_type_id=input_type_id,
-                           person_id=person_id)
+                           owner_id=owner_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
 
@@ -182,33 +181,33 @@ class Rotation(views.APIView):
 
 class Rotations(views.APIView):
     """
-    Fetch distinct prep_id, input_type, person_id and username:
+    Fetch distinct prep_id, input_type, owner_id and username:
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotations
     """
 
     def get(self, request, format=None):
         data = []
-        com_manual = AnnotationPoints.objects.order_by('prep_id', 'person_id', 'input_type_id')\
-            .filter(layer='COM').filter(person_id=2)\
+        com_manual = AnnotationPoints.objects.order_by('animal', 'owner_id', 'input_type_id')\
+            .filter(label='COM').filter(owner_id=2)\
             .filter(active=True).filter(input_type__input_type__in=['manual'])\
-            .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
-        com_detected = AnnotationPoints.objects.order_by('prep_id', 'person_id', 'input_type_id')\
-            .filter(layer='COM').filter(person_id=23)\
+            .values('animal', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
+        com_detected = AnnotationPoints.objects.order_by('animal', 'owner_id', 'input_type_id')\
+            .filter(label='COM').filter(owner_id=23)\
             .filter(active=True).filter(input_type__input_type__in=['detected'])\
-            .values('prep_id', 'input_type__input_type', 'person_id', 'person__username').distinct()
+            .values('animal', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
         for com in com_manual:
             data.append({
-                "prep_id":com['prep_id'],
+                "animal":com['animal'],
                 "input_type":com['input_type__input_type'],
-                "person_id":com['person_id'],
-                "username":com['person__username'],
+                "owner_id":com['owner_id'],
+                "username":com['owner__username'],
                 })
         for com in com_detected:
             data.append({
-                "prep_id":com['prep_id'],
+                "animal":com['animal'],
                 "input_type":com['input_type__input_type'],
-                "person_id":com['person_id'],
-                "username":com['person__username'],
+                "owner_id":com['owner_id'],
+                "username":com['owner__username'],
                 })
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
@@ -273,7 +272,7 @@ class LandmarkList(views.APIView):
 
     def get(self, request, format=None):
 
-        list_of_landmarks = Structure.objects.all().filter(active=True).all()
+        list_of_landmarks = BrainRegion.objects.all().filter(active=True).all()
         list_of_landmarks = [i.abbreviation for i in list_of_landmarks]
         data = {}
         data['land_marks'] = list_of_landmarks
@@ -283,7 +282,7 @@ class LandmarkList(views.APIView):
 class AnnotationStatus(views.APIView):
 
     def get(self, request, format=None):
-        list_of_landmarks = Structure.objects.all().filter(active=True).all()
+        list_of_landmarks = BrainRegion.objects.all().filter(active=True).all()
         list_of_landmarks_id = [i.id for i in list_of_landmarks]
         list_of_landmarks_name = [i.abbreviation for i in list_of_landmarks]
         list_of_animals = ['DK39', 'DK41', 'DK43', 'DK46', 'DK52', 'DK54', 'DK55', 'DK61', \

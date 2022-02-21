@@ -17,7 +17,7 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
     AnnotationPoints, AnnotationPointArchive, \
-    UrlModel,  Structure, Points, AtlasToBeth,AnnotationStatus
+    UrlModel,  BrainRegion, Points, AtlasToBeth,AnnotationStatus
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
@@ -172,8 +172,8 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-@admin.register(Structure)
-class StructureAdmin(admin.ModelAdmin, ExportCsvMixin):
+@admin.register(BrainRegion)
+class BrainRegionAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']

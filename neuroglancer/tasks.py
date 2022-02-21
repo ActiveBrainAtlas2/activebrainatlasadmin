@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 import datetime
-from neuroglancer.models import Structure, AnnotationPoints, AnnotationPointArchive
+from neuroglancer.models import BrainRegion, AnnotationPoints, AnnotationPointArchive
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
@@ -113,7 +113,7 @@ def bulk_annotations(prep_id, layer, person_id, label):
     bulk_mgr = BulkCreateManager(chunk_size=100)
     scale_xy, z_scale = get_scales(prep_id)
     annotations = layer['annotations']
-    line_structure = Structure.objects.get(pk=LINE_ID)
+    line_structure = BrainRegion.objects.get(pk=LINE_ID)
     for annotation in annotations:
         if 'point' in annotation:
             x1 = annotation['point'][0] * scale_xy
@@ -146,11 +146,11 @@ def bulk_annotations(prep_id, layer, person_id, label):
 
 
 def get_structure(annotation):
-    structure = Structure.objects.get(pk=POINT_ID)
+    structure = BrainRegion.objects.get(pk=POINT_ID)
     if 'description' in annotation:
         abbreviation = str(annotation['description']).replace('\n', '').strip()
         try:
-            structure = Structure.objects.get(abbreviation=abbreviation)
-        except Structure.DoesNotExist:
-            logger.error(f'Structure {abbreviation} does not exist')
+            structure = BrainRegion.objects.get(abbreviation=abbreviation)
+        except BrainRegion.DoesNotExist:
+            logger.error(f'BrainRegion {abbreviation} does not exist')
     return structure
