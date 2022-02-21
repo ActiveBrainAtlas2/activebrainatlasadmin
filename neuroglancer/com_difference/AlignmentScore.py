@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from neuroglancer.atlas import get_centers_dict
+from neuroglancer.atlas import get_annotation_dict
 from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
 from plotly.subplots import make_subplots
 from neuroglancer.models import LAUREN_ID, AnnotationPoints
@@ -18,13 +18,13 @@ class AlignmentScore(DifferencePlot):
             .filter(layer='COM')\
             .exclude(prep_id__in=['Atlas'])\
             .values_list('prep_id', flat=True).distinct().order_by('prep_id'))
-        self.atlas_centers = get_centers_dict('atlas', input_type_id=self.INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
+        self.atlas_centers = get_annotation_dict('atlas', input_type_id=self.INPUT_TYPE_MANUAL, person_id=LAUREN_ID)
         self.common_structures = self.get_common_structure(self.brains)
     
     def get_common_structure(self, brains):
         common_structures = set()
         for brain in brains:
-            common_structures = common_structures | set(get_centers_dict(brain).keys())
+            common_structures = common_structures | set(get_annotation_dict(brain).keys())
         common_structures = list(sorted(common_structures))
         return common_structures
 
@@ -38,7 +38,7 @@ class AlignmentScore(DifferencePlot):
         """
         df = pd.DataFrame()
         for brain in self.brains:
-            brain_com = get_centers_dict(prep_id=brain, person_id=2, input_type_id=self.INPUT_TYPE_MANUAL)
+            brain_com = get_annotation_dict(prep_id=brain, person_id=2, input_type_id=self.INPUT_TYPE_MANUAL)
 
             structures = sorted(brain_com.keys())
             dst_point_set = np.array([self.atlas_centers[s] for s in structures if s in self.common_structures]).T

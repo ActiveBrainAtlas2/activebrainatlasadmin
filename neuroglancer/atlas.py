@@ -1,11 +1,8 @@
 """
-These are methods taken from notebooks, mostly Bili's
-There are constants defined in the models.py script and imported here
-so we can resuse them througout the code.
+Some important static methods used throughout the Django project.
 """
 import numpy as np
-from neuroglancer.models import BrainRegion, AnnotationPoints, LAUREN_ID, \
-    ATLAS_Z_BOX_SCALE
+from neuroglancer.models import BrainRegion, AnnotationPoints, LAUREN_ID
 from brain.models import Animal, ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
@@ -13,8 +10,6 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 MANUAL = 1
 CORRECTED = 2
-
-monitored_layer_names = {'COM':'COM','ADDITIONAL MANUAL ANNOTATIONS':'COM_addition'}
 
 def align_atlas(animal, input_type_id=None, owner_id=None):
     """
@@ -28,10 +23,10 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
-    atlas_centers = get_centers_dict('atlas',
+    atlas_centers = get_annotation_dict('atlas',
                                      input_type_id=MANUAL,
                                      owner_id=LAUREN_ID)
-    reference_centers = get_centers_dict(animal,
+    reference_centers = get_annotation_dict(animal,
                                          input_type_id=input_type_id,
                                          owner_id=owner_id)
     try:
@@ -41,7 +36,7 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
 
     if len(reference_centers) > 2 and scanRun is not None:
         resolution = scanRun.resolution
-        reference_scales = (resolution, resolution, ATLAS_Z_BOX_SCALE)
+        reference_scales = (resolution, resolution, scanRun.zresolution)
         brain_regions = sorted(reference_centers.keys())
         # align animal to atlas
         common_keys = atlas_centers.keys() & reference_centers.keys()
@@ -55,11 +50,15 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
         t = np.zeros((3,1))
     return R, t
 
-def get_centers_dict(prep_id, input_type_id=0, owner_id=None):
-    return get_layer_data_row(prep_id,input_type_id,owner_id)
 
-
-def get_layer_data_row(prep_id, input_type_id=0, owner_id=None, label='COM'):
+def get_annotation_dict(prep_id, input_type_id=0, owner_id=None, label='COM'):
+    '''
+    This method replaces get_centers_dict and get_layer_data_row
+    :param prep_id: string name of animal
+    :param input_type_id: integer foreign key to the input_type table 
+    :param owner_id: formerly person_id, integer of the user ID
+    :param label: formerly layer, the string name of the layer
+    '''
     row_dict = {}
     try:
         animal = Animal.objects.get(pk=prep_id)

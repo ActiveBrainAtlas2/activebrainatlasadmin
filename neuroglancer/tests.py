@@ -14,6 +14,7 @@ class TestUrlModel(TransactionTestCase):
     client = Client()
 
     def setUp(self):
+        self.coms = [ 1,2,4,5,8,9,10,11,12,13,19,20,22,23,28,29,44,45,18,17,27,26]
         self.username = 'edward'
         self.animal_name = 'DKXX'
         self.atlas_name = 'Atlas'
@@ -81,6 +82,7 @@ class TestUrlModel(TransactionTestCase):
             self.lauren = User.objects.create(username='Lauren', email='l@here.com', password = 'pass', id = LAUREN_ID)
 
         self.lauren = User.objects.get(pk=LAUREN_ID)
+        self.lauren.save()
 
         pk = 273
         self.urlModel = UrlModel.objects.get(pk=pk)
@@ -133,56 +135,91 @@ class TestUrlModel(TransactionTestCase):
                 x=x, y=y, z=z)
         
         
-        n = AnnotationPoints.objects.count()
-        print('count of points is ', n)
-        self.assertGreater(n, 0, msg='Error: Annotation point table is empty')
+        c = AnnotationPoints.objects.count()
+        self.assertEqual(n, c, msg='Error: Annotation point table has incorrect number of entries.')
         
     def test_brain_region_count(self):
         n = BrainRegion.objects.count()
-        print('count of brain regions is ', n)
         self.assertGreater(n, 0, msg='Error: Brain region table is empty')
 
     
     def test_rotation_url_with_good_animal(self):
-        coms = [ 1,2,4,5,8,9,10,11,12,13,19,20,22,23,28,29,44,45,18,17,27,26]
-        for com in coms:
+        for com in self.coms:
             brain_region = BrainRegion.objects.get(pk=com)
             x1 = uniform(0, 65000)
             y1 = uniform(0, 35000)
             z1 = uniform(0, 450)
-            x2 = uniform(0, 65000)
-            y2 = uniform(0, 35000)
-            z2 = uniform(0, 450)
-            AnnotationPoints.objects.create(animal=self.animal, brain_region=brain_region,
+            x2 = uniform(0, 55000)
+            y2 = uniform(0, 45000)
+            z2 = uniform(0, 350)
+            p1 = AnnotationPoints.objects.create(animal=self.animal, brain_region=brain_region,
                 label='COM', owner=self.owner, input_type=self.input_type,
                 x=x1, y=y1, z=z1)
-            AnnotationPoints.objects.create(animal=self.atlas, brain_region=brain_region,
+            p1.save()
+            p2 = AnnotationPoints.objects.create(animal=self.atlas, brain_region=brain_region,
                 label='COM', owner=self.lauren, input_type=self.input_type,
                 x=x2, y=y2, z=z2)
-
+            p2.save()
         qc = AnnotationPoints.objects.filter(animal=self.animal, label='COM', owner=self.owner).count()
-        print(f'count of {self.animal_name} COMs is {qc}')
+        self.assertEqual(qc, len(self.coms), msg="Animal coms are of wrong size")
         
         qc = AnnotationPoints.objects.filter(animal=self.atlas).filter(label='COM').count()
-        print(f'count of {self.atlas_name} COMs is {qc}')
+        self.assertEqual(qc, len(self.coms), msg="Atlas coms are of wrong size")
         
         url = f'/rotation/{self.animal_name}/{self.input_type_name}/{self.owner.id}'
-        print('url is', url)    
         response = self.client.get(url)
         data = str(response.content, encoding='utf8')
         data = json.loads(data)
         translation = data['translation']
         s = np.sum(translation)
-        print(data)
         self.assertNotEqual(s, 0.0, msg="Translation is not equal to zero")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
-    """
     def test_annotation_url(self):
-        response = self.client.get("/annotation/DK39/premotor/1")
+        n = 10
+        label = 'premotor'
+        for i in range(n):
+            x = uniform(0, 65000)
+            y = uniform(0, 35000)
+            z = uniform(0, 450)
+            AnnotationPoints.objects.create(animal=self.animal, brain_region=self.brain_region,
+                label=label, owner=self.owner, input_type=self.input_type,
+                x=x, y=y, z=z)
+        url = f'/annotation/{self.animal_name}/{label}/{self.input_type.id}'
+        response = self.client.get(url)
+        self.assertEqual(len(response.data), n, msg="The number of annotations entered and returned do not match.")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    
     def test_annotation_Atlas_url(self):
-        response = self.client.get("/annotation/Atlas/COM/1")
+        label = 'COM'
+        for com in self.coms:
+            brain_region = BrainRegion.objects.get(pk=com)
+            x1 = uniform(0, 65000)
+            y1 = uniform(0, 35000)
+            z1 = uniform(0, 450)
+            try:
+                p = AnnotationPoints.objects.create(animal=self.atlas, brain_region=brain_region,
+                    label=label, owner=self.lauren, input_type=self.input_type,
+                    x=x1, y=y1, z=z1)
+            except Exception as e:
+                print('could not create', e)
+            try:
+                p.save()
+            except Exception as e:
+                print('could not save', e)
+                
+        qc = AnnotationPoints.objects\
+            .filter(animal=self.atlas)\
+            .filter(label=label)\
+            .filter(owner=self.lauren)\
+            .filter(input_type=self.input_type)\
+            .count()
+        self.assertEqual(qc, len(self.coms), msg="Atlas coms are of wrong size")
+
+        url = f'/annotation/{self.atlas_name}/{label}/{self.input_type.id}'
+        response = self.client.get(url)
+        self.assertEqual(len(response.data), len(self.coms), msg="Atlas coms are of wrong size")
+        self.assertEqual(len(response.data), qc, msg="Atlas coms are of wrong size")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    """
+    
