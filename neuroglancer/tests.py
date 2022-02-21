@@ -7,7 +7,11 @@ from django.contrib.auth.models import User
 from brain.models import Animal, ScanRun
 from neuroglancer.models import UrlModel, AnnotationPoints, BrainRegion, \
     InputType, LAUREN_ID
+from neuroglancer.views import random_string
 from random import uniform
+import os
+from datetime import datetime
+import json
 
 
 class TestUrlModel(TransactionTestCase):
@@ -19,6 +23,7 @@ class TestUrlModel(TransactionTestCase):
         self.animal_name = 'DKXX'
         self.atlas_name = 'Atlas'
         self.input_type_name = 'manual'
+        self.label = random_string()
         # atlas
         try:
             self.atlas = Animal.objects.get(pk=self.atlas_name)
@@ -83,25 +88,6 @@ class TestUrlModel(TransactionTestCase):
 
         self.lauren = User.objects.get(pk=LAUREN_ID)
         self.lauren.save()
-
-        pk = 273
-        self.urlModel = UrlModel.objects.get(pk=pk)
-
-        self.serializer_data = {
-            'url': self.urlModel.url,
-            'user_date': self.urlModel.user_date,
-            'comments': self.urlModel.comments,
-            'owner_id': self.owner.id
-        }
-
-        self.bad_serializer_data = {
-            'url': None,
-            'user_date': None,
-            'comments': None,
-            'vetted': None,
-            'public': None,
-            'owner_id': "18888888888"
-        }
 
     def test_neuroglancer_url(self):
         response = self.client.get("/neuroglancer")
@@ -222,4 +208,37 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(len(response.data), len(self.coms), msg="Atlas coms are of wrong size")
         self.assertEqual(len(response.data), qc, msg="Atlas coms are of wrong size")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+        
+        
+    def test_create_post_get_state(self):
+        """
+        Ensure we can create a new neuroglancer_state object.
+        neuroglancer_state is the new, url is the old
+        owner_id is the new, person_id is the old
+        """
+        parent_path = os.getcwd()
+        jfile = f'{parent_path}/scripts/363.json'
+        state = json.load(open(jfile))
+        
+        
+        data = {}
+        data['url'] = json.dumps(state)
+        data['user_date'] = '999999'
+        data['comments'] = self.label
+        data['person_id'] = self.owner.id
+        data['created'] = datetime.now()
+        data['updated'] =  datetime.now()
+        
+        response = self.client.post('/neuroglancer', data, format='json')
+        if response.status_code != status.HTTP_201_CREATED:
+            print('ERROR', response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        urlModel = UrlModel.objects.filter(comments=self.label)
+        n = UrlModel.objects.filter(comments=self.label).count()
+        self.assertEqual(n, 1)
+        self.assertEqual(urlModel[0].comments, self.label)
+        self.state_id = urlModel[0].id
+        
+        response = self.client.get("/neuroglancer/" + str(self.state_id))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+

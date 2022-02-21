@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-import datetime
 from neuroglancer.models import BrainRegion, AnnotationPoints, AnnotationPointArchive
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
@@ -42,8 +41,9 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_annotations(animal, label)
-                    bulk_annotations(neuroglancerModel.animal, state_layer, 
+                    move_annotations(animal.prep_id, label, verbose_name="Bulk annotation archive insert", 
+                                     creator=loggedInUser)
+                    bulk_annotations(animal.prep_id, state_layer, 
                                      neuroglancerModel.person.id, label, 
                                      verbose_name="Bulk annotation insert", 
                                      creator=loggedInUser)
@@ -119,11 +119,11 @@ def bulk_annotations(prep_id, layer, person_id, label):
             x1 = annotation['point'][0] * scale_xy
             y1 = annotation['point'][1] * scale_xy
             z1 = annotation['point'][2] * z_scale
-            structure = get_structure(annotation)
-            if structure is not None:
-                bulk_mgr.add(AnnotationPoints(prep=animal, structure=structure,
-                label=label, active=True, person=loggedInUser, input_type_id=MANUAL,
-                x=x1, y=y1, section=z1))
+            brain_region = get_brain_region(annotation)
+            if brain_region is not None:
+                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
+                label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
+                x=x1, y=y1, z=z1))
         if 'parentAnnotationId' in annotation and 'pointA' in annotation and 'pointB' in annotation:
             xa = annotation['pointA'][0] * scale_xy
             ya = annotation['pointA'][1] * scale_xy
@@ -132,25 +132,28 @@ def bulk_annotations(prep_id, layer, person_id, label):
             xb = annotation['pointB'][0] * scale_xy
             yb = annotation['pointB'][1] * scale_xy
             zb = annotation['pointB'][2] * z_scale
-            bulk_mgr.add(AnnotationPoints(prep=animal, structure=line_structure, created=datetime.datetime.now(),
+            bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=line_structure,
             label=label, person=loggedInUser, input_type_id=LINE,
-            x=xa, y=ya, section=za))
+            x=xa, y=ya, z=za))
             if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
                 print('adding', xa, xb)
-                bulk_mgr.add(AnnotationPoints(prep=animal, structure=line_structure, created=datetime.datetime.now(),
-                label=label, person=loggedInUser, input_type_id=LINE,
-                x=xb, y=yb, section=zb))
+                bulk_mgr.add(AnnotationPoints(animal=animal, structure=line_structure,
+                label=label, owner=loggedInUser, input_type_id=LINE,
+                x=xb, y=yb, z=zb))
     bulk_mgr.done()
     end = timer()
-    print(f'Inserting {layer_name} annotations took {end - start} seconds')
+    print(f'Inserting {label} annotations took {end - start} seconds')
 
 
-def get_structure(annotation):
-    structure = BrainRegion.objects.get(pk=POINT_ID)
+def get_brain_region(annotation):
+    brain_region = BrainRegion.objects.get(pk=POINT_ID)
     if 'description' in annotation:
         abbreviation = str(annotation['description']).replace('\n', '').strip()
         try:
-            structure = BrainRegion.objects.get(abbreviation=abbreviation)
+            query_set = BrainRegion.objects.filter(abbreviation=abbreviation)
         except BrainRegion.DoesNotExist:
             logger.error(f'BrainRegion {abbreviation} does not exist')
-    return structure
+        if query_set is not None and len(query_set) > 0:
+            brain_region = query_set[0]
+        
+    return brain_region
