@@ -159,7 +159,7 @@ class Points(UrlModel):
         verbose_name = 'Points'
         verbose_name_plural = 'Points'
 
-class Structure(AtlasModel):
+class BrainRegion(AtlasModel):
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
@@ -169,8 +169,8 @@ class Structure(AtlasModel):
     class Meta:
         managed = False
         db_table = 'structure'
-        verbose_name = 'Structure'
-        verbose_name_plural = 'Structures'
+        verbose_name = 'Brain region'
+        verbose_name_plural = 'Brain regions'
 
     def __str__(self):
         return f'{self.description} {self.abbreviation}'
@@ -192,51 +192,13 @@ class InputType(models.Model):
     def __str__(self):
         return u'{}'.format(self.input_type)
 
-class LayersXXX(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    # url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
-    #                            verbose_name="Url")
-    prep = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    
-    structure = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="structure_id",
-                               verbose_name="Structure")
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
-                               verbose_name="Creator", blank=False, null=False, related_name="creator")
-    updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="updated_by",
-                               verbose_name="Updater", blank=True, null=True, related_name="updater")
-    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="input_type_id",
-                               verbose_name="Input", blank=False, null=False)
-    vetted = EnumField(choices=['yes','no'], blank=True, null=True)
-    layer = models.CharField(max_length=255)
-    x = models.FloatField(verbose_name="X (um)")
-    y = models.FloatField(verbose_name="Y (um)")
-    section = models.FloatField(verbose_name="Section (um)")
-    # segment_id = models.IntegerField(blank=True, null=True)
-    active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=False)
-    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
-
-    class Meta:
-        abstract = True
-
-class LayerDataXXX(LayersXXX):
-
-    class Meta:
-        managed = False
-        db_table = 'layer_data'
-        verbose_name = 'Annotation Data'
-        verbose_name_plural = 'Annotation Data'
-
-    def __str__(self):
-        return u'{} {}'.format(self.prep, self.layer)
-
 # new models for th eannotation data
 
 class AnnotationAbstract(models.Model):
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    brain_region = models.ForeignKey(Structure, models.CASCADE, null=True, db_column="FK_structure_id",
-                               verbose_name="Structure")
+    brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_structure_id",
+                               verbose_name="Brain region")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_owner_id",
                                verbose_name="Owner", blank=False, null=False)
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
