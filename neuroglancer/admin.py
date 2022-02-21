@@ -287,30 +287,3 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-@admin.register(AtlasToBeth)
-class AlignmentScoreAdmin(admin.ModelAdmin):
-    change_list_template = "atlas_to_beth.html"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-@admin.register(AnnotationStatus)
-class AnnotationStatusAdmin(admin.ModelAdmin):
-    change_list_template = "annotation_status_admin.html"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False

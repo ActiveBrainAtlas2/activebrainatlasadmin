@@ -253,7 +253,7 @@ class AnnotationPointArchive(AnnotationAbstract):
 class AlignmentScore(models.Model):
     class Meta:
         managed = False
-        db_table = 'layer_data'
+        db_table = 'annotations_points'
         verbose_name = 'Alignment Score'
         verbose_name_plural = 'Alignment Scores'
 
@@ -263,7 +263,7 @@ class AlignmentScore(models.Model):
 class AtlasToBeth(models.Model):
     class Meta:
         managed = False
-        db_table = 'layer_data'
+        db_table = 'annotations_points'
         verbose_name = 'Aligned Atlas to Beth'
         verbose_name_plural = 'Aligned Atlas to Beth'
 
@@ -273,7 +273,7 @@ class AtlasToBeth(models.Model):
 class AnnotationStatus(models.Model):
     class Meta:
         managed = False
-        db_table = 'layer_data'
+        db_table = 'annotations_points'
         verbose_name = 'Annotation Status'
         verbose_name_plural = 'Annotation Status'
 

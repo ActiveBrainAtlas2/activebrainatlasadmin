@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from neuroglancer.atlas import get_layer_data_row
+from neuroglancer.atlas import get_annotation_dict
 from plotly.subplots import make_subplots
 from neuroglancer.com_difference.DifferencePlot import DifferencePlot
 import os
@@ -19,10 +19,10 @@ class TransformedAtlasToBeth(DifferencePlot):
         self.new_coms = {}
         self.all_coms = {}
         for animali in self.animals:
-            self.new_coms[animali] = get_layer_data_row(prep_id = animali,layer = 'COM_addition')
+            self.new_coms[animali] = get_annotation_dict(prep_id = animali, label = 'COM_addition')
         self.coms = {}
         for animali in self.animals:
-            self.coms[animali] = get_layer_data_row(prep_id = animali)
+            self.coms[animali] = get_annotation_dict(prep_id = animali)
             self.all_coms[animali] = self.coms[animali]
             self.all_coms[animali].update(self.new_coms[animali])
 

@@ -11,6 +11,7 @@ import random
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
+from neuroglancer.models import Animal
 from neuroglancer.serializers import AnnotationSerializer, \
     AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
     AnimalInputSerializer, IdSerializer
@@ -78,7 +79,12 @@ class Annotation(views.APIView):
     def get(self, request, prep_id, label, input_type_id, format=None):
         data = []
         try:
-            rows = AnnotationPoints.objects.filter(animal=prep_id)\
+            animal = Animal.objects.get(pk=prep_id)
+        except Animal.DoesNotExist:
+            return data
+
+        try:
+            rows = AnnotationPoints.objects.filter(animal=animal)\
                         .filter(label=label)\
                         .filter(input_type_id=input_type_id)\
                         .filter(active=True)\
@@ -91,10 +97,10 @@ class Annotation(views.APIView):
                 point_dict = {}
                 point_dict['id'] = random_string()
                 point_dict['point'] = \
-                    [int(round(row.x / scale_xy)), int(round(row.y / scale_xy)), int(round(row.section / z_scale)) + 0.5]
+                    [int(round(row.x / scale_xy)), int(round(row.y / scale_xy)), int(round(row.z / z_scale)) + 0.5]
                 point_dict['type'] = 'point'
                 if 'COM' or 'Rough Alignment' in label:
-                    point_dict['description'] = row.structure.abbreviation
+                    point_dict['description'] = row.brain_region.abbreviation
                 else:
                     point_dict['description'] = ""
                 data.append(point_dict)
@@ -102,7 +108,7 @@ class Annotation(views.APIView):
         else:
             orig_points = []
             bigger_points = []
-            section = mode([int(round(row.section / z_scale)) for row in rows])
+            z = mode([int(round(row.z / z_scale)) for row in rows])
             for i, row in enumerate(rows):
                 x = row.x / scale_xy
                 y = row.y / scale_xy
@@ -117,8 +123,8 @@ class Annotation(views.APIView):
                 except IndexError:
                     pointB = bigger_points[0]
                 tmp_dict['id'] = random_string()
-                tmp_dict['pointA'] = [pointA[0], pointA[1], section]
-                tmp_dict['pointB'] = [pointB[0], pointB[1], section]
+                tmp_dict['pointA'] = [pointA[0], pointA[1], z]
+                tmp_dict['pointB'] = [pointB[0], pointB[1], z]
                 tmp_dict['type'] = 'line'
                 tmp_dict['description'] = ""
                 data.append(tmp_dict)
@@ -141,6 +147,7 @@ class Annotations(views.APIView):
         This will get the layer_data
         """
         data = []
+
         state_layers = AnnotationPoints.objects.order_by('animal__prep_id', 'label', 'input_type_id')\
             .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
             .filter(label__isnull=False)\
@@ -293,13 +300,13 @@ class AnnotationStatus(views.APIView):
         for animali in range(n_animals):
             for landmarki in range(n_landmarks):
                 prep_id = list_of_animals[animali]
-                structure = list_of_landmarks_id[landmarki]
+                brain_region = list_of_landmarks_id[landmarki]
 
                 has_annotation[landmarki, animali] = \
                     AnnotationPoints.objects.all().filter(active=True).filter(prep=prep_id)\
-                        .filter(layer='COM').filter(structure=structure).exists() 
+                        .filter(layer='COM').filter(brain_region=brain_region).exists() 
                 counts = has_annotation.sum(axis=0)
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals, \
-            'structures': list_of_landmarks_name, 'counts': counts})
+            'brain_regions': list_of_landmarks_name, 'counts': counts})
         
         # return HttpResponse(has_annotation)
