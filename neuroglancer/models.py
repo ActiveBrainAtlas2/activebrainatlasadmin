@@ -7,15 +7,7 @@ import pandas as pd
 from enum import Enum
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
-from django_mysql.models import EnumField
 
-COL_LENGTH = 1000
-ROW_LENGTH = 1000
-Z_LENGTH = 300
-ATLAS_X_BOX_SCALE = 10
-ATLAS_Y_BOX_SCALE = 10
-ATLAS_Z_BOX_SCALE = 20
-ATLAS_RAW_SCALE = 10
 ANNOTATION_ID = 52
 LAUREN_ID = 16
 
@@ -33,7 +25,7 @@ class AnnotationChoice(str, Enum):
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
     vetted = models.BooleanField(default = False)
@@ -247,6 +239,9 @@ class AnnotationPointArchive(AnnotationAbstract):
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
+        
+    def __str__(self):
+        return u'{} {}'.format(self.animal, self.label)
 
 
 

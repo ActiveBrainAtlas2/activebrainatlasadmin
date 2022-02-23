@@ -98,7 +98,26 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_annotations_url(self):
+        label = 'XXX'
+        for com in self.coms:
+            brain_region = BrainRegion.objects.get(pk=com)
+            x1 = uniform(0, 65000)
+            y1 = uniform(0, 35000)
+            z1 = uniform(0, 450)
+            try:
+                p = AnnotationPoints.objects.create(animal=self.animal, brain_region=brain_region,
+                    label=label, owner=self.owner, input_type=self.input_type,
+                    x=x1, y=y1, z=z1)
+            except Exception as e:
+                print('could not create', e)
+            try:
+                p.save()
+            except Exception as e:
+                print('could not save', e)
+        
+        
         response = self.client.get("/annotations")
+        self.assertEqual(len(response.data), 1, msg="Annotations is empty")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotation_url_with_bad_animal(self):
@@ -225,7 +244,7 @@ class TestUrlModel(TransactionTestCase):
         data['url'] = json.dumps(state)
         data['user_date'] = '999999'
         data['comments'] = self.label
-        data['person_id'] = self.owner.id
+        data['owner_id'] = self.owner.id
         data['created'] = datetime.now()
         data['updated'] =  datetime.now()
         

@@ -43,7 +43,7 @@ class AnnotationsSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
-    animal = serializers.CharField()
+    prep_id = serializers.CharField()
     label = serializers.CharField()
     input_type = serializers.CharField()
     input_type_id = serializers.IntegerField()
@@ -68,7 +68,7 @@ class RotationModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AnnotationPoints
-        fields = ['animal', 'input_type_id', 'person_id', 'username']
+        fields = ['animal', 'input_type_id', 'owner_id', 'username']
 
 
 class RotationSerializer(serializers.Serializer):
@@ -82,7 +82,7 @@ class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url can't be in the UrlModel when it is returned
     to neuroglancer as it crashes neuroglancer."""
-    person_id = serializers.IntegerField()
+    owner_id = serializers.IntegerField()
 
     class Meta:
         model = UrlModel
@@ -100,9 +100,9 @@ class UrlSerializer(serializers.ModelSerializer):
             public=False,
             vetted=False,
         )
-        if 'person_id' in validated_data:
+        if 'owner_id' in validated_data:
             try:
-                authUser = User.objects.get(pk=validated_data['person_id'])
+                authUser = User.objects.get(pk=validated_data['owner_id'])
                 urlModel.person = authUser
             except User.DoesNotExist:
                 logger.error('Person was not in validated data')
@@ -122,9 +122,9 @@ class UrlSerializer(serializers.ModelSerializer):
         instance.user_date = validated_data.get(
             'user_date', instance.user_date)
         instance.comments = validated_data.get('comments', instance.comments)
-        if 'person_id' in validated_data:
+        if 'owner_id' in validated_data:
             try:
-                authUser = User.objects.get(pk=validated_data['person_id'])
+                authUser = User.objects.get(pk=validated_data['owner_id'])
                 instance.person = authUser
             except User.DoesNotExist:
                 logger.error('Person was not in validated data')
