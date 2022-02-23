@@ -64,7 +64,7 @@ def inactivate_annotations(animal, label):
     .filter(label=label)\
     .update(active=False)
 
-@background(schedule=0)
+@background(schedule=60)
 def move_annotations(prep_id, label):
     '''
     Move existing annotations into the archive. First we get the existing
@@ -97,11 +97,11 @@ def move_annotations(prep_id, label):
     rows.delete()
 
 
-@background(schedule=10)
-def bulk_annotations(prep_id, layer, person_id, label):
+@background(schedule=120)
+def bulk_annotations(prep_id, layer, owner_id, label):
     start = timer()
     try:
-        loggedInUser = User.objects.get(pk=person_id)
+        loggedInUser = User.objects.get(pk=owner_id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -133,10 +133,9 @@ def bulk_annotations(prep_id, layer, person_id, label):
             yb = annotation['pointB'][1] * scale_xy
             zb = annotation['pointB'][2] * z_scale
             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=line_structure,
-            label=label, person=loggedInUser, input_type_id=LINE,
+            label=label, owner=loggedInUser, input_type_id=LINE,
             x=xa, y=ya, z=za))
             if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
-                print('adding', xa, xb)
                 bulk_mgr.add(AnnotationPoints(animal=animal, structure=line_structure,
                 label=label, owner=loggedInUser, input_type_id=LINE,
                 x=xb, y=yb, z=zb))

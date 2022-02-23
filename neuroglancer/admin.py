@@ -32,7 +32,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
     list_display = ('animal', 'open_neuroglancer', 'open_multiuser',
-                    'person', 'updated')
+                    'owner', 'updated')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
@@ -82,7 +82,7 @@ class UrlModelAdmin(admin.ModelAdmin):
 
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
-    list_display = ('animal', 'comments', 'person','show_points', 'updated')
+    list_display = ('animal', 'comments', 'owner','show_points', 'updated')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
@@ -212,14 +212,14 @@ class TransformationAdmin(AtlasAdminModel):
             kwargs["queryset"] = Animal.objects.filter(layerdata__active=True).distinct().order_by()
         if db_field.name == "person":
             UserModel = get_user_model()
-            com_users = AnnotationPoints.objects.values_list('person', flat=True).distinct().order_by()
+            com_users = AnnotationPoints.objects.values_list('owner', flat=True).distinct().order_by()
             kwargs["queryset"] = UserModel.objects.filter(id__in=com_users)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def com_count(self, obj):
         count = AnnotationPoints.objects.filter(prep_id=obj.prep_id)\
             .filter(input_type=obj.input_type).filter(layer='COM')\
-            .filter(person_id=obj.person_id).filter(active=True).count()
+            .filter(owner_id=obj.owner_id).filter(active=True).count()
         return count
 
     com_count.short_description = "Active COMS"
@@ -228,7 +228,7 @@ class TransformationAdmin(AtlasAdminModel):
         obj.user = request.user
         count = AnnotationPoints.objects.filter(prep=obj.prep)\
             .filter(input_type=obj.input_type).filter(layer='COM')\
-            .filter(person=obj.person).filter(active=True).count()        
+            .filter(owner=obj.owner).filter(active=True).count()        
         if count < 1:
             messages.add_message(request, messages.WARNING, 'There no COMs associated with that animal/user/input type combination. Please correct it.')
             return
@@ -236,7 +236,7 @@ class TransformationAdmin(AtlasAdminModel):
             super().save_model(request, obj, form, change)
             AnnotationPoints.objects.filter(prep=obj.prep)\
                 .filter(input_type=obj.input_type).filter(layer='COM')\
-                .filter(person=obj.person).filter(active=True).update(transformation=obj)
+                .filter(owner=obj.owner).filter(active=True).update(transformation=obj)
 
 @admin.register(InputType)
 class InputTypeAdmin(AtlasAdminModel):
@@ -256,8 +256,44 @@ class AnnotationPointsAdmin(AtlasAdminModel):
     scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
 
     def save_model(self, request, obj, form, change):
-        obj.person = request.user
+        obj.owner = request.user
         super().save_model(request, obj, form, change)
+
+    def x_f(self, obj):
+        initial = str(obj.animal.prep_id[0:2]).lower()
+        number = int(round(obj.x / self.scales[initial]))
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
+    def y_f(self, obj):
+        initial = str(obj.animal.prep_id[0:2]).lower()
+        number = int(round(obj.y / self.scales[initial]))
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
+    def z_f(self, obj):
+        number = int(obj.z / 20)
+        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
+
+    x_f.short_description = "X"
+    y_f.short_description = "Y"
+    z_f.short_description = "Z"
+
+
+@admin.register(AnnotationPointArchive)
+class AnnotationPointArchiveAdmin(AtlasAdminModel):
+    # change_list_template = 'layer_data_group.html'
+    list_display = ('animal', 'brain_region', 'label', 'owner', 'x_f', 'y_f', 'z_f')
+    ordering = ['animal', 'label','brain_region__abbreviation', 'z']
+    list_filter = ['input_type']
+    search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
+    scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
     def x_f(self, obj):
         initial = str(obj.animal.prep_id[0:2]).lower()

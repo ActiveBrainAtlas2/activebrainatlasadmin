@@ -155,7 +155,7 @@ class Annotations(views.APIView):
             .distinct()
         for state_layer in state_layers:
             data.append({
-                "animal":state_layer['animal__prep_id'],
+                "prep_id":state_layer['animal__prep_id'],
                 "label":state_layer['label'],
                 "input_type":state_layer['input_type__input_type'],
                 "input_type_id":state_layer['input_type_id'],
