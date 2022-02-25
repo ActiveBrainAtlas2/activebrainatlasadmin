@@ -59,3 +59,8 @@ DELETE FROM annotations_points wHERE active = 0;
 ALTER TABLE annotations_points DROP COLUMN updated_by;
 ALTER TABLE annotations_points DROP COLUMN created;
 ALTER TABLE annotations_points DROP COLUMN updated;
+# new column
+ALTER TABLE annotations_points ADD COLUMN segment_id char(40) DEFAULT NULL;
+ALTER TABLE annotations_point_archive ADD COLUMN segment_id char(40) DEFAULT NULL;
+
+

@@ -3,6 +3,7 @@ from neuroglancer.models import BrainRegion, AnnotationPoints, AnnotationPointAr
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
+from neuroglancer.models import LINE_ID, MANUAL, POINT_ID, POLYGON
 from timeit import default_timer as timer
 from math import isclose
 from background_task import background
@@ -10,11 +11,6 @@ from background_task import background
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-MANUAL = 1
-CORRECTED = 2
-LINE = 5
-POINT_ID = 52
-LINE_ID = 53
 
 def update_annotation_data(neuroglancerModel):
     """
@@ -41,12 +37,8 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_annotations(animal.prep_id, label, verbose_name="Bulk annotation archive insert", 
-                                     creator=loggedInUser)
-                    bulk_annotations(animal.prep_id, state_layer, 
-                                     neuroglancerModel.person.id, label, 
-                                     verbose_name="Bulk annotation insert", 
-                                     creator=loggedInUser)
+                    move_annotations(animal.prep_id, label, verbose_name="Bulk annotation archive insert", creator=loggedInUser)
+                    bulk_annotations(animal.prep_id, state_layer, neuroglancerModel.person.id, label, verbose_name="Bulk annotation insert",  creator=loggedInUser)
                 
     end = timer()
     print(f'Updating all annotations took {end - start} seconds')
@@ -64,7 +56,7 @@ def inactivate_annotations(animal, label):
     .filter(label=label)\
     .update(active=False)
 
-@background(schedule=60)
+@background(schedule=0)
 def move_annotations(prep_id, label):
     '''
     Move existing annotations into the archive. First we get the existing
@@ -97,7 +89,7 @@ def move_annotations(prep_id, label):
     rows.delete()
 
 
-@background(schedule=120)
+@background(schedule=60)
 def bulk_annotations(prep_id, layer, owner_id, label):
     start = timer()
     try:
@@ -125,6 +117,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
                 x=x1, y=y1, z=z1))
         if 'parentAnnotationId' in annotation and 'pointA' in annotation and 'pointB' in annotation:
+            print(annotation)
             xa = annotation['pointA'][0] * scale_xy
             ya = annotation['pointA'][1] * scale_xy
             za = annotation['pointA'][2] * z_scale
@@ -132,12 +125,13 @@ def bulk_annotations(prep_id, layer, owner_id, label):
             xb = annotation['pointB'][0] * scale_xy
             yb = annotation['pointB'][1] * scale_xy
             zb = annotation['pointB'][2] * z_scale
+            segment_id = annotation['parentAnnotationId']
             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=line_structure,
-            label=label, owner=loggedInUser, input_type_id=LINE,
+            owner=loggedInUser, input_type_id=POLYGON, label=label, segment_id=segment_id,
             x=xa, y=ya, z=za))
             if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
                 bulk_mgr.add(AnnotationPoints(animal=animal, structure=line_structure,
-                label=label, owner=loggedInUser, input_type_id=LINE,
+                owner=loggedInUser, input_type_id=POLYGON, label=label, segment_id=segment_id, 
                 x=xb, y=yb, z=zb))
     bulk_mgr.done()
     end = timer()
