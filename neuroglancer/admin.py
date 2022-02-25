@@ -23,6 +23,10 @@ from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
 from neuroglancer.url_filter import UrlFilter
 
+from background_task.models import Task
+from background_task.models import CompletedTask
+
+
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
@@ -324,3 +328,31 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+admin.site.unregister(Task)
+admin.site.unregister(CompletedTask)
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    display_filter = ['task_name']
+    search_fields = ['task_name', 'task_params', ]
+    list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+@admin.register(CompletedTask)
+class CompletedTaskAdmin(admin.ModelAdmin):
+    display_filter = ['task_name']
+    search_fields = ['task_name', 'task_params', ]
+    list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
+
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

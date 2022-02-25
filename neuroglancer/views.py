@@ -6,6 +6,7 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
+import json
 import string
 import random
 import numpy as np
@@ -18,6 +19,7 @@ from neuroglancer.serializers import AnnotationSerializer, \
 from neuroglancer.models import InputType, UrlModel, AnnotationPoints, BrainRegion
 import logging
 from scipy import interpolate
+from collections import defaultdict
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
@@ -105,31 +107,42 @@ class Annotation(views.APIView):
                     point_dict['description'] = ""
                 data.append(point_dict)
             serializer = AnnotationSerializer(data, many=True)
+            data = Response(serializer.data)
         else:
-            orig_points = []
+            polygons = defaultdict(list)
             bigger_points = []
             z = mode([int(round(row.z / z_scale)) for row in rows])
             for i, row in enumerate(rows):
                 x = row.x / scale_xy
                 y = row.y / scale_xy
-                orig_points.append((x,y))
+                segment_id = row.segment_id
+                #orig_points.append((x,y))
+                polygons[segment_id].append((x, y))
             n = 50
-            bigger_points = interpolate(orig_points, n)
-            for i in range(n):
+            for parent_id, polygon in polygons.items(): 
                 tmp_dict = {}
-                pointA = bigger_points[i]
-                try:
-                    pointB = bigger_points[i + 1]
-                except IndexError:
-                    pointB = bigger_points[0]
-                tmp_dict['id'] = random_string()
-                tmp_dict['pointA'] = [pointA[0], pointA[1], z]
-                tmp_dict['pointB'] = [pointB[0], pointB[1], z]
-                tmp_dict['type'] = 'line'
-                tmp_dict['description'] = ""
+                tmp_dict['id'] = parent_id
+                tmp_dict['source'] = polygon[0] + (z,)
+                tmp_dict['type'] = 'polygon'
                 data.append(tmp_dict)
-            serializer = LineSerializer(data, many=True)
-        return Response(serializer.data)
+                bigger_points = interpolate(polygon, n)
+                # bigger_points = polygon
+                for j in range(n):
+                    tmp_dict = {}
+                    pointA = bigger_points[j]
+                    try:
+                        pointB = bigger_points[j + 1]
+                    except IndexError:
+                        pointB = bigger_points[0]
+                    tmp_dict['id'] = random_string()
+                    tmp_dict['pointA'] = [pointA[0], pointA[1], z]
+                    tmp_dict['pointB'] = [pointB[0], pointB[1], z]
+                    tmp_dict['type'] = 'line'
+                    tmp_dict['parentAnnotationId'] = parent_id
+                    data.append(tmp_dict)
+            print(json.dumps(data, sort_keys=False, indent=4))
+            data = JsonResponse(data, safe=False)
+        return data
 
 
 class Annotations(views.APIView):

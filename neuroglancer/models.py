@@ -10,6 +10,11 @@ from brain.models import AtlasModel, Animal
 
 ANNOTATION_ID = 52
 LAUREN_ID = 16
+MANUAL = 1
+CORRECTED = 2
+POLYGON = 5
+POINT_ID = 52
+LINE_ID = 53
 
 class AnnotationChoice(str, Enum):
     POINT = 'point'
@@ -196,6 +201,8 @@ class AnnotationAbstract(models.Model):
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
                                verbose_name="Input", blank=False, null=False)
     label = models.CharField(max_length=255)
+    segment_id = models.CharField(max_length=40, blank=True, null=True, 
+                                  db_column="segment_id", verbose_name="Polygon ID")
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
@@ -211,7 +218,7 @@ class ArchiveSet(models.Model):
                                verbose_name="Updated by", blank=False, null=False, 
                                db_column='FK_update_user_id')
     class Meta:
-        managed = True
+        managed = False
         db_table = 'archive_set'
         verbose_name = 'Archive set'
         verbose_name_plural = 'Archive sets'
@@ -220,7 +227,7 @@ class AnnotationPoints(AnnotationAbstract):
     active = models.BooleanField(default = True, db_column='active')
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'annotations_points'
         verbose_name = 'Annotation Point'
         verbose_name_plural = 'Annotation Points'
@@ -235,7 +242,7 @@ class AnnotationPointArchive(AnnotationAbstract):
                                db_column='FK_archive_set_id')
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
