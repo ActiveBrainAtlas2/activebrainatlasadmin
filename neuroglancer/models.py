@@ -8,13 +8,12 @@ from enum import Enum
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
 
-ANNOTATION_ID = 52
 LAUREN_ID = 16
 MANUAL = 1
 CORRECTED = 2
-POLYGON = 5
 POINT_ID = 52
 LINE_ID = 53
+POLYGON_ID = 54
 
 class AnnotationChoice(str, Enum):
     POINT = 'point'
@@ -211,6 +210,21 @@ class AnnotationAbstract(models.Model):
         abstract = True
 
 class ArchiveSet(models.Model):
+    '''
+    ANTICIPATED OPERATION: 
+    1) USER SAVES ANNOTATION POINTS IN NEUROGLANCER 
+    2) NEW ENTRY IN archive_set TABLE (PARENT 'archive_id' - 0 IF FIRST; UPDATE USER; TIMESTAMP ) 
+    3) ALL CURRENT POINTS FOR USER ARE MOVED TO annotations_points_archive 
+    4) NEW POINTS ARE ADDED TO annotations_points *    
+    - CONSIDERATIONS: *      
+        A) IF LATENCY -> DB MODIFICATIONS MAY BE QUEUED AND MADE VIA CRON JOB (DURING OFF-PEAK)
+        B) annotations_points_archive, archive_sets WILL NOT BE STORED ON LIVE DB
+    #2 - INSERT entry into archive_sets table   
+    This will store the versioning  is the 
+    'SELECT INTO' with concurrent/subsequent entry into #2 (archive_sets table).  
+    After INSERT, we should receive the id of the insert (id field).  
+    This will be the unique key to identify an archive set.
+    '''
     id = models.BigAutoField(primary_key=True)
     created = models.DateTimeField(auto_now_add=True)
     parent =  models.IntegerField(db_column='FK_parent')
@@ -238,7 +252,7 @@ class AnnotationPoints(AnnotationAbstract):
 
 class AnnotationPointArchive(AnnotationAbstract):
     archive = models.ForeignKey(ArchiveSet, models.CASCADE, 
-                               verbose_name="Archive Set", blank=True, null=True, 
+                               verbose_name="Archive Set", blank=False, null=False, 
                                db_column='FK_archive_set_id')
 
     class Meta:

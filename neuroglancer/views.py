@@ -6,19 +6,17 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
-import json
 import string
 import random
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
 from neuroglancer.models import Animal
-from neuroglancer.serializers import AnnotationSerializer, \
-    AnnotationsSerializer, LineSerializer, RotationSerializer, UrlSerializer, \
-    AnimalInputSerializer, IdSerializer
-from neuroglancer.models import InputType, UrlModel, AnnotationPoints, BrainRegion
+from neuroglancer.serializers import AnnotationsSerializer, RotationSerializer, \
+    UrlSerializer, AnimalInputSerializer, IdSerializer
+from neuroglancer.models import InputType, UrlModel, AnnotationPoints, \
+    BrainRegion
 import logging
-from scipy import interpolate
 from collections import defaultdict
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -93,56 +91,60 @@ class Annotation(views.APIView):
                         .order_by('id').all()
         except AnnotationPoints.DoesNotExist:
             raise Http404
+        
         scale_xy, z_scale = get_scales(prep_id)
-        if input_type_id != 5:
-            for row in rows:
-                point_dict = {}
-                point_dict['id'] = random_string()
-                point_dict['point'] = \
-                    [int(round(row.x / scale_xy)), int(round(row.y / scale_xy)), int(round(row.z / z_scale)) + 0.5]
-                point_dict['type'] = 'point'
-                if 'COM' or 'Rough Alignment' in label:
-                    point_dict['description'] = row.brain_region.abbreviation
-                else:
-                    point_dict['description'] = ""
-                data.append(point_dict)
-            serializer = AnnotationSerializer(data, many=True)
-            data = Response(serializer.data)
-        else:
-            polygons = defaultdict(list)
-            bigger_points = []
-            z = mode([int(round(row.z / z_scale)) for row in rows])
-            for i, row in enumerate(rows):
-                x = row.x / scale_xy
-                y = row.y / scale_xy
+        polygons = defaultdict(list)
+        # Working with polygons/lines is much different        
+        # first do the lines/polygons
+        for row in rows:
+            x = row.x / scale_xy
+            y = row.y / scale_xy
+            z = int(round(row.z / z_scale))
+            if 'line' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
-                #orig_points.append((x,y))
-                polygons[segment_id].append((x, y))
-            n = 50
-            for parent_id, polygon in polygons.items(): 
+                polygons[segment_id].append((x, y, z))
+            
+            else:
                 tmp_dict = {}
-                tmp_dict['id'] = parent_id
-                tmp_dict['source'] = polygon[0] + (z,)
-                tmp_dict['type'] = 'polygon'
+                tmp_dict['id'] = random_string()
+                tmp_dict['point'] = [int(round(x)), int(round(y)), z + 0.5]
+                tmp_dict['type'] = 'point'
+                if 'COM' in label or 'Rough Alignment' in label:
+                    tmp_dict['description'] = row.brain_region.abbreviation
+                else:
+                    tmp_dict['description'] = ""
                 data.append(tmp_dict)
-                bigger_points = interpolate(polygon, n)
-                # bigger_points = polygon
-                for j in range(n):
-                    tmp_dict = {}
-                    pointA = bigger_points[j]
-                    try:
-                        pointB = bigger_points[j + 1]
-                    except IndexError:
-                        pointB = bigger_points[0]
-                    tmp_dict['id'] = random_string()
-                    tmp_dict['pointA'] = [pointA[0], pointA[1], z]
-                    tmp_dict['pointB'] = [pointB[0], pointB[1], z]
-                    tmp_dict['type'] = 'line'
-                    tmp_dict['parentAnnotationId'] = parent_id
-                    data.append(tmp_dict)
-            print(json.dumps(data, sort_keys=False, indent=4))
-            data = JsonResponse(data, safe=False)
-        return data
+        if len(polygons) > 0:
+            data = create_polygons(polygons)
+        #print(json.dumps(data, sort_keys=False, indent=4))
+        return JsonResponse(data, safe=False)
+
+def create_polygons(polygons):
+    data = []
+    n = 50
+    for parent_id, polygon in polygons.items(): 
+        tmp_dict = {}
+        tmp_dict['id'] = parent_id
+        tmp_dict['source'] = polygon[0]
+        tmp_dict['type'] = 'polygon'
+        data.append(tmp_dict)
+        bigger_points = interpolate2d(polygon, n)
+        # bigger_points = polygon
+        for j in range(len(bigger_points)):
+            tmp_dict = {}
+            pointA = bigger_points[j]
+            try:
+                pointB = bigger_points[j + 1]
+            except IndexError:
+                pointB = bigger_points[0]
+            tmp_dict['id'] = random_string()
+            tmp_dict['pointA'] = [pointA[0], pointA[1], pointA[2]]
+            tmp_dict['pointB'] = [pointB[0], pointB[1], pointB[2]]
+            tmp_dict['type'] = 'line'
+            tmp_dict['parentAnnotationId'] = parent_id
+            data.append(tmp_dict)
+    return data
+
 
 
 class Annotations(views.APIView):
@@ -233,19 +235,31 @@ class Rotations(views.APIView):
         return Response(serializer.data)
 
 
-def interpolate(points, new_len):
+def interpolate2d(points, new_len):
+    '''
+    Interpolates a list of tuples to the specified length. The points param
+    must be a list of tuples in 2d
+    :param points: list of floats
+    :param new_len: integer you want to interpolate to. This will be the new
+    length of the array
+    '''
     points = np.array(points)
-    pu = points.astype(int)
-    indexes = np.unique(pu, axis=0, return_index=True)[1]
-    points = np.array([points[index] for index in sorted(indexes)])
-    addme = points[0].reshape(1, 2)
-    points = np.concatenate((points, addme), axis=0)
+    lastcolumn = np.round(points[:,-1])
+    z = mode(lastcolumn)
 
-    tck, u = splprep(points.T, u=None, s=3, per=1)
+    points2d = np.delete(points, -1, axis=1)
+    pu = points2d.astype(int)
+    indexes = np.unique(pu, axis=0, return_index=True)[1]
+    points = np.array([points2d[index] for index in sorted(indexes)])
+    addme = points2d[0].reshape(1, 2)
+    points2d = np.concatenate((points2d, addme), axis=0)
+
+    tck, u = splprep(points2d.T, u=None, s=3, per=1)
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
-    return list(map(tuple, arr_2d))
+    arr_3d = np.c_[ arr_2d, np.zeros(new_len)+z ] 
+    return list(map(tuple, arr_3d))
 
 
 def get_input_type_id(input_type):

@@ -62,5 +62,7 @@ ALTER TABLE annotations_points DROP COLUMN updated;
 # new column
 ALTER TABLE annotations_points ADD COLUMN segment_id char(40) DEFAULT NULL;
 ALTER TABLE annotations_point_archive ADD COLUMN segment_id char(40) DEFAULT NULL;
+INSERT INTO structure (id, abbreviation, description,color, hexadecimal,active, created, is_structure) 
+values (54, 'polygon','Brain region drawn by anatomist',300,'#FFF000',1,NOW(), 0);
 
 
