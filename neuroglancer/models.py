@@ -29,7 +29,8 @@ class AnnotationChoice(str, Enum):
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
+                              blank=False, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
     vetted = models.BooleanField(default = False)

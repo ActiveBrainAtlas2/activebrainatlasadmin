@@ -40,13 +40,12 @@ class LineSerializer(serializers.Serializer):
 
 class PolygonSerializer(serializers.Serializer):
     id = serializers.CharField()
-    source = serializers.ListField()
+    source = serializers.ListField(required=False)
+    childAnnotationIds = serializers.ListField(required=False)
+    pointA = serializers.ListField(required=False)
+    pointB = serializers.ListField(required=False)
     type = serializers.CharField()
-    id = serializers.ListField()
-    pointA = serializers.ListField()
-    pointB = serializers.ListField()
-    type = serializers.ListField()
-    parentAnnotationId = serializers.ListField()
+    parentAnnotationId = serializers.CharField(required=False)
 
 class AnnotationsSerializer(serializers.Serializer):
     """
@@ -91,11 +90,11 @@ class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url *probably* can't be in the UrlModel when it is returned
     to neuroglancer as it crashes neuroglancer."""
-    owner_id = serializers.IntegerField()
 
     class Meta:
         model = UrlModel
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'url', 'owner_id',  'user_date', 'comments', 'created']
         ordering = ['-created']
 
     def create(self, validated_data):
@@ -117,6 +116,8 @@ class UrlSerializer(serializers.ModelSerializer):
                 print('Person was not in validated data')
         else:
             print('No owner ID in validated data!!!!!!!')
+            for k,v in validated_data.items():
+                print('key', k)
         try:
             urlModel.save()
         except APIException:
