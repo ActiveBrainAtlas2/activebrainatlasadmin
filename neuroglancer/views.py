@@ -12,8 +12,9 @@ import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
 from neuroglancer.models import Animal
-from neuroglancer.serializers import AnnotationsSerializer, RotationSerializer, \
-    UrlSerializer, AnimalInputSerializer, IdSerializer
+from neuroglancer.serializers import AnimalInputSerializer, \
+    AnnotationSerializer, AnnotationsSerializer, \
+    IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import InputType, UrlModel, AnnotationPoints, \
     BrainRegion
 import logging
@@ -78,6 +79,7 @@ class Annotation(views.APIView):
 
     def get(self, request, prep_id, label, input_type_id, format=None):
         data = []
+        polygons = defaultdict(list)
         try:
             animal = Animal.objects.get(pk=prep_id)
         except Animal.DoesNotExist:
@@ -93,14 +95,13 @@ class Annotation(views.APIView):
             raise Http404
         
         scale_xy, z_scale = get_scales(prep_id)
-        polygons = defaultdict(list)
         # Working with polygons/lines is much different        
         # first do the lines/polygons
         for row in rows:
             x = row.x / scale_xy
             y = row.y / scale_xy
             z = int(round(row.z / z_scale))
-            if 'line' in row.brain_region.abbreviation.lower():
+            if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
                 polygons[segment_id].append((x, y, z))
             
@@ -116,32 +117,38 @@ class Annotation(views.APIView):
                 data.append(tmp_dict)
         if len(polygons) > 0:
             data = create_polygons(polygons)
-        #print(json.dumps(data, sort_keys=False, indent=4))
-        return JsonResponse(data, safe=False)
+            serializer = PolygonSerializer(data, many=True)
+        else:
+            serializer = AnnotationSerializer(data, many=True)
+
+        return Response(serializer.data)
+        # return JsonResponse(data, safe=False)
 
 def create_polygons(polygons):
     data = []
     n = 50
     for parent_id, polygon in polygons.items(): 
+        print('parent id', parent_id)
         tmp_dict = {}
-        tmp_dict['id'] = parent_id
-        tmp_dict['source'] = polygon[0]
-        tmp_dict['type'] = 'polygon'
+        tmp_dict["id"] = parent_id
+        tmp_dict["source"] = list(polygon[0])
+        tmp_dict["type"] = "polygon"
         data.append(tmp_dict)
         bigger_points = interpolate2d(polygon, n)
-        # bigger_points = polygon
-        for j in range(len(bigger_points)):
+        child_ids = [random_string() for _ in range(n)]
+        tmp_dict["childAnnotationIds"] = child_ids
+        for j in range(n):
             tmp_dict = {}
             pointA = bigger_points[j]
             try:
                 pointB = bigger_points[j + 1]
             except IndexError:
                 pointB = bigger_points[0]
-            tmp_dict['id'] = random_string()
-            tmp_dict['pointA'] = [pointA[0], pointA[1], pointA[2]]
-            tmp_dict['pointB'] = [pointB[0], pointB[1], pointB[2]]
-            tmp_dict['type'] = 'line'
-            tmp_dict['parentAnnotationId'] = parent_id
+            tmp_dict["id"] = child_ids[j]
+            tmp_dict["pointA"] = [pointA[0], pointA[1], pointA[2]]
+            tmp_dict["pointB"] = [pointB[0], pointB[1], pointB[2]]
+            tmp_dict["type"] = "line"
+            tmp_dict["parentAnnotationId"] = parent_id
             data.append(tmp_dict)
     return data
 
