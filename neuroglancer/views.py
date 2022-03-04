@@ -8,6 +8,11 @@ from django.utils.html import escape
 from django.http import Http404
 import string
 import random
+
+from functools import reduce
+import operator
+import math
+
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
@@ -90,7 +95,7 @@ class Annotation(views.APIView):
                         .filter(label=label)\
                         .filter(input_type_id=input_type_id)\
                         .filter(active=True)\
-                        .order_by('id').all()
+                        .order_by('id')
         except AnnotationPoints.DoesNotExist:
             raise Http404
         
@@ -128,16 +133,18 @@ def create_polygons(polygons):
     data = []
     n = 50
     for parent_id, polygon in polygons.items(): 
-        print('parent id', parent_id)
+        print('id', parent_id)
         tmp_dict = {}
         tmp_dict["id"] = parent_id
         tmp_dict["source"] = list(polygon[0])
         tmp_dict["type"] = "polygon"
-        data.append(tmp_dict)
-        bigger_points = interpolate2d(polygon, n)
         child_ids = [random_string() for _ in range(n)]
         tmp_dict["childAnnotationIds"] = child_ids
-        for j in range(n):
+        data.append(tmp_dict)
+        sorted_points = sort_from_center(polygon)
+        bigger_points = interpolate2d(sorted_points, n)
+        # bigger_points = sorted_points
+        for j in range(len(bigger_points)):
             tmp_dict = {}
             pointA = bigger_points[j]
             try:
@@ -152,6 +159,37 @@ def create_polygons(polygons):
             data.append(tmp_dict)
     return data
 
+
+
+def sort_from_center(polygon):
+    center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), polygon), [len(polygon)] * 2))
+    #sorted_points = sorted(polygon, key=lambda coord: (-135 - math.degrees(math.atan2(*tuple(map(operator.sub, coord, center))[::-1]))) % 360)
+    return sorted(polygon, key=lambda coord: (math.atan2(*tuple(map(operator.sub, coord, center))[::-1])))
+
+def interpolate2d(points, new_len):
+    '''
+    Interpolates a list of tuples to the specified length. The points param
+    must be a list of tuples in 2d
+    :param points: list of floats
+    :param new_len: integer you want to interpolate to. This will be the new
+    length of the array
+    '''
+    points = np.array(points)
+    lastcolumn = np.round(points[:,-1])
+    z = mode(lastcolumn)
+    points2d = np.delete(points, -1, axis=1)
+    pu = points2d.astype(int)
+    indexes = np.unique(pu, axis=0, return_index=True)[1]
+    points = np.array([points2d[index] for index in sorted(indexes)])
+    addme = points2d[0].reshape(1, 2)
+    points2d = np.concatenate((points2d, addme), axis=0)
+
+    tck, u = splprep(points2d.T, u=None, s=3, per=1)
+    u_new = np.linspace(u.min(), u.max(), new_len)
+    x_array, y_array = splev(u_new, tck, der=0)
+    arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
+    arr_3d = np.c_[ arr_2d, np.zeros(new_len)+z ] 
+    return list(map(tuple, arr_3d))
 
 
 class Annotations(views.APIView):
@@ -240,33 +278,6 @@ class Rotations(views.APIView):
                 })
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
-
-
-def interpolate2d(points, new_len):
-    '''
-    Interpolates a list of tuples to the specified length. The points param
-    must be a list of tuples in 2d
-    :param points: list of floats
-    :param new_len: integer you want to interpolate to. This will be the new
-    length of the array
-    '''
-    points = np.array(points)
-    lastcolumn = np.round(points[:,-1])
-    z = mode(lastcolumn)
-
-    points2d = np.delete(points, -1, axis=1)
-    pu = points2d.astype(int)
-    indexes = np.unique(pu, axis=0, return_index=True)[1]
-    points = np.array([points2d[index] for index in sorted(indexes)])
-    addme = points2d[0].reshape(1, 2)
-    points2d = np.concatenate((points2d, addme), axis=0)
-
-    tck, u = splprep(points2d.T, u=None, s=3, per=1)
-    u_new = np.linspace(u.min(), u.max(), new_len)
-    x_array, y_array = splev(u_new, tck, der=0)
-    arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
-    arr_3d = np.c_[ arr_2d, np.zeros(new_len)+z ] 
-    return list(map(tuple, arr_3d))
 
 
 def get_input_type_id(input_type):
