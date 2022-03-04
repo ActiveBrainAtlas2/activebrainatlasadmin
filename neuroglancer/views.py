@@ -130,9 +130,16 @@ class Annotation(views.APIView):
         # return JsonResponse(data, safe=False)
 
 def create_polygons(polygons):
+    '''
+    Takes all the polygon x,y,z data and turns them into
+    Neuroglancer polygons
+    :param polygons: dictionary of polygon: x,y,z values
+    Interpolates out to a max of 50 splines. I just picked
+    50 as a nice round number
+    '''
     data = []
-    n = 50
     for parent_id, polygon in polygons.items(): 
+        n = max(len(polygon), 50)
         print('id', parent_id)
         tmp_dict = {}
         tmp_dict["id"] = parent_id
@@ -143,7 +150,7 @@ def create_polygons(polygons):
         data.append(tmp_dict)
         sorted_points = sort_from_center(polygon)
         bigger_points = interpolate2d(sorted_points, n)
-        # bigger_points = sorted_points
+        
         for j in range(len(bigger_points)):
             tmp_dict = {}
             pointA = bigger_points[j]
@@ -162,8 +169,12 @@ def create_polygons(polygons):
 
 
 def sort_from_center(polygon):
+    '''
+    Get the center of the polygon and then use atan2 to get
+    the angle from the x-axis to the x,y point. Use that to sort.
+    :param polygon:
+    '''
     center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), polygon), [len(polygon)] * 2))
-    #sorted_points = sorted(polygon, key=lambda coord: (-135 - math.degrees(math.atan2(*tuple(map(operator.sub, coord, center))[::-1]))) % 360)
     return sorted(polygon, key=lambda coord: (math.atan2(*tuple(map(operator.sub, coord, center))[::-1])))
 
 def interpolate2d(points, new_len):
