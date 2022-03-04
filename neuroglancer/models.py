@@ -240,6 +240,9 @@ class ArchiveSet(models.Model):
 
 class AnnotationPoints(AnnotationAbstract):
     active = models.BooleanField(default = True, db_column='active')
+    xy = models.FloatField()
+
+
 
     class Meta:
         managed = False
