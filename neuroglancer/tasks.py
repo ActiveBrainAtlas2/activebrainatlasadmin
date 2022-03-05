@@ -42,8 +42,7 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_annotations(animal.prep_id, owner_id, label, verbose_name="Bulk annotation archive insert", creator=loggedInUser)
-                    bulk_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation insert",  creator=loggedInUser)
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                 
     end = timer()
     print(f'Updating all annotations took {end - start} seconds')
@@ -62,6 +61,10 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 @background(schedule=0)
+def move_and_insert_annotations(prep_id, layer, owner_id, label):
+    move_annotations(prep_id, owner_id, label)
+    bulk_annotations(prep_id, layer, owner_id, label)
+
 def move_annotations(prep_id, owner_id, label):
     '''
     Move existing annotations into the archive. First we get the existing
@@ -130,7 +133,6 @@ def move_annotations(prep_id, owner_id, label):
     rows.delete()
 
 
-@background(schedule=10)
 def bulk_annotations(prep_id, layer, owner_id, label):
     start = timer()
     try:
