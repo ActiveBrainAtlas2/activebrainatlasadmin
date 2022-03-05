@@ -9,10 +9,6 @@ from django.http import Http404
 import string
 import random
 
-from functools import reduce
-import operator
-import math
-
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
@@ -138,9 +134,8 @@ def create_polygons(polygons):
     50 as a nice round number
     '''
     data = []
+    n = 50
     for parent_id, polygon in polygons.items(): 
-        n = max(len(polygon), 50)
-        print('id', parent_id)
         tmp_dict = {}
         tmp_dict["id"] = parent_id
         tmp_dict["source"] = list(polygon[0])
@@ -148,8 +143,10 @@ def create_polygons(polygons):
         child_ids = [random_string() for _ in range(n)]
         tmp_dict["childAnnotationIds"] = child_ids
         data.append(tmp_dict)
-        sorted_points = sort_from_center(polygon)
-        bigger_points = interpolate2d(sorted_points, n)
+        print(polygon)
+        bigger_points = sort_from_center(polygon)
+        if len(bigger_points) < 50:
+            bigger_points = interpolate2d(bigger_points, n)
         
         for j in range(len(bigger_points)):
             tmp_dict = {}
@@ -168,14 +165,26 @@ def create_polygons(polygons):
 
 
 
+def sort_from_centerXXX(polygon):
+    pass
+    #center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), polygon), [len(polygon)] * 2))
+    #return math.degrees(math.atan2(*tuple(map(operator.sub, polygon, center))[::-1])) % 360
+    # return sorted(polygon, key=lambda coord: (math.atan2(*tuple(map(operator.sub, coord, center))[::-1])))
+
 def sort_from_center(polygon):
     '''
     Get the center of the polygon and then use atan2 to get
     the angle from the x-axis to the x,y point. Use that to sort.
     :param polygon:
     '''
-    center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), polygon), [len(polygon)] * 2))
-    return sorted(polygon, key=lambda coord: (math.atan2(*tuple(map(operator.sub, coord, center))[::-1])))
+    coords = np.array(polygon)
+    center = coords.mean(axis=0)
+    centered = coords - center
+    angles = -np.arctan2(centered[:,1], centered[:,0])
+    sorted_coords = coords[np.argsort(angles)]
+    return list(map(tuple, sorted_coords))
+
+
 
 def interpolate2d(points, new_len):
     '''
@@ -184,6 +193,8 @@ def interpolate2d(points, new_len):
     :param points: list of floats
     :param new_len: integer you want to interpolate to. This will be the new
     length of the array
+    There can't be any consecutive identical points or an error will be thrown
+    unique_rows = np.unique(original_array, axis=0)
     '''
     points = np.array(points)
     lastcolumn = np.round(points[:,-1])
