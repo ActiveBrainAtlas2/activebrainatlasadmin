@@ -80,7 +80,7 @@ class RotationModelSerializer(serializers.ModelSerializer):
 
 
 class RotationSerializer(serializers.Serializer):
-    animal = serializers.CharField()
+    prep_id = serializers.CharField()
     input_type = serializers.CharField()
     owner_id = serializers.IntegerField()
     username = serializers.CharField()
