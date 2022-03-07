@@ -20,7 +20,6 @@ def update_annotation_data(neuroglancerModel):
     This is the method from brainsharer_portal. It will spawn off the 
     SQL insert intensive bits to the background.
     """    
-    start = timer()
     json_txt = neuroglancerModel.url
     owner_id = neuroglancerModel.owner_id
 
@@ -44,9 +43,6 @@ def update_annotation_data(neuroglancerModel):
                     inactivate_annotations(animal, label)
                     move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                 
-    end = timer()
-    print(f'Updating all annotations took {end - start} seconds')
-
 
 def inactivate_annotations(animal, label):
     """
@@ -134,7 +130,6 @@ def move_annotations(prep_id, owner_id, label):
 
 
 def bulk_annotations(prep_id, layer, owner_id, label):
-    start = timer()
     try:
         loggedInUser = User.objects.get(pk=owner_id)
     except User.DoesNotExist:
@@ -178,8 +173,6 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id, 
                 x=xb, y=yb, z=zb))
     bulk_mgr.done()
-    end = timer()
-    print(f'Inserting {label} annotations took {end - start} seconds')
 
 
 def get_brain_region(annotation):
