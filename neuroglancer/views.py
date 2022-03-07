@@ -136,14 +136,13 @@ def create_polygons(polygons):
     data = []
     n = 50
     for parent_id, polygon in polygons.items(): 
-        tmp_dict = {}
+        tmp_dict = {} # create initial parent/source starting point
         tmp_dict["id"] = parent_id
         tmp_dict["source"] = list(polygon[0])
         tmp_dict["type"] = "polygon"
         child_ids = [random_string() for _ in range(n)]
         tmp_dict["childAnnotationIds"] = child_ids
         data.append(tmp_dict)
-        print(polygon)
         bigger_points = sort_from_center(polygon)
         if len(bigger_points) < 50:
             bigger_points = interpolate2d(bigger_points, n)
