@@ -271,28 +271,29 @@ class Rotations(views.APIView):
     """
     Fetch distinct prep_id, input_type, owner_id and username:
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotations
+    Note: animal is an animal object, while the prep_id is the name of the animal
     """
 
     def get(self, request, format=None):
         data = []
-        com_manual = AnnotationPoints.objects.order_by('animal', 'owner_id', 'input_type_id')\
+        com_manual = AnnotationPoints.objects.order_by('animal__prep_id', 'owner_id', 'input_type_id')\
             .filter(label='COM').filter(owner_id=2)\
             .filter(active=True).filter(input_type__input_type__in=['manual'])\
-            .values('animal', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
-        com_detected = AnnotationPoints.objects.order_by('animal', 'owner_id', 'input_type_id')\
+            .values('animal__prep_id', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
+        com_detected = AnnotationPoints.objects.order_by('animal__prep_id', 'owner_id', 'input_type_id')\
             .filter(label='COM').filter(owner_id=23)\
             .filter(active=True).filter(input_type__input_type__in=['detected'])\
-            .values('animal', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
+            .values('animal__prep_id', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
         for com in com_manual:
             data.append({
-                "animal":com['animal'],
+                "prep_id":com['animal__prep_id'],
                 "input_type":com['input_type__input_type'],
                 "owner_id":com['owner_id'],
                 "username":com['owner__username'],
                 })
         for com in com_detected:
             data.append({
-                "animal":com['animal'],
+                "prep_id":com['animal__prep_id'],
                 "input_type":com['input_type__input_type'],
                 "owner_id":com['owner_id'],
                 "username":com['owner__username'],
