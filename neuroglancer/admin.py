@@ -16,11 +16,10 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
-    AnnotationPoints, AnnotationPointArchive, \
-    UrlModel,  BrainRegion, Points, AtlasToBeth,AnnotationStatus
+    AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
+    UrlModel,  BrainRegion, Points
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
-from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
 from neuroglancer.url_filter import UrlFilter
 
 from background_task.models import Task
@@ -314,6 +313,29 @@ class AnnotationPointArchiveAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
+
+class RestoreArchiveMixin:
+    def restore_archive(self, request, queryset):
+
+        meta = self.model._meta
+        excludes = []
+        field_names = [field.name for field in meta.fields if field.name not in excludes]
+
+        for obj in queryset:
+            print([getattr(obj, field) for field in field_names])
+
+
+    restore_archive.short_description = "Restore archive"
+
+
+    
+@admin.register(ArchiveSet)
+class ArchiveSetAdmin(admin.ModelAdmin, RestoreArchiveMixin):
+    list_display = ['animal', 'label', 'input_type', 'created', 'updatedby']
+    ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
+    list_filter = ['created']
+    search_fields = ['animal', 'label']
+
     
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

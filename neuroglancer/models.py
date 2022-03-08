@@ -227,6 +227,10 @@ class ArchiveSet(models.Model):
     This will be the unique key to identify an archive set.
     '''
     id = models.BigAutoField(primary_key=True)
+    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
+                               verbose_name="Input", blank=False, null=False)
+    label = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     parent =  models.IntegerField(db_column='FK_parent')
     updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, 
