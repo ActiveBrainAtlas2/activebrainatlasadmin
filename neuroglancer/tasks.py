@@ -1,11 +1,10 @@
 from django.contrib.auth.models import User
-from neuroglancer.models import BrainRegion, AnnotationPoints, AnnotationPointArchive,\
-    ArchiveSet
+from neuroglancer.models import  AnnotationPoints, AnnotationPointArchive,\
+    ArchiveSet, BrainRegion, InputType
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID
-from timeit import default_timer as timer
 from math import isclose
 from background_task import background
 
@@ -17,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 def update_annotation_data(neuroglancerModel):
     """
-    This is the method from brainsharer_portal. It will spawn off the 
+    This is the method from the create and update methods
+    in the neuroglancer state serializer. It will spawn off the 
     SQL insert intensive bits to the background.
     """    
     json_txt = neuroglancerModel.url
@@ -58,6 +58,15 @@ def inactivate_annotations(animal, label):
 
 @background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
+    '''
+    This is a simple method that just calls two other methods.
+    The reason for this method's existence is just to make sure the CPU/time
+    instensive methods are run in the proper order and are run in the background.
+    :param prep_id: char string of the animal name
+    :param layer: json layer data
+    :param owner_id: int of the auth user primary key
+    :param label: char string of the name of the layer
+    '''
     move_annotations(prep_id, owner_id, label)
     bulk_annotations(prep_id, layer, owner_id, label)
 
@@ -91,38 +100,49 @@ def move_annotations(prep_id, owner_id, label):
         return
     
     '''
-    We check if there is an existing dataset of the same data in the 
+    First, we need to check if there is any existing data in the 
+    non-archive online table. If there are, we create an archive,
+    otherwise, you can't archive None!
+    
+    Then, we check if there is an existing dataset of the same data in the 
     annotation point archive. If so, we get that archive ID and
     that then is the parent ID for the new archive set.
     '''
-    try:
-        query_set = AnnotationPointArchive.objects\
-            .filter(animal=animal)\
-            .filter(label=label)\
-            .filter(input_type_id=MANUAL)\
-            .order_by('-id')
-    except AnnotationPointArchive.DoesNotExist:
-        archive = None
-        
-    if query_set is not None and len(query_set) > 0:
-        annotationPointArchive = query_set[0]
-        archive = annotationPointArchive.archive
-        print('Parent exists. Using existing parent.')
-    else:
-        archive = ArchiveSet.objects.create(parent=0, updatedby=loggedInUser)
-        print('Parent did not exist, creating')
-        
-    
-    # archive = ArchiveSet.objects.create(parent=parent.id, updatedby=loggedInUser)
-    
+    parent = 0
+    # check online table
     rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
         .filter(animal=animal)\
         .filter(label=label)
+
+        
+    if rows is not None and len(rows) > 0:        
+        # now check the point archive table
+        try:
+            query_set = AnnotationPointArchive.objects\
+                .filter(animal=animal)\
+                .filter(label=label)\
+                .filter(input_type_id=MANUAL)\
+                .order_by('-id')
+        except AnnotationPointArchive.DoesNotExist:
+            parent = 0
+            
+        if query_set is not None and len(query_set) > 0:
+            annotationPointArchive = query_set[0]
+            parent = annotationPointArchive.archive.id
+            
+        print(f'Using parent {parent}')
+        input_type = InputType.objects.get(pk=MANUAL)
+        archive = ArchiveSet.objects.create(parent=parent,
+                                            animal=animal,
+                                            input_type=input_type,
+                                            label=label,
+                                            updatedby=loggedInUser)
+    
         
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
-            label=row.label, owner=row.owner, input_type=row.input_type,
+            label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
             x=row.x, y=row.y, z=row.z, archive=archive))
     bulk_mgr.done()
     # now delete them as they are no longer useful in the original table.
