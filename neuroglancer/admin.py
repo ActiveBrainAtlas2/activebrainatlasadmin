@@ -21,7 +21,7 @@ from neuroglancer.models import AlignmentScore, InputType, \
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.url_filter import UrlFilter
-from neuroglancer.tasks import inactivate_annotations, restore_annotations
+from neuroglancer.tasks import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
@@ -326,20 +326,26 @@ def restore_archive(modeladmin, request, queryset):
     '''
     n = len(queryset)
     if n != 1:
-        messages.error(request, f'Check just one archive. You cannot restore more than one archive.')
+        messages.error(request, 'Check just one archive. You cannot restore more than one archive.')
     else:
         archive = queryset[0]
-        print(archive.id, archive.label, archive.prep_id)
-        inactivate_annotations(archive.prep_id, archive.label)
-        restore_annotations(archive.id, archive.prep_id, archive.label)
+        restore_annotations(archive.id, archive.animal.prep_id, archive.label)
+        messages.info(request, f'Annotation {archive.label} for {archive.animal.prep_id} have been restored.')
             
 @admin.register(ArchiveSet)
 class ArchiveSetAdmin(admin.ModelAdmin):
-    list_display = ['animal', 'label', 'input_type', 'created', 'updatedby']
+    list_display = ['animal', 'label', 'input_type', 'created', 'updatedby', 'archive_count']
     ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
     list_filter = ['created']
     search_fields = ['animal', 'label']
     actions = [restore_archive]
+    
+    def archive_count(self, obj):
+        count = AnnotationPointArchive.objects.filter(archive=obj).count()
+        return count
+
+    archive_count.short_description = "# Points"
+
 
     
 @admin.register(AlignmentScore)
