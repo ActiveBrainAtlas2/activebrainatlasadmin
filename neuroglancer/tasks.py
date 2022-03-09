@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.http import Http404
 from neuroglancer.models import  AnnotationPoints, AnnotationPointArchive,\
     ArchiveSet, BrainRegion, InputType
 from brain.models import Animal
@@ -44,6 +45,10 @@ def update_annotation_data(neuroglancerModel):
                     move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                 
 
+def delete_annotations(animal, label):
+    """
+    """
+
 def inactivate_annotations(animal, label):
     """
     Update the existing annotations that are manual, prep, active 
@@ -73,35 +78,44 @@ def move_and_insert_annotations(prep_id, layer, owner_id, label):
 @background(schedule=0)
 def restore_annotations(archive_id, prep_id, label):
     '''
-        select online rows that are inactive
-        insert those rows into archive
-        get archived rows
+        Inactivate the existing annotations that are manual, prep, active.
+        It is OK to inactivate them as they must already be in the:
+        annotation_points_archive table for this operation to be
+        accessible. 
+        Fetch rows from the archive and 
         insert into online table
-        delete inactive rows in online table
     :archive_id: int of primary key of archive_set
     :param prep_id: char string of animal name
     :param label: char staring of layer name
     '''
-    pass
-    """
-    oldarchive = ArchiveSet.objects.get(pk=archive_id)
-    newarchive = ArchiveSet.objects.create(parent=parent,
-                                    animal=animal,
-                                    input_type=input_type,
-                                    label=label,
-                                    updatedby=loggedInUser)
+    try:
+        archive = ArchiveSet.objects.get(pk=archive_id)
+    except ArchiveSet.DoesNotExist:
+        print('No archive to fetch')
+        raise Http404
 
-    rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
-        .filter(animal__prep_id=prep_id)\
-        .filter(active=False)\
-        .filter(label=label)
+    
+    AnnotationPoints.objects.filter(input_type_id=MANUAL)\
+    .filter(animal__prep_id=prep_id)\
+    .filter(active=True)\
+    .filter(label=label)\
+    .update(active=False)
+
+    rows = AnnotationPointArchive.objects.filter(archive=archive)
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
-        bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
+        bulk_mgr.add(AnnotationPoints(animal=row.animal, brain_region=row.brain_region,
             label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
-            x=row.x, y=row.y, z=row.z, archive=newarchive))
+            x=row.x, y=row.y, z=row.z))
     bulk_mgr.done()
-    """
+    
+    # now delete the existing inactivated rows
+    AnnotationPoints.objects.filter(input_type_id=MANUAL)\
+    .filter(animal__prep_id=prep_id)\
+    .filter(active=False)\
+    .filter(label=label)\
+    .delete()
+    
 
 def move_annotations(prep_id, owner_id, label):
     '''
