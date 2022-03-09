@@ -70,6 +70,39 @@ def move_and_insert_annotations(prep_id, layer, owner_id, label):
     move_annotations(prep_id, owner_id, label)
     bulk_annotations(prep_id, layer, owner_id, label)
 
+@background(schedule=0)
+def restore_annotations(archive_id, prep_id, label):
+    '''
+        select online rows that are inactive
+        insert those rows into archive
+        get archived rows
+        insert into online table
+        delete inactive rows in online table
+    :archive_id: int of primary key of archive_set
+    :param prep_id: char string of animal name
+    :param label: char staring of layer name
+    '''
+    pass
+    """
+    oldarchive = ArchiveSet.objects.get(pk=archive_id)
+    newarchive = ArchiveSet.objects.create(parent=parent,
+                                    animal=animal,
+                                    input_type=input_type,
+                                    label=label,
+                                    updatedby=loggedInUser)
+
+    rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
+        .filter(animal__prep_id=prep_id)\
+        .filter(active=False)\
+        .filter(label=label)
+    bulk_mgr = BulkCreateManager(chunk_size=100)
+    for row in rows:
+        bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
+            label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
+            x=row.x, y=row.y, z=row.z, archive=newarchive))
+    bulk_mgr.done()
+    """
+
 def move_annotations(prep_id, owner_id, label):
     '''
     Move existing annotations into the archive. First we get the existing

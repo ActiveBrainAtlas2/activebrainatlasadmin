@@ -2,6 +2,9 @@ DROP TABLE IF EXISTS annotations_points;
 DROP TABLE IF EXISTS archive_set;
 CREATE TABLE archive_set (
 id int not null primary key auto_increment,
+prep_id varchar(20) CHARACTER SET utf8 NOT NULL,
+FK_input_id int(11) NOT NULL,
+label varchar(255) CHARACTER SET utf8 NOT NULL,
 FK_parent int not null,
 created datetime(6) not null,
 FK_update_user_id int not null,

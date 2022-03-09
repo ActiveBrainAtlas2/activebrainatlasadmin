@@ -172,11 +172,12 @@ def sort_from_centerXXX(polygon):
 
 def sort_from_center(polygon):
     '''
-    Get the center of the polygon and then use atan2 to get
+    Get the center of the unique points in a polygon and then use atan2 to get
     the angle from the x-axis to the x,y point. Use that to sort.
     :param polygon:
     '''
     coords = np.array(polygon)
+    coords = np.unique(coords, axis=0)
     center = coords.mean(axis=0)
     centered = coords - center
     angles = -np.arctan2(centered[:,1], centered[:,0])

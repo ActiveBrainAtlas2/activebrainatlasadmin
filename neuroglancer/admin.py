@@ -17,11 +17,11 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
     AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
-    UrlModel,  BrainRegion, Points
+    UrlModel,  BrainRegion, Points, MANUAL
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.url_filter import UrlFilter
-
+from neuroglancer.tasks import inactivate_annotations, restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
@@ -287,9 +287,6 @@ class AnnotationPointArchiveAdmin(AtlasAdminModel):
     list_filter = ['input_type']
     search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
     scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
-
-    def has_delete_permission(self, request, obj=None):
-        return False
     
     def has_add_permission(self, request, obj=None):
         return False
@@ -314,27 +311,35 @@ class AnnotationPointArchiveAdmin(AtlasAdminModel):
     y_f.short_description = "Y"
     z_f.short_description = "Z"
 
-class RestoreArchiveMixin:
-    def restore_archive(self, request, queryset):
 
-        meta = self.model._meta
-        excludes = []
-        field_names = [field.name for field in meta.fields if field.name not in excludes]
-
-        for obj in queryset:
-            print([getattr(obj, field) for field in field_names])
-
-
-    restore_archive.short_description = "Restore archive"
-
-
-    
+@admin.action(description='Restore the selected archive')
+def restore_archive(modeladmin, request, queryset):
+    '''
+    Restore data from the annotation_points_archive table to the 
+    annotations_points table.
+    1. Set existing data to inactive (quick)
+    2. Move inactive data to archive (select, insert, slow, use background)
+    3. Move archived data to existing (select, insert, slow use background)
+    :param modeladmin:
+    :param request:
+    :param queryset:
+    '''
+    n = len(queryset)
+    if n != 1:
+        messages.error(request, f'Check just one archive. You cannot restore more than one archive.')
+    else:
+        archive = queryset[0]
+        print(archive.id, archive.label, archive.prep_id)
+        inactivate_annotations(archive.prep_id, archive.label)
+        restore_annotations(archive.id, archive.prep_id, archive.label)
+            
 @admin.register(ArchiveSet)
-class ArchiveSetAdmin(admin.ModelAdmin, RestoreArchiveMixin):
+class ArchiveSetAdmin(admin.ModelAdmin):
     list_display = ['animal', 'label', 'input_type', 'created', 'updatedby']
     ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
     list_filter = ['created']
     search_fields = ['animal', 'label']
+    actions = [restore_archive]
 
     
 @admin.register(AlignmentScore)
