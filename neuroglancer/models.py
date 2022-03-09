@@ -250,6 +250,9 @@ class AnnotationPoints(AnnotationAbstract):
         db_table = 'annotations_points'
         verbose_name = 'Annotation Point'
         verbose_name_plural = 'Annotation Points'
+        constraints = [
+                models.UniqueConstraint(fields=['animal', 'label', 'input_type'], name='unique annotations')
+            ]        
 
     def __str__(self):
         return u'{} {}'.format(self.animal, self.label)
@@ -265,7 +268,9 @@ class AnnotationPointArchive(AnnotationAbstract):
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
-        
+        constraints = [
+                models.UniqueConstraint(fields=['animal', 'label', 'input_type', 'archive'], name='unique backup')
+            ]        
     def __str__(self):
         return u'{} {}'.format(self.animal, self.label)
 
