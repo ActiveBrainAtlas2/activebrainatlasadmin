@@ -16,12 +16,15 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
-    AnnotationPoints, AnnotationPointArchive, \
-    UrlModel,  BrainRegion, Points, AtlasToBeth,AnnotationStatus
+    AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
+    UrlModel,  BrainRegion, Points, MANUAL
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.com_score_app import alignmentPlot
-from neuroglancer.atlas_to_beth_app import atlas_to_beth_app
 from neuroglancer.url_filter import UrlFilter
+from neuroglancer.tasks import restore_annotations
+from background_task.models import Task
+from background_task.models import CompletedTask
+
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
@@ -280,9 +283,6 @@ class AnnotationPointArchiveAdmin(AtlasAdminModel):
     list_filter = ['input_type']
     search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
     scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
-
-    def has_delete_permission(self, request, obj=None):
-        return False
     
     def has_add_permission(self, request, obj=None):
         return False
@@ -306,6 +306,43 @@ class AnnotationPointArchiveAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
+
+
+@admin.action(description='Restore the selected archive')
+def restore_archive(modeladmin, request, queryset):
+    '''
+    Restore data from the annotation_points_archive table to the 
+    annotations_points table.
+    1. Set existing data to inactive (quick)
+    2. Move inactive data to archive (select, insert, slow, use background)
+    3. Move archived data to existing (select, insert, slow use background)
+    :param modeladmin:
+    :param request:
+    :param queryset:
+    '''
+    n = len(queryset)
+    if n != 1:
+        messages.error(request, 'Check just one archive. You cannot restore more than one archive.')
+    else:
+        archive = queryset[0]
+        restore_annotations(archive.id, archive.animal.prep_id, archive.label)
+        messages.info(request, f'Annotation {archive.label} for {archive.animal.prep_id} have been restored.')
+            
+@admin.register(ArchiveSet)
+class ArchiveSetAdmin(admin.ModelAdmin):
+    list_display = ['animal', 'label', 'input_type', 'created', 'updatedby', 'archive_count']
+    ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
+    list_filter = ['created']
+    search_fields = ['animal', 'label']
+    actions = [restore_archive]
+    
+    def archive_count(self, obj):
+        count = AnnotationPointArchive.objects.filter(archive=obj).count()
+        return count
+
+    archive_count.short_description = "# Points"
+
+
     
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
@@ -320,3 +357,31 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+admin.site.unregister(Task)
+admin.site.unregister(CompletedTask)
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    display_filter = ['task_name']
+    search_fields = ['task_name', 'task_params', ]
+    list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+@admin.register(CompletedTask)
+class CompletedTaskAdmin(admin.ModelAdmin):
+    display_filter = ['task_name']
+    search_fields = ['task_name', 'task_params', ]
+    list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
+
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
