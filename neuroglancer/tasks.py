@@ -25,11 +25,7 @@ def update_annotation_data(neuroglancerModel):
     owner_id = neuroglancerModel.owner_id
 
     try:
-<<<<<<< HEAD
-        loggedInUser = User.objects.get(pk=neuroglancerModel.owner.id)
-=======
         loggedInUser = User.objects.get(pk=owner_id)
->>>>>>> 1d3d1483a21cf860f78f431527b1e4feb76ab190
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -46,16 +42,7 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-<<<<<<< HEAD
-                    move_annotations(animal.prep_id, label, verbose_name="Bulk annotation archive insert", 
-                                     creator=loggedInUser)
-                    bulk_annotations(animal.prep_id, state_layer, 
-                                     neuroglancerModel.owner.id, label, 
-                                     verbose_name="Bulk annotation insert", 
-                                     creator=loggedInUser)
-=======
                     move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
->>>>>>> 1d3d1483a21cf860f78f431527b1e4feb76ab190
                 
 
 def delete_annotations(animal, label):
