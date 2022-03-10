@@ -248,13 +248,11 @@ class InputTypeAdmin(AtlasAdminModel):
 
 @admin.register(AnnotationPoints)
 class AnnotationPointsAdmin(AtlasAdminModel):
-    # change_list_template = 'layer_data_group.html'
     list_display = ('animal', 'brain_region', 'label', 'owner', 'x_f', 'y_f', 'z_f')
     ordering = ['animal', 'label','brain_region__abbreviation', 'z']
     list_filter = ['input_type']
     search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
     scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
-
     def save_model(self, request, obj, form, change):
         obj.owner = request.user
         super().save_model(request, obj, form, change)
@@ -274,8 +272,6 @@ class AnnotationPointsAdmin(AtlasAdminModel):
     x_f.short_description = "X"
     y_f.short_description = "Y"
     z_f.short_description = "Z"
-
-
 @admin.register(AnnotationPointArchive)
 class AnnotationPointArchiveAdmin(AtlasAdminModel):
     # change_list_template = 'layer_data_group.html'

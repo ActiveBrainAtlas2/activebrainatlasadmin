@@ -147,7 +147,6 @@ class Annotations(views.APIView):
         This will get the layer_data
         """
         data = []
-
         state_layers = AnnotationPoints.objects.order_by('animal__prep_id', 'label', 'input_type_id')\
             .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
             .filter(label__isnull=False)\
@@ -160,7 +159,6 @@ class Annotations(views.APIView):
                 "input_type":state_layer['input_type__input_type'],
                 "input_type_id":state_layer['input_type_id'],
                 })
-
         serializer = AnnotationsSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -301,7 +299,6 @@ class AnnotationStatus(views.APIView):
             for landmarki in range(n_landmarks):
                 prep_id = list_of_animals[animali]
                 brain_region = list_of_landmarks_id[landmarki]
-
                 has_annotation[landmarki, animali] = \
                     AnnotationPoints.objects.all().filter(active=True).filter(prep=prep_id)\
                         .filter(layer='COM').filter(brain_region=brain_region).exists() 

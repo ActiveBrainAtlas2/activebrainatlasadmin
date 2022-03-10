@@ -48,6 +48,6 @@ class ScheduleAdmin(admin.ModelAdmin):
     }
 
     def save_model(self, request, obj, form, change):
-        obj.person = request.user
+        obj.owner = request.user
         super().save_model(request, obj, form, change)
 
