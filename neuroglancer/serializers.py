@@ -103,7 +103,7 @@ class UrlSerializer(serializers.ModelSerializer):
         if 'owner_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['owner_id'])
-                urlModel.person = authUser
+                urlModel.owner = authUser
             except User.DoesNotExist:
                 logger.error('Person was not in validated data')
         try:
@@ -125,7 +125,7 @@ class UrlSerializer(serializers.ModelSerializer):
         if 'owner_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['owner_id'])
-                instance.person = authUser
+                instance.owner = authUser
             except User.DoesNotExist:
                 logger.error('Person was not in validated data')
         try:

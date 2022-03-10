@@ -24,7 +24,7 @@ def update_annotation_data(neuroglancerModel):
     start = timer()
     json_txt = neuroglancerModel.url
     try:
-        loggedInUser = User.objects.get(pk=neuroglancerModel.person.id)
+        loggedInUser = User.objects.get(pk=neuroglancerModel.owner.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -44,7 +44,7 @@ def update_annotation_data(neuroglancerModel):
                     move_annotations(animal.prep_id, label, verbose_name="Bulk annotation archive insert", 
                                      creator=loggedInUser)
                     bulk_annotations(animal.prep_id, state_layer, 
-                                     neuroglancerModel.person.id, label, 
+                                     neuroglancerModel.owner.id, label, 
                                      verbose_name="Bulk annotation insert", 
                                      creator=loggedInUser)
                 
