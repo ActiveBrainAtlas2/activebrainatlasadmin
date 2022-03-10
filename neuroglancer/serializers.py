@@ -38,6 +38,14 @@ class LineSerializer(serializers.Serializer):
     type = serializers.CharField()
     description = serializers.CharField()
 
+class PolygonSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    source = serializers.ListField(required=False)
+    childAnnotationIds = serializers.ListField(required=False)
+    pointA = serializers.ListField(required=False)
+    pointB = serializers.ListField(required=False)
+    type = serializers.CharField()
+    parentAnnotationId = serializers.CharField(required=False)
 
 class AnnotationsSerializer(serializers.Serializer):
     """
@@ -72,7 +80,7 @@ class RotationModelSerializer(serializers.ModelSerializer):
 
 
 class RotationSerializer(serializers.Serializer):
-    animal = serializers.CharField()
+    prep_id = serializers.CharField()
     input_type = serializers.CharField()
     owner_id = serializers.IntegerField()
     username = serializers.CharField()
@@ -80,13 +88,13 @@ class RotationSerializer(serializers.Serializer):
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
-    The url can't be in the UrlModel when it is returned
+    The url *probably* can't be in the UrlModel when it is returned
     to neuroglancer as it crashes neuroglancer."""
-    owner_id = serializers.IntegerField()
 
     class Meta:
         model = UrlModel
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'url', 'owner_id',  'user_date', 'comments', 'created']
         ordering = ['-created']
 
     def create(self, validated_data):
@@ -105,11 +113,15 @@ class UrlSerializer(serializers.ModelSerializer):
                 authUser = User.objects.get(pk=validated_data['owner_id'])
                 urlModel.owner = authUser
             except User.DoesNotExist:
-                logger.error('Person was not in validated data')
+                print('Person was not in validated data')
+        else:
+            print('No owner ID in validated data!!!!!!!')
+            for k,v in validated_data.items():
+                print('key', k)
         try:
             urlModel.save()
         except APIException:
-            logger.error('Could not save url model')
+            print('Could not save url model')
         update_annotation_data(urlModel)
         urlModel.url = None
         return urlModel

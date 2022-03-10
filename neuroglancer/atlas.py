@@ -63,6 +63,7 @@ def get_annotation_dict(prep_id, input_type_id=0, owner_id=None, label='COM'):
     try:
         animal = Animal.objects.get(pk=prep_id)
     except Animal.DoesNotExist:
+        logger.error(f'Error, {prep_id} does not exist in DB. Method: get_annotation_dict is returning an empty dictionary.')
         return row_dict
     
     rows = AnnotationPoints.objects.filter(animal=animal).filter(label='COM')\

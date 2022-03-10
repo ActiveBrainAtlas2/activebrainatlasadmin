@@ -8,8 +8,12 @@ from enum import Enum
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
 
-ANNOTATION_ID = 52
 LAUREN_ID = 16
+MANUAL = 1
+CORRECTED = 2
+POINT_ID = 52
+LINE_ID = 53
+POLYGON_ID = 54
 
 class AnnotationChoice(str, Enum):
     POINT = 'point'
@@ -25,7 +29,8 @@ class AnnotationChoice(str, Enum):
 class UrlModel(models.Model):
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=True, db_column="person_id",
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
+                              blank=False, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
     vetted = models.BooleanField(default = False)
@@ -196,6 +201,8 @@ class AnnotationAbstract(models.Model):
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
                                verbose_name="Input", blank=False, null=False)
     label = models.CharField(max_length=255)
+    segment_id = models.CharField(max_length=40, blank=True, null=True, 
+                                  db_column="segment_id", verbose_name="Polygon ID")
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
@@ -204,14 +211,33 @@ class AnnotationAbstract(models.Model):
         abstract = True
 
 class ArchiveSet(models.Model):
+    '''
+    ANTICIPATED OPERATION: 
+    1) USER SAVES ANNOTATION POINTS IN NEUROGLANCER 
+    2) NEW ENTRY IN archive_set TABLE (PARENT 'archive_id' - 0 IF FIRST; UPDATE USER; TIMESTAMP ) 
+    3) ALL CURRENT POINTS FOR USER ARE MOVED TO annotations_points_archive 
+    4) NEW POINTS ARE ADDED TO annotations_points *    
+    - CONSIDERATIONS: *      
+        A) IF LATENCY -> DB MODIFICATIONS MAY BE QUEUED AND MADE VIA CRON JOB (DURING OFF-PEAK)
+        B) annotations_points_archive, archive_sets WILL NOT BE STORED ON LIVE DB
+    #2 - INSERT entry into archive_sets table   
+    This will store the versioning  is the 
+    'SELECT INTO' with concurrent/subsequent entry into #2 (archive_sets table).  
+    After INSERT, we should receive the id of the insert (id field).  
+    This will be the unique key to identify an archive set.
+    '''
     id = models.BigAutoField(primary_key=True)
+    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
+    input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
+                               verbose_name="Input", blank=False, null=False)
+    label = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     parent =  models.IntegerField(db_column='FK_parent')
     updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, 
                                verbose_name="Updated by", blank=False, null=False, 
                                db_column='FK_update_user_id')
     class Meta:
-        managed = True
+        managed = False
         db_table = 'archive_set'
         verbose_name = 'Archive set'
         verbose_name_plural = 'Archive sets'
@@ -220,10 +246,13 @@ class AnnotationPoints(AnnotationAbstract):
     active = models.BooleanField(default = True, db_column='active')
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'annotations_points'
         verbose_name = 'Annotation Point'
         verbose_name_plural = 'Annotation Points'
+        constraints = [
+                models.UniqueConstraint(fields=['animal', 'label', 'input_type'], name='unique annotations')
+            ]        
 
     def __str__(self):
         return u'{} {}'.format(self.animal, self.label)
@@ -231,15 +260,17 @@ class AnnotationPoints(AnnotationAbstract):
 
 class AnnotationPointArchive(AnnotationAbstract):
     archive = models.ForeignKey(ArchiveSet, models.CASCADE, 
-                               verbose_name="Archive Set", blank=True, null=True, 
+                               verbose_name="Archive Set", blank=False, null=False, 
                                db_column='FK_archive_set_id')
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
-        
+        constraints = [
+                models.UniqueConstraint(fields=['animal', 'label', 'input_type', 'archive'], name='unique backup')
+            ]        
     def __str__(self):
         return u'{} {}'.format(self.animal, self.label)
 

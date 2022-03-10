@@ -2,6 +2,9 @@ DROP TABLE IF EXISTS annotations_points;
 DROP TABLE IF EXISTS archive_set;
 CREATE TABLE archive_set (
 id int not null primary key auto_increment,
+prep_id varchar(20) CHARACTER SET utf8 NOT NULL,
+FK_input_id int(11) NOT NULL,
+label varchar(255) CHARACTER SET utf8 NOT NULL,
 FK_parent int not null,
 created datetime(6) not null,
 FK_update_user_id int not null,
@@ -59,3 +62,10 @@ DELETE FROM annotations_points wHERE active = 0;
 ALTER TABLE annotations_points DROP COLUMN updated_by;
 ALTER TABLE annotations_points DROP COLUMN created;
 ALTER TABLE annotations_points DROP COLUMN updated;
+# new column
+ALTER TABLE annotations_points ADD COLUMN segment_id char(40) DEFAULT NULL;
+ALTER TABLE annotations_point_archive ADD COLUMN segment_id char(40) DEFAULT NULL;
+INSERT INTO structure (id, abbreviation, description,color, hexadecimal,active, created, is_structure) 
+values (54, 'polygon','Brain region drawn by anatomist',300,'#FFF000',1,NOW(), 0);
+
+
