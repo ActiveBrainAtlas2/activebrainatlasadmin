@@ -12,6 +12,25 @@ KEY `K__AS_UUID` (`FK_update_user_id`),
 CONSTRAINT `FK__AS_PID` FOREIGN KEY (`FK_update_user_id`) REFERENCES `auth_user` (`id`)
 );
 
+
+CREATE TABLE `annotations_point_archive` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `prep_id` varchar(20) CHARACTER SET utf8 NOT NULL,
+  `FK_structure_id` int(11) NOT NULL,
+  `FK_owner_id` int(11) NOT NULL,
+  `FK_input_id` int(11) NOT NULL,
+  `label` varchar(255) CHARACTER SET utf8 NOT NULL,
+  `x` float DEFAULT NULL,
+  `y` float DEFAULT NULL,
+  `z` float NOT NULL DEFAULT 0,
+  `FK_archive_set_id` int(11) DEFAULT NULL,
+  `segment_id` char(40) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=91439 DEFAULT CHARSET=utf8mb4
+
+
+
+
 RENAME TABLE layer_data TO annotations_points;
 -- remove foreign keys
   ALTER TABLE annotations_points DROP FOREIGN KEY `FK__LDA_AID`;
