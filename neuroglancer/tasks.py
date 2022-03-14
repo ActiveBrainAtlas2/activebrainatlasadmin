@@ -43,6 +43,9 @@ def update_annotation_data(neuroglancerModel):
                     label != 'annotation':
                     inactivate_annotations(animal, label)
                     move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
+                    # Uncomment the line below for testing and comment out the line above and the @background
+                    # decorator
+                    #move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
                 
 
 def delete_annotations(animal, label):
@@ -212,7 +215,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
     scale_xy, z_scale = get_scales(prep_id)
     annotations = layer['annotations']
     polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
-    for annotation in annotations:
+    for ordering, annotation in enumerate(annotations):
         if 'point' in annotation:
             x1 = annotation['point'][0] * scale_xy
             y1 = annotation['point'][1] * scale_xy
@@ -221,24 +224,18 @@ def bulk_annotations(prep_id, layer, owner_id, label):
             if brain_region is not None:
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
+                ordering=0,
                 x=x1, y=y1, z=z1))
         # polygons
         if 'parentAnnotationId' in annotation and 'pointA' in annotation and 'pointB' in annotation:
-            xa = annotation['pointA'][0] * scale_xy
-            ya = annotation['pointA'][1] * scale_xy
-            za = annotation['pointA'][2] * z_scale
-            
-            xb = annotation['pointB'][0] * scale_xy
-            yb = annotation['pointB'][1] * scale_xy
-            zb = annotation['pointB'][2] * z_scale
             segment_id = annotation['parentAnnotationId']
+            x = annotation['pointA'][0] * scale_xy
+            y = annotation['pointA'][1] * scale_xy
+            z = annotation['pointA'][2] * z_scale
             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
             owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-            x=xa, y=ya, z=za))
-            if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id, 
-                x=xb, y=yb, z=zb))
+            ordering=ordering, x=x, y=y, z=z))
+            
     bulk_mgr.done()
 
 
