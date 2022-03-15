@@ -8,12 +8,12 @@ from neuroglancer.atlas import get_scales
 from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID
 from math import isclose
 from background_task import background
-
+from abakit.neuroglancer.AnnotationLayer import AnnotationLayer
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-
+from abakit.neuroglancer.AnnotationLayer import AnnotationLayer
+import numpy as np
 
 def update_annotation_data(neuroglancerModel):
     """
@@ -25,7 +25,8 @@ def update_annotation_data(neuroglancerModel):
     owner_id = neuroglancerModel.owner_id
 
     try:
-        loggedInUser = User.objects.get(pk=owner_id)
+        loggedInUser = User.objects.get(pk=neuroglancerModel.owner.id)
+        print(neuroglancerModel.owner.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -116,7 +117,6 @@ def restore_annotations(archive_id, prep_id, label):
     .filter(label=label)\
     .delete()
     
-
 def move_annotations(prep_id, owner_id, label):
     '''
     Move existing annotations into the archive. First we get the existing
@@ -161,7 +161,6 @@ def move_annotations(prep_id, owner_id, label):
         .filter(animal=animal)\
         .filter(label=label)
 
-        
     if rows is not None and len(rows) > 0:        
         # now check the point archive table
         try:
@@ -172,11 +171,9 @@ def move_annotations(prep_id, owner_id, label):
                 .order_by('-id')
         except AnnotationPointArchive.DoesNotExist:
             parent = 0
-            
         if query_set is not None and len(query_set) > 0:
             annotationPointArchive = query_set[0]
             parent = annotationPointArchive.archive.id
-            
         print(f'Using parent {parent}')
         input_type = InputType.objects.get(pk=MANUAL)
         archive = ArchiveSet.objects.create(parent=parent,
@@ -184,8 +181,6 @@ def move_annotations(prep_id, owner_id, label):
                                             input_type=input_type,
                                             label=label,
                                             updatedby=loggedInUser)
-    
-        
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
@@ -194,7 +189,7 @@ def move_annotations(prep_id, owner_id, label):
     bulk_mgr.done()
     # now delete them as they are no longer useful in the original table.
     rows.delete()
-
+    print('rows deleted')
 
 def bulk_annotations(prep_id, layer, owner_id, label):
     try:
@@ -210,35 +205,26 @@ def bulk_annotations(prep_id, layer, owner_id, label):
         return
     bulk_mgr = BulkCreateManager(chunk_size=100)
     scale_xy, z_scale = get_scales(prep_id)
-    annotations = layer['annotations']
-    polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
-    for annotation in annotations:
-        if 'point' in annotation:
-            x1 = annotation['point'][0] * scale_xy
-            y1 = annotation['point'][1] * scale_xy
-            z1 = annotation['point'][2] * z_scale
+    layer = AnnotationLayer(layer)
+    polygon = BrainRegion.objects.get(pk=POLYGON_ID)
+    for annotation in layer.annotations:
+        if annotation.type =='point':
+            x,y,z = annotation.coord * np.array([scale_xy,scale_xy,z_scale])
             brain_region = get_brain_region(annotation)
             if brain_region is not None:
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
-                x=x1, y=y1, z=z1))
-        # polygons
-        if 'parentAnnotationId' in annotation and 'pointA' in annotation and 'pointB' in annotation:
-            xa = annotation['pointA'][0] * scale_xy
-            ya = annotation['pointA'][1] * scale_xy
-            za = annotation['pointA'][2] * z_scale
-            
-            xb = annotation['pointB'][0] * scale_xy
-            yb = annotation['pointB'][1] * scale_xy
-            zb = annotation['pointB'][2] * z_scale
-            segment_id = annotation['parentAnnotationId']
-            bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-            owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-            x=xa, y=ya, z=za))
-            if not isclose(xa, xb, rel_tol=1e-0) and not isclose(ya, yb, rel_tol=1e-0):
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id, 
-                x=xb, y=yb, z=zb))
+                x=x, y=y, z=z))
+        if annotation.type == 'polygon':
+            print('inserting polygon')
+            segment_id = annotation.parent_id
+            i=1
+            for childi in annotation.childs:
+                x,y,z = childi.coord_start * np.array([scale_xy,scale_xy,z_scale])
+                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon,
+                owner=loggedInUser,active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
+                x=x, y=y, z=z,ordering = i))
+                i+=1
     bulk_mgr.done()
 
 
@@ -250,13 +236,12 @@ def get_brain_region(annotation):
     :param annotation:
     '''
     brain_region = BrainRegion.objects.get(pk=POINT_ID)
-    if 'description' in annotation:
-        abbreviation = str(annotation['description']).replace('\n', '').strip()
+    if hasattr(annotation,'description'):
+        abbreviation = str(annotation.description).replace('\n', '').strip()
         try:
             query_set = BrainRegion.objects.filter(abbreviation=abbreviation)
         except BrainRegion.DoesNotExist:
             logger.error(f'BrainRegion {abbreviation} does not exist')
         if query_set is not None and len(query_set) > 0:
             brain_region = query_set[0]
-        
     return brain_region

@@ -206,7 +206,7 @@ class AnnotationAbstract(models.Model):
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
-
+    ordering = models.IntegerField(verbose_name="polygon point ordering")
     class Meta:
         abstract = True
 
