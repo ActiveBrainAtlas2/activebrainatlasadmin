@@ -42,16 +42,7 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert", creator=loggedInUser)
-                    # Uncomment the line below for testing and comment out the line above and the @background
-                    # decorator
-                    # move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
-                
-
-def delete_annotations(animal, label):
-    """
-    """
-
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
 
 def inactivate_annotations(animal, label):
     """
@@ -66,7 +57,7 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 
-@background(schedule=0)
+# @background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
     '''
     This is a simple method that just calls two other methods.
@@ -196,7 +187,7 @@ def move_annotations(prep_id, owner_id, label):
     rows.delete()
     print('rows deleted')
 
-def bulk_annotationsNEW(prep_id, layer, owner_id, label):
+def bulk_annotations(prep_id, layer, owner_id, label):
     try:
         loggedInUser = User.objects.get(pk=owner_id)
     except User.DoesNotExist:
@@ -223,73 +214,64 @@ def bulk_annotationsNEW(prep_id, layer, owner_id, label):
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
                 ordering=0,
                 x=x, y=y, z=z))
-        # polygons
         if annotation.type == 'polygon': 
             i = 1
-            print(annotation)
-            continue
-            # TODO, this part needs work
             for childi in annotation.childs:
+                print(childi)
                 xa, ya, za = childi.coord_start * scales
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
                 x=xa, y=ya, z=za, ordering=i))
-                i += 1            
-                xb, yb, zb = childi.coord_end * scales
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xb, y=yb, z=zb, ordering=i))
-                i += 1            
+                i += 1                 
     bulk_mgr.done()
 
 
-def bulk_annotations(prep_id, layer, owner_id, label):
-    try:
-        loggedInUser = User.objects.get(pk=owner_id)
-    except User.DoesNotExist:
-        logger.error("bulk_annoations User does not exist")
-        print('bulk_annoations User does not exist')
-        return
-    try:
-        animal = Animal.objects.get(pk=prep_id)
-    except Animal.DoesNotExist:
-        print("bulk_annoations Animal does not exist")
-        return
-    bulk_mgr = BulkCreateManager(chunk_size=100)
-    scale_xy, z_scale = get_scales(prep_id)
-    annotations = layer['annotations']
-    polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
-    ordering = 0
-    for annotation in annotations:
-        if 'point' in annotation:
-            x1 = annotation['point'][0] * scale_xy
-            y1 = annotation['point'][1] * scale_xy
-            z1 = annotation['point'][2] * z_scale
-            brain_region = get_brain_region(annotation)
-            if brain_region is not None:
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
-                label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
-                ordering=0,
-                x=x1, y=y1, z=z1))
-        # polygons
-        if 'parentAnnotationId' in annotation and 'pointA' in annotation:
-            segment_id = annotation['parentAnnotationId']
-            ordering += 1 
-            xa = annotation['pointA'][0] * scale_xy
-            ya = annotation['pointA'][1] * scale_xy
-            za = annotation['pointA'][2] * z_scale
-            bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-            owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-            ordering=ordering, x=xa, y=ya, z=za))
-            ordering += 1 
-            xb = annotation['pointB'][0] * scale_xy
-            yb = annotation['pointB'][1] * scale_xy
-            zb = annotation['pointB'][2] * z_scale
-            bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-            owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-            ordering=ordering, x=xb, y=yb, z=zb))
-            
-    bulk_mgr.done()
+# def bulk_annotations(prep_id, layer, owner_id, label):
+#     try:
+#         loggedInUser = User.objects.get(pk=owner_id)
+#     except User.DoesNotExist:
+#         logger.error("bulk_annoations User does not exist")
+#         print('bulk_annoations User does not exist')
+#         return
+#     try:
+#         animal = Animal.objects.get(pk=prep_id)
+#     except Animal.DoesNotExist:
+#         print("bulk_annoations Animal does not exist")
+#         return
+#     bulk_mgr = BulkCreateManager(chunk_size=100)
+#     scale_xy, z_scale = get_scales(prep_id)
+#     annotations = layer['annotations']
+#     polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
+#     ordering = 0
+#     for annotation in annotations:
+#         if 'point' in annotation:
+#             x1 = annotation['point'][0] * scale_xy
+#             y1 = annotation['point'][1] * scale_xy
+#             z1 = annotation['point'][2] * z_scale
+#             brain_region = get_brain_region(annotation)
+#             if brain_region is not None:
+#                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
+#                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
+#                 ordering=0,
+#                 x=x1, y=y1, z=z1))
+#         # polygons
+#         if 'parentAnnotationId' in annotation and 'pointA' in annotation:
+#             segment_id = annotation['parentAnnotationId']
+#             ordering += 1 
+#             xa = annotation['pointA'][0] * scale_xy
+#             ya = annotation['pointA'][1] * scale_xy
+#             za = annotation['pointA'][2] * z_scale
+#             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
+#             owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
+#             ordering=ordering, x=xa, y=ya, z=za))
+#             ordering += 1 
+#             xb = annotation['pointB'][0] * scale_xy
+#             yb = annotation['pointB'][1] * scale_xy
+#             zb = annotation['pointB'][2] * z_scale
+#             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
+#             owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
+#             ordering=ordering, x=xb, y=yb, z=zb))
+#     bulk_mgr.done()
 
 
 def get_brain_region(annotation):
