@@ -56,8 +56,13 @@ class UrlModel(models.Model):
         """
         animal = "NA"
         match = re.search('data/(.+?)/neuroglancer_data', str(self.url))
-        if match is not None and match.group(1) is not None:
-            animal = match.group(1)
+        neuroglancer_json = self.url
+        image_layers = [layer for layer in neuroglancer_json['layers'] if layer['type'] == 'image']
+        if len(image_layers) >0:
+            first_image_layer = json.dumps(image_layers[0])
+            match = re.search('data/(.+?)/neuroglancer_data', first_image_layer)
+            if match is not None and match.group(1) is not None:
+                animal = match.group(1)
         return animal
 
     @property
@@ -203,6 +208,7 @@ class AnnotationAbstract(models.Model):
     label = models.CharField(max_length=255)
     segment_id = models.CharField(max_length=40, blank=True, null=True, 
                                   db_column="segment_id", verbose_name="Polygon ID")
+    ordering = models.IntegerField(blank=False, null=False, default=0)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")

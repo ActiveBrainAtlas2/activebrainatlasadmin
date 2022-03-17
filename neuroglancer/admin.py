@@ -176,7 +176,7 @@ class PointsAdmin(admin.ModelAdmin):
         return False
 
 @admin.register(BrainRegion)
-class BrainRegionAdmin(admin.ModelAdmin, ExportCsvMixin):
+class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']
@@ -326,10 +326,10 @@ def restore_archive(modeladmin, request, queryset):
     else:
         archive = queryset[0]
         restore_annotations(archive.id, archive.animal.prep_id, archive.label)
-        messages.info(request, f'Annotation {archive.label} for {archive.animal.prep_id} have been restored.')
+        messages.info(request, f'The {archive.label} layer for {archive.animal.prep_id} has been restored. ID={archive.id}')
             
 @admin.register(ArchiveSet)
-class ArchiveSetAdmin(admin.ModelAdmin):
+class ArchiveSetAdmin(AtlasAdminModel):
     list_display = ['animal', 'label', 'input_type', 'created', 'updatedby', 'archive_count']
     ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
     list_filter = ['created']
