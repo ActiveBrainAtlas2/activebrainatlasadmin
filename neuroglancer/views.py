@@ -6,20 +6,18 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
-import string
-import random
+from collections import OrderedDict
 
 import numpy as np
-from statistics import mode
-from scipy.interpolate import splprep, splev
 from neuroglancer.models import Animal
 from neuroglancer.serializers import AnimalInputSerializer, \
     AnnotationSerializer, AnnotationsSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import InputType, UrlModel, AnnotationPoints, \
     BrainRegion
+from neuroglancer.annotation_controller import create_polygons, random_string    
+    
 import logging
-from collections import defaultdict
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
@@ -66,7 +64,6 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-
 class Annotation(views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
@@ -80,7 +77,7 @@ class Annotation(views.APIView):
 
     def get(self, request, prep_id, label, input_type_id, format=None):
         data = []
-        polygons = defaultdict(list)
+        polygons = OrderedDict()
         try:
             animal = Animal.objects.get(pk=prep_id)
         except Animal.DoesNotExist:
@@ -101,7 +98,9 @@ class Annotation(views.APIView):
             z = int(round(row.z / z_scale))
             if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
-                polygons[segment_id].append((x, y, z))
+                #polygons[segment_id].append((x, y, z))
+                # d.setdefault(input(), []).append(i)
+                polygons.setdefault(segment_id, []).append((x,y,z))
             
             else:
                 tmp_dict = {}
@@ -121,97 +120,6 @@ class Annotation(views.APIView):
 
         return Response(serializer.data)
         # return JsonResponse(data, safe=False)
-
-def create_polygons(polygons):
-    '''
-    Takes all the polygon x,y,z data and turns them into
-    Neuroglancer polygons
-    :param polygons: dictionary of polygon: x,y,z values
-    Interpolates out to a max of 50 splines. I just picked
-    50 as a nice round number
-    '''
-    data = []
-    for parent_id, polygon in polygons.items(): 
-        n = len(polygon)
-        tmp_dict = {} # create initial parent/source starting point
-        tmp_dict["id"] = parent_id
-        tmp_dict["source"] = list(polygon[0])
-        tmp_dict["type"] = "polygon"
-        child_ids = [random_string() for _ in range(n)]
-        tmp_dict["childAnnotationIds"] = child_ids
-        data.append(tmp_dict)
-        #bigger_points = sort_from_center(polygon)
-        bigger_points = polygon
-        if len(bigger_points) < n:
-            pass
-            # bigger_points = interpolate2d(bigger_points, n)
-        
-        for j in range(len(bigger_points)):
-            tmp_dict = {}
-            pointA = bigger_points[j]
-            try:
-                pointB = bigger_points[j + 1]
-            except IndexError:
-                pointB = bigger_points[0]
-            tmp_dict["id"] = child_ids[j]
-            tmp_dict["pointA"] = pointA
-            tmp_dict["pointB"] = pointB
-            tmp_dict["type"] = "line"
-            tmp_dict["parentAnnotationId"] = parent_id
-            data.append(tmp_dict)
-    return data
-
-
-
-def sort_from_centerXXX(polygon):
-    pass
-    #center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), polygon), [len(polygon)] * 2))
-    #return math.degrees(math.atan2(*tuple(map(operator.sub, polygon, center))[::-1])) % 360
-    # return sorted(polygon, key=lambda coord: (math.atan2(*tuple(map(operator.sub, coord, center))[::-1])))
-
-def sort_from_center(polygon):
-    '''
-    Get the center of the unique points in a polygon and then use atan2 to get
-    the angle from the x-axis to the x,y point. Use that to sort.
-    :param polygon:
-    '''
-    coords = np.array(polygon)
-    coords = np.unique(coords, axis=0)
-    center = coords.mean(axis=0)
-    centered = coords - center
-    angles = -np.arctan2(centered[:,1], centered[:,0])
-    sorted_coords = coords[np.argsort(angles)]
-    return list(map(tuple, sorted_coords))
-
-
-
-def interpolate2d(points, new_len):
-    '''
-    Interpolates a list of tuples to the specified length. The points param
-    must be a list of tuples in 2d
-    :param points: list of floats
-    :param new_len: integer you want to interpolate to. This will be the new
-    length of the array
-    There can't be any consecutive identical points or an error will be thrown
-    unique_rows = np.unique(original_array, axis=0)
-    '''
-    points = np.array(points)
-    lastcolumn = np.round(points[:,-1])
-    z = mode(lastcolumn)
-    points2d = np.delete(points, -1, axis=1)
-    pu = points2d.astype(int)
-    indexes = np.unique(pu, axis=0, return_index=True)[1]
-    points = np.array([points2d[index] for index in sorted(indexes)])
-    addme = points2d[0].reshape(1, 2)
-    points2d = np.concatenate((points2d, addme), axis=0)
-
-    tck, u = splprep(points2d.T, u=None, s=3, per=1)
-    u_new = np.linspace(u.min(), u.max(), new_len)
-    x_array, y_array = splev(u_new, tck, der=0)
-    arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
-    arr_3d = np.c_[ arr_2d, np.zeros(new_len)+z ] 
-    return list(map(tuple, arr_3d))
-
 
 class Annotations(views.APIView):
     """
@@ -314,9 +222,6 @@ def get_input_type_id(input_type):
     return input_type_id
 
 
-def random_string():
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
-
         
 def load_layers(request):
     layers = []
@@ -335,10 +240,6 @@ def public_list(request):
     """
     urls = UrlModel.objects.filter(public=True).order_by('comments')
     return render(request, 'public.html', {'urls': urls})
-
-
-from django.contrib.auth.decorators import login_required
-
 
 class LandmarkList(views.APIView):
 
