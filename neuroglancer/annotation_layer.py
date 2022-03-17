@@ -11,7 +11,8 @@ class AnnotationLayer:
             raise Http404
         self.annotations = annotation_layer['annotations']
         self.name = annotation_layer['name']
-        self.tool = annotation_layer['tool']
+        if 'tool' in annotation_layer:
+            self.tool = annotation_layer['tool']
         self.source = annotation_layer['source']
         self.type = 'annotation'
         self.parse_annotations()
@@ -67,7 +68,7 @@ class AnnotationLayer:
     
     def get_annotation_with_id(self, id):
         search_result = self.search_annotation_with_id(id)
-        return self.annotations[search_result]
+        return self.annotations[search_result][0]
     
     def delete_annotation_with_id(self, id):
         search_result = self.search_annotation_with_id(id)
