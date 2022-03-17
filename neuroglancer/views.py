@@ -86,14 +86,11 @@ class Annotation(views.APIView):
         except Animal.DoesNotExist:
             return data
 
-        try:
-            rows = AnnotationPoints.objects.filter(animal=animal)\
-                        .filter(label=label)\
-                        .filter(input_type_id=input_type_id)\
-                        .filter(active=True)\
-                        .order_by('id')
-        except AnnotationPoints.DoesNotExist:
-            raise Http404
+        rows = AnnotationPoints.objects.filter(animal=animal)\
+                    .filter(label=label)\
+                    .filter(input_type_id=input_type_id)\
+                    .filter(active=True)\
+                    .order_by('ordering')
         
         scale_xy, z_scale = get_scales(prep_id)
         # Working with polygons/lines is much different        
@@ -134,8 +131,8 @@ def create_polygons(polygons):
     50 as a nice round number
     '''
     data = []
-    n = 50
     for parent_id, polygon in polygons.items(): 
+        n = len(polygon)
         tmp_dict = {} # create initial parent/source starting point
         tmp_dict["id"] = parent_id
         tmp_dict["source"] = list(polygon[0])
@@ -143,9 +140,11 @@ def create_polygons(polygons):
         child_ids = [random_string() for _ in range(n)]
         tmp_dict["childAnnotationIds"] = child_ids
         data.append(tmp_dict)
-        bigger_points = sort_from_center(polygon)
-        if len(bigger_points) < 50:
-            bigger_points = interpolate2d(bigger_points, n)
+        #bigger_points = sort_from_center(polygon)
+        bigger_points = polygon
+        if len(bigger_points) < n:
+            pass
+            # bigger_points = interpolate2d(bigger_points, n)
         
         for j in range(len(bigger_points)):
             tmp_dict = {}
@@ -155,8 +154,8 @@ def create_polygons(polygons):
             except IndexError:
                 pointB = bigger_points[0]
             tmp_dict["id"] = child_ids[j]
-            tmp_dict["pointA"] = [pointA[0], pointA[1], pointA[2]]
-            tmp_dict["pointB"] = [pointB[0], pointB[1], pointB[2]]
+            tmp_dict["pointA"] = pointA
+            tmp_dict["pointB"] = pointB
             tmp_dict["type"] = "line"
             tmp_dict["parentAnnotationId"] = parent_id
             data.append(tmp_dict)
