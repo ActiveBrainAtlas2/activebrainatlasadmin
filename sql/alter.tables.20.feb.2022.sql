@@ -87,4 +87,7 @@ ALTER TABLE annotations_point_archive ADD COLUMN segment_id char(40) DEFAULT NUL
 INSERT INTO structure (id, abbreviation, description,color, hexadecimal,active, created, is_structure) 
 values (54, 'polygon','Brain region drawn by anatomist',300,'#FFF000',1,NOW(), 0);
 
+ALTER TABLE annotations_points ADD COLUMN ordering INT NOT NULL DEFAULT 0 after segment_id;
+ALTER TABLE annotations_point_archive ADD COLUMN ordering INT NOT NULL DEFAULT 0 after segment_id;
+
 
