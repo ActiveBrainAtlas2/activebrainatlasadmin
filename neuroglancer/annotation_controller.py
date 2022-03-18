@@ -4,9 +4,8 @@ from scipy.interpolate import splprep, splev
 from collections import OrderedDict
 import string
 import random
-import math
 
-def create_polygons(polygons):
+def create_polygons(polygons:list) -> list:
     '''
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
@@ -18,7 +17,7 @@ def create_polygons(polygons):
     POINTS = 50
     for parent_id, polygon in polygons.items(): 
         
-        if is_convex_polygon(polygon):
+        if is_convex(polygon):
             polygon = sort_from_center(polygon)
             polygon = interpolate2d(polygon, POINTS)
         
@@ -48,7 +47,7 @@ def create_polygons(polygons):
     return data
 
 
-def interpolate2d(points, new_len):
+def interpolate2d(points:list, new_len:int) -> list:
     '''
     Interpolates a list of tuples to the specified length. The points param
     must be a list of tuples in 2d
@@ -76,66 +75,6 @@ def interpolate2d(points, new_len):
     return list(map(tuple, arr_3d))
 
 
-
-def is_convex_polygon(p):
-    """Return True if the polynomial defined by the sequence of 2D
-    points is 'strictly convex': points are valid, side lengths non-
-    zero, interior angles are strictly between zero and a straight
-    angle, and the polygon does not intersect itself.
-
-    NOTES:  1.  Algorithm: the signed changes of the direction angles
-                from one side to the next side must be all positive or
-                all negative, and their sum must equal plus-or-minus
-                one full turn (2 pi radians). Also check for too few,
-                invalid, or repeated points.
-            2.  No check is explicitly done for zero internal angles
-                (180 degree direction-change angle) as this is covered
-                in other ways, including the `n < 3` check.
-    """
-    TWO_PI = 2 * math.pi
-    polygon = [(x[0], x[1]) for x in p]
-    try:  # needed for any bad points or direction changes
-        # Check for too few points
-        if len(polygon) < 3:
-            return False
-        # Get starting information
-        old_x, old_y = polygon[-2]
-        new_x, new_y = polygon[-1]
-        new_direction = math.atan2(new_y - old_y, new_x - old_x)
-        angle_sum = 0.0
-        # Check each point (the side ending there, its angle) and accum. angles
-        for ndx, newpoint in enumerate(polygon):
-            # Update point coordinates and side directions, check side length
-            old_x, old_y, old_direction = new_x, new_y, new_direction
-            new_x, new_y = newpoint
-            new_direction = math.atan2(new_y - old_y, new_x - old_x)
-            if old_x == new_x and old_y == new_y:
-                return False  # repeated consecutive points
-            # Calculate & check the normalized direction-change angle
-            angle = new_direction - old_direction
-            if angle <= -math.pi:
-                angle += TWO_PI  # make it in half-open interval (-Pi, Pi]
-            elif angle > math.pi:
-                angle -= TWO_PI
-            if ndx == 0:  # if first time through loop, initialize orientation
-                if angle == 0.0:
-                    return False
-                orientation = 1.0 if angle > 0.0 else -1.0
-            else:  # if other time through loop, check orientation is stable
-                if orientation * angle <= 0.0:  # not both pos. or both neg.
-                    return False
-            # Accumulate the direction-change angle
-            angle_sum += angle
-        # Check that the total number of full turns is plus-or-minus 1
-        return abs(round(angle_sum / TWO_PI)) == 1
-    except (ArithmeticError, TypeError, ValueError):
-        return False  # any exception means not a proper convex polygon
-
-# A Python3 program to check if a given point 
-# lies inside a given polygon
-# Refer https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
-# for explanation of functions onSegment(),
-# orientation() and doIntersect() 
  
  
 # Given three collinear points p, q, r, 
@@ -256,11 +195,11 @@ def is_inside_polygon(points:list) -> bool:
     return (count % 2 == 1)
 
 
-def random_string():
+def random_string() -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
 
 
-def sort_from_center(polygon):
+def sort_from_center(polygon:list) -> list:
     '''
     Get the center of the unique points in a polygon and then use math.atan2 to get
     the angle from the x-axis to the x,y point. Use that to sort.
@@ -274,3 +213,14 @@ def sort_from_center(polygon):
     angles = -np.arctan2(centered[:,1], centered[:,0])
     sorted_coords = coords[np.argsort(angles)]
     return list(map(tuple, sorted_coords))
+
+
+def zCrossProduct(a, b, c):
+    return (a[0] - b[0]) * (b[1] - c[1]) - (a[1] - b[1]) * (b[0] - c[0])
+
+
+def is_convex(vertices:list) -> list:
+    if len(vertices) < 4:
+        return True
+    signs = [zCrossProduct(a, b, c) > 0 for a, b, c in zip(vertices[2:], vertices[1:], vertices)]
+    return all(signs) or not any(signs)

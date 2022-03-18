@@ -107,7 +107,6 @@ class UrlSerializer(serializers.ModelSerializer):
             public=False,
             vetted=False,
         )
-        print(validated_data)
         if 'owner_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['owner_id'])
