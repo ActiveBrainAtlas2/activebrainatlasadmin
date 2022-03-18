@@ -45,7 +45,6 @@ class AnnotationLayer:
     
     def parse_line(self, line_json):
         line = Line(line_json['pointA'], line_json['pointB'], line_json['id'])
-        print('line object', line)
         if 'parentAnnotationId' in line_json:
             line.parent_id = line_json['parentAnnotationId']
         if 'description' in line_json:
