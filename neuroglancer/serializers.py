@@ -92,7 +92,8 @@ class UrlSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UrlModel
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'url', 'owner_id',  'user_date', 'comments', 'created']
         ordering = ['-created']
 
     def create(self, validated_data):
