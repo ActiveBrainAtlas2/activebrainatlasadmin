@@ -14,13 +14,7 @@ def create_polygons(polygons:list) -> list:
     50 as a nice round number
     '''
     data = []
-    POINTS = 50
     for parent_id, polygon in polygons.items(): 
-        
-        # if is_convex_polygon(polygon):
-        #     polygon = sort_from_center(polygon)
-        #     polygon = interpolate2d(polygon, POINTS)
-        
         n = len(polygon)
         hexcolor = "#FFF000"
         tmp_dict = OrderedDict() # create initial parent/source starting point
