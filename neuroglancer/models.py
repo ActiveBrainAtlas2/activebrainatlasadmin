@@ -208,11 +208,10 @@ class AnnotationAbstract(models.Model):
     label = models.CharField(max_length=255)
     segment_id = models.CharField(max_length=40, blank=True, null=True, 
                                   db_column="segment_id", verbose_name="Polygon ID")
-    ordering = models.IntegerField(blank=False, null=False, default=0)
+    ordering = models.IntegerField(blank=False, null=False, default=0, verbose_name="polygon point ordering")
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
-    ordering = models.IntegerField(verbose_name="polygon point ordering")
     class Meta:
         abstract = True
 
