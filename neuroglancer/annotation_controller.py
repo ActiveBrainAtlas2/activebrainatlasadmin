@@ -18,9 +18,9 @@ def create_polygons(polygons):
     POINTS = 50
     for parent_id, polygon in polygons.items(): 
         
-        if is_convex_polygon(polygon):
-            polygon = sort_from_center(polygon)
-            polygon = interpolate2d(polygon, POINTS)
+        # if is_convex_polygon(polygon):
+        #     polygon = sort_from_center(polygon)
+        #     polygon = interpolate2d(polygon, POINTS)
         
         n = len(polygon)
         hexcolor = "#FFF000"
@@ -28,23 +28,31 @@ def create_polygons(polygons):
         tmp_dict["id"] = parent_id
         tmp_dict["source"] = list(polygon[0])
         tmp_dict["type"] = "polygon"
-        child_ids = [random_string() for _ in range(n//2)]
+        child_ids = [random_string() for _ in range(n)]
         tmp_dict["childAnnotationIds"] = child_ids
         tmp_dict["props"] = [hexcolor]
         data.append(tmp_dict)
-        k = 0
-        for b in range(n//2):
+        for i in range(n-1):
             tmp_dict = OrderedDict()
-            pointA = polygon[k]
-            pointB = polygon[k + 1]
-            tmp_dict["id"] = child_ids[b]
+            pointA = polygon[i]
+            pointB = polygon[i + 1]
+            tmp_dict["id"] = child_ids[i]
             tmp_dict["pointA"] = pointA
             tmp_dict["pointB"] = pointB
             tmp_dict["type"] = "line"
             tmp_dict["parentAnnotationId"] = parent_id
             tmp_dict["props"] = [hexcolor]
             data.append(tmp_dict)
-            k += 2
+        tmp_dict = OrderedDict()
+        pointA = polygon[-1]
+        pointB = polygon[0]
+        tmp_dict["id"] = child_ids[-1]
+        tmp_dict["pointA"] = pointA
+        tmp_dict["pointB"] = pointB
+        tmp_dict["type"] = "line"
+        tmp_dict["parentAnnotationId"] = parent_id
+        tmp_dict["props"] = [hexcolor]
+        data.append(tmp_dict)
     return data
 
 

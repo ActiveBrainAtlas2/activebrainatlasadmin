@@ -181,7 +181,7 @@ def move_annotations(prep_id, owner_id, label):
     for row in rows:
         bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
             label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
-            x=row.x, y=row.y, z=row.z, archive=archive))
+            x=row.x, y=row.y, z=row.z, archive=archive,ordering = row.ordering))
     bulk_mgr.done()
     # now delete them as they are no longer useful in the original table.
     rows.delete()
