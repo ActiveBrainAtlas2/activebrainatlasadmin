@@ -225,55 +225,6 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 i += 1                 
     bulk_mgr.done()
 
-
-# def bulk_annotations(prep_id, layer, owner_id, label):
-#     try:
-#         loggedInUser = User.objects.get(pk=owner_id)
-#     except User.DoesNotExist:
-#         logger.error("bulk_annoations User does not exist")
-#         print('bulk_annoations User does not exist')
-#         return
-#     try:
-#         animal = Animal.objects.get(pk=prep_id)
-#     except Animal.DoesNotExist:
-#         print("bulk_annoations Animal does not exist")
-#         return
-#     bulk_mgr = BulkCreateManager(chunk_size=100)
-#     scale_xy, z_scale = get_scales(prep_id)
-#     annotations = layer['annotations']
-#     polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
-#     ordering = 0
-#     for annotation in annotations:
-#         if 'point' in annotation:
-#             x1 = annotation['point'][0] * scale_xy
-#             y1 = annotation['point'][1] * scale_xy
-#             z1 = annotation['point'][2] * z_scale
-#             brain_region = get_brain_region(annotation)
-#             if brain_region is not None:
-#                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
-#                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
-#                 ordering=0,
-#                 x=x1, y=y1, z=z1))
-#         # polygons
-#         if 'parentAnnotationId' in annotation and 'pointA' in annotation:
-#             segment_id = annotation['parentAnnotationId']
-#             ordering += 1 
-#             xa = annotation['pointA'][0] * scale_xy
-#             ya = annotation['pointA'][1] * scale_xy
-#             za = annotation['pointA'][2] * z_scale
-#             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-#             owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-#             ordering=ordering, x=xa, y=ya, z=za))
-#             ordering += 1 
-#             xb = annotation['pointB'][0] * scale_xy
-#             yb = annotation['pointB'][1] * scale_xy
-#             zb = annotation['pointB'][2] * z_scale
-#             bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-#             owner=loggedInUser, input_type_id=MANUAL, label=label, segment_id=segment_id,
-#             ordering=ordering, x=xb, y=yb, z=zb))
-#     bulk_mgr.done()
-
-
 def get_brain_region(annotation):
     '''
     This method is important! By default, the brain regions is just an annotation
