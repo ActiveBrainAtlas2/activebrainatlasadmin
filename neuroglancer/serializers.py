@@ -92,7 +92,8 @@ class UrlSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UrlModel
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['id', 'url', 'owner_id',  'user_date', 'comments', 'created']
         ordering = ['-created']
 
     def create(self, validated_data):
@@ -106,7 +107,6 @@ class UrlSerializer(serializers.ModelSerializer):
             public=False,
             vetted=False,
         )
-        print(validated_data)
         if 'owner_id' in validated_data:
             try:
                 authUser = User.objects.get(pk=validated_data['owner_id'])
