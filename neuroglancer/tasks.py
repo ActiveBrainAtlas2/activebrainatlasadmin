@@ -187,7 +187,6 @@ def move_annotations(prep_id, owner_id, label):
             label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
             x=row.x, y=row.y, z=row.z, archive=archive,ordering = row.ordering))
     bulk_mgr.done()
-    # now delete them as they are no longer useful in the original table.
     rows.delete()
 
 def bulk_annotations(prep_id, layer, owner_id, label):
@@ -224,12 +223,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
                 x=xa, y=ya, z=za, ordering=ordering))
-                ordering += 1
-                xb, yb, zb = childi.coord_end * scales
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xb, y=yb, z=zb, ordering=ordering))
-                ordering += 1                 
+                ordering += 1              
     bulk_mgr.done()
 
 def get_brain_region(annotation):
