@@ -95,7 +95,8 @@ class Annotation(views.APIView):
         for row in rows:
             x = row.x / scale_xy
             y = row.y / scale_xy
-            z = int(round(row.z / z_scale))+0.5
+            # z = int(round(row.z / z_scale))+0.5
+            z = row.z / z_scale
             if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
                 polygons.setdefault(segment_id, []).append((x,y,z))
@@ -103,7 +104,8 @@ class Annotation(views.APIView):
             else:
                 tmp_dict = {}
                 tmp_dict['id'] = random_string()
-                tmp_dict['point'] = [int(round(x)), int(round(y)), z + 0.5]
+                # tmp_dict['point'] = [int(round(x)), int(round(y)), z + 0.5]
+                tmp_dict['point'] = [int(round(x)), int(round(y)), z]
                 tmp_dict['type'] = 'point'
                 if 'COM' in label or 'Rough Alignment' in label:
                     tmp_dict['description'] = row.brain_region.abbreviation

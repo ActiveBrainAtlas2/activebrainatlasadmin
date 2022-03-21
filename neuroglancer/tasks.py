@@ -42,7 +42,11 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
+                    # Do not remove these comments.
+                    # Uncomment the line below for testing and comment out the line above and the @background
+                    # decorator
+                    #move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
 
 def inactivate_annotations(animal, label):
     """
@@ -57,7 +61,7 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 
-# @background(schedule=0)
+@background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
     '''
     This is a simple method that just calls two other methods.
