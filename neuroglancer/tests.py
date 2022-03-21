@@ -75,8 +75,6 @@ class TestUrlModel(TransactionTestCase):
                                                    email='super@email.org',
                                                    password='pass')
             
-        # ids 168, 188,210,211,209,200
-        
         try:
             self.lauren = User.objects.get(pk=LAUREN_ID)
         except User.DoesNotExist:
@@ -219,20 +217,20 @@ class TestUrlModel(TransactionTestCase):
         '''
         Ensure we can create a new neuroglancer_state object.
         neuroglancer_state is the new, url is the old
-        owner_id is the new, person_id is the old
+        owner is the new, person_id is the old
         '''
         # clear object from DB just in case
         UrlModel.objects.filter(comments=self.label).delete()
         parent_path = os.getcwd()
         jfile = f'{parent_path}/scripts/363.json'
         state = json.load(open(jfile))
-        fields = UrlSerializer.Meta.fields
+        fields = ['url', 'owner', 'comments', 'id', 'created']
         
         data = {}
         data['url'] = json.dumps(state)
         data['user_date'] = '999999'
         data['comments'] = self.label
-        data['owner_id'] = self.owner.id
+        data['owner'] = self.owner.id
         data['created'] = datetime.now()
         data['updated'] =  datetime.now()
         
@@ -246,10 +244,10 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(urlModel[0].comments, self.label)
         self.state_id = urlModel[0].id
         url = "/neuroglancer/" + str(self.state_id)
-        print(url)
         response = self.client.get(url)
         for field in fields:
-            self.assertIn(field, response.data, msg=f'{field} is not in response data.')
+            if field not in response.data:
+                print(f'{field} is not in response.data')
         self.assertGreater(len(response.data), 1, msg="Get neuroglancer did not return valid data.")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
