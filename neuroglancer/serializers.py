@@ -127,6 +127,7 @@ class UrlSerializer(serializers.ModelSerializer):
         :param obj: the neuroglancerModel object
         :param owner: the owner object from the validated_data
         '''
+        print('owner type and id', type(owner), owner.id)
         try:
             # authUser = User.objects.get(pk=owner)
             obj.owner = owner
