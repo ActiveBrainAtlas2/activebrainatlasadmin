@@ -92,57 +92,50 @@ class UrlSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UrlModel
-        # fields = '__all__'
-        fields = ['id', 'url', 'owner_id',  'user_date', 'comments', 'created']
+        fields = '__all__'
         ordering = ['-created']
 
     def create(self, validated_data):
         """
         This gets called when a user clicks New in Neuroglancer
         """
-        urlModel = UrlModel(
+        obj = UrlModel(
             url=validated_data['url'],
             user_date=validated_data['user_date'],
             comments=validated_data['comments'],
-            public=False,
-            vetted=False,
         )
-        if 'owner_id' in validated_data:
-            try:
-                authUser = User.objects.get(pk=validated_data['owner_id'])
-                urlModel.owner = authUser
-            except User.DoesNotExist:
-                print('Person was not in validated data')
-        else:
-            print('No owner ID in validated data!!!!!!!')
-            for k,v in validated_data.items():
-                print('key', k)
-        try:
-            urlModel.save()
-        except APIException:
-            print('Could not save url model')
-        update_annotation_data(urlModel)
-        urlModel.url = None
-        return urlModel
+        if 'owner' in validated_data:
+            owner = validated_data['owner']
+            obj = self.take_care_of_owner(obj, owner)
+        return obj
 
-    def update(self, instance, validated_data):
+    def update(self, obj, validated_data):
         """
         This gets called when a user clicks Save in Neuroglancer
         """
-        instance.url = validated_data.get('url', instance.url)
-        instance.user_date = validated_data.get(
-            'user_date', instance.user_date)
-        instance.comments = validated_data.get('comments', instance.comments)
-        if 'owner_id' in validated_data:
-            try:
-                authUser = User.objects.get(pk=validated_data['owner_id'])
-                instance.owner = authUser
-            except User.DoesNotExist:
-                logger.error('Person was not in validated data')
+        obj.url = validated_data.get('url', obj.url)
+        obj.user_date = validated_data.get('user_date', obj.user_date)
+        obj.comments = validated_data.get('comments', obj.comments)
+        if 'owner' in validated_data:
+            owner = validated_data['owner']
+            obj = self.take_care_of_owner(obj, owner)
+        return obj
+
+    def take_care_of_owner(self, obj, owner):
+        '''
+        Takes care of tasks that are in both create and update
+        :param obj: the neuroglancerModel object
+        :param owner: the owner object from the validated_data
+        '''
         try:
-            instance.save()
+            # authUser = User.objects.get(pk=owner)
+            obj.owner = owner
+        except User.DoesNotExist:
+            logger.error('Owner was not in validated data')
+        try:
+            obj.save()
         except APIException:
-            logger.error('Could not save url model')
-        update_annotation_data(instance)
-        instance.url = None
-        return instance
+            logger.error('Could not save Neuroglancer model')
+        update_annotation_data(obj)
+        obj.url = None
+        return obj
