@@ -63,7 +63,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_neuroglancer(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:43595"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
