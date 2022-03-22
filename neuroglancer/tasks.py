@@ -21,11 +21,10 @@ def update_annotation_data(neuroglancerModel):
     SQL insert intensive bits to the background.
     """    
     json_txt = neuroglancerModel.url
-    owner_id = neuroglancerModel.owner_id
+    owner_id = neuroglancerModel.owner.id
 
     try:
         loggedInUser = User.objects.get(pk=neuroglancerModel.owner.id)
-        print(neuroglancerModel.owner.id)
     except User.DoesNotExist:
         logger.error("User does not exist")
         return
@@ -172,8 +171,10 @@ def move_annotations(prep_id, owner_id, label):
             parent = 0
         if query_set is not None and len(query_set) > 0:
             annotationPointArchive = query_set[0]
-            parent = annotationPointArchive.archive.id
-        print(f'Using parent {parent}')
+            try:
+                parent = annotationPointArchive.archive.id
+            except ArchiveSet.DoesNotExist:
+                parent = 0
         input_type = InputType.objects.get(pk=MANUAL)
         archive = ArchiveSet.objects.create(parent=parent,
                                             animal=animal,
@@ -223,7 +224,13 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
                 x=xa, y=ya, z=za, ordering=ordering))
-                ordering += 1              
+                ordering += 1
+                
+                xb, yb, zb = childi.coord_end * scales
+                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
+                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
+                x=xb, y=yb, z=zb, ordering=ordering))
+                ordering += 1
     bulk_mgr.done()
 
 def get_brain_region(annotation):
