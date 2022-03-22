@@ -95,7 +95,7 @@ class Annotation(views.APIView):
         for row in rows:
             x = row.x / scale_xy
             y = row.y / scale_xy
-            z = int(round(row.z / z_scale))+0.5
+            z = row.z / z_scale
             if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
                 polygons.setdefault(segment_id, []).append((x,y,z))
