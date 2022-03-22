@@ -48,7 +48,6 @@ def create_polygons(polygons:list) -> list:
         data.append(tmp_dict)
     return data
 
-
 def interpolate2d(points:list, new_len:int) -> list:
     '''
     Interpolates a list of tuples to the specified length. The points param
