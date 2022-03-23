@@ -23,39 +23,31 @@ def create_polygons(polygons:list) -> list:
     layer_data = []
     for parent_id, polygon in polygons.items(): 
         hexcolor = "#FF0000"
-        children = defaultdict(list)
         source = {} # create initial parent/source starting point
-        ids = OrderedDict({line[3]: [line[0], line[1], line[2]]  for line in polygon})
-        
-        
+        ids = OrderedDict({line[3]: [line[0], line[1], line[2]]  for line in polygon})        
         source["source"] = next(iter(ids.values()))
         source["childAnnotationIds"] = list(ids.keys())
         source["type"] = "polygon"
         source["id"] = parent_id
         source["props"] = [hexcolor]
         layer_data.append(source)
-        print(source["childAnnotationIds"])
-        print()
-        
+        children = defaultdict(list)
         for line in polygon:
             children[line[3]].append([line[0], line[1], line[2]])
-    
-        i = 1
+            
         for child, value in children.items():
             line = {}
             line["pointA"] = value[0]
-            pointB = next_item(children, child)
-            line["pointB"] = value[1]
+            try:
+                line["pointB"] = value[1]
+            except IndexError:
+                line["pointB"] = value[0]
+                
             line["type"] = "line"
             line["id"] = child
             line["parentAnnotationId"] = parent_id
             line["props"] = [hexcolor]
             layer_data.append(line)
-            #print(i, child, type(value[0]), len(value[0]), value[0])
-            i += 1
-            
-        for d in layer_data:
-            print(d)
     return layer_data
 
 

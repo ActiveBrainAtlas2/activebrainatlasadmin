@@ -208,8 +208,8 @@ class AnnotationAbstract(models.Model):
     label = models.CharField(max_length=255)
     segment_id = models.CharField(max_length=40, blank=True, null=True, 
                                   db_column="segment_id", verbose_name="Polygon ID")
-    child_ids = models.TextField(blank=True, null=True, 
-                                  db_column="child_ids", verbose_name="Polygon children IDs")
+    child_id = models.CharField(max_length=40, blank=True, null=True, 
+                                  db_column="child_id", verbose_name="Polygon child ID")
     ordering = models.IntegerField(blank=False, null=False, default=0, verbose_name="polygon point ordering")
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
