@@ -98,7 +98,10 @@ class Annotation(views.APIView):
             z = row.z / z_scale
             if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
-                child_id = row.child_ids
+                if row.child_id is None:
+                    child_id = random_string()
+                else:
+                    child_id = row.child_id
                 polygons.setdefault(segment_id, []).append([x,y,z, child_id])
             
             else:

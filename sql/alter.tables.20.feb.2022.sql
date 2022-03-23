@@ -90,4 +90,7 @@ values (54, 'polygon','Brain region drawn by anatomist',300,'#FFF000',1,NOW(), 0
 ALTER TABLE annotations_points ADD COLUMN ordering INT NOT NULL DEFAULT 0 after segment_id;
 ALTER TABLE annotations_point_archive ADD COLUMN ordering INT NOT NULL DEFAULT 0 after segment_id;
 
+ALTER TABLE annotations_points ADD COLUMN child_id char(40) DEFAULT NULL after segment_id;
+ALTER TABLE annotations_point_archive ADD COLUMN child_id char(40) DEFAULT NULL after segment_id;
+
 
