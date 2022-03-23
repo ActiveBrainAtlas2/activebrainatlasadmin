@@ -38,13 +38,14 @@ class LineSerializer(serializers.Serializer):
     description = serializers.CharField()
 
 class PolygonSerializer(serializers.Serializer):
-    id = serializers.CharField()
     source = serializers.ListField(required=False)
-    childAnnotationIds = serializers.ListField(required=False)
     pointA = serializers.ListField(required=False)
     pointB = serializers.ListField(required=False)
+    childAnnotationIds = serializers.ListField(required=False)
+    id = serializers.CharField()
     type = serializers.CharField()
     parentAnnotationId = serializers.CharField(required=False)
+    props = serializers.ListField()
 
 class AnnotationsSerializer(serializers.Serializer):
     """

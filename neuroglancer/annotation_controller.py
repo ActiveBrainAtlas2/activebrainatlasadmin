@@ -1,11 +1,65 @@
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import string
 import random
 
+
+def next_item(odic, key):
+    try:
+        k = list(odic)[list(odic.keys()).index(key) + 1]
+        result = odic[k]
+    except IndexError:
+        result = next(iter(odic.values()))
+    return result 
+
 def create_polygons(polygons:list) -> list:
+    '''
+    Takes all the polygon x,y,z data and turns them into
+    Neuroglancer polygons
+    :param polygons: dictionary of polygon: x,y,z values
+    '''
+    layer_data = []
+    for parent_id, polygon in polygons.items(): 
+        hexcolor = "#FF0000"
+        children = defaultdict(list)
+        source = {} # create initial parent/source starting point
+        ids = OrderedDict({line[3]: [line[0], line[1], line[2]]  for line in polygon})
+        
+        
+        source["source"] = next(iter(ids.values()))
+        source["childAnnotationIds"] = list(ids.keys())
+        source["type"] = "polygon"
+        source["id"] = parent_id
+        source["props"] = [hexcolor]
+        layer_data.append(source)
+        print(source["childAnnotationIds"])
+        print()
+        
+        for line in polygon:
+            children[line[3]].append([line[0], line[1], line[2]])
+    
+        i = 1
+        for child, value in children.items():
+            line = {}
+            line["pointA"] = value[0]
+            pointB = next_item(children, child)
+            line["pointB"] = value[1]
+            line["type"] = "line"
+            line["id"] = child
+            line["parentAnnotationId"] = parent_id
+            line["props"] = [hexcolor]
+            layer_data.append(line)
+            #print(i, child, type(value[0]), len(value[0]), value[0])
+            i += 1
+            
+        for d in layer_data:
+            print(d)
+    return layer_data
+
+
+def create_polygonsOK(polygons:list) -> list:
     '''
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
@@ -13,40 +67,44 @@ def create_polygons(polygons:list) -> list:
     Interpolates out to a max of 50 splines. I just picked
     50 as a nice round number
     '''
-    data = []
+    layer_data = []
     for parent_id, polygon in polygons.items(): 
         n = len(polygon)
         hexcolor = "#FFF000"
-        tmp_dict = OrderedDict() # create initial parent/source starting point
-        tmp_dict["id"] = parent_id
-        tmp_dict["source"] = list(polygon[0])
-        tmp_dict["type"] = "polygon"
+        source = {} # create initial parent/source starting point
+        source["source"] = list(polygon[0])
         child_ids = [random_string() for _ in range(n)]
-        tmp_dict["childAnnotationIds"] = child_ids
-        tmp_dict["props"] = [hexcolor]
-        data.append(tmp_dict)
+        source["childAnnotationIds"] = child_ids
+        source["type"] = "polygon"
+        source["id"] = parent_id
+        source["props"] = [hexcolor]
+        layer_data.append(source)
         for i in range(n-1):
-            tmp_dict = OrderedDict()
+            line = {}
             pointA = polygon[i]
             pointB = polygon[i + 1]
-            tmp_dict["id"] = child_ids[i]
-            tmp_dict["pointA"] = pointA
-            tmp_dict["pointB"] = pointB
-            tmp_dict["type"] = "line"
-            tmp_dict["parentAnnotationId"] = parent_id
-            tmp_dict["props"] = [hexcolor]
-            data.append(tmp_dict)
-        tmp_dict = OrderedDict()
+            line["pointA"] = pointA
+            line["pointB"] = pointB
+            line["type"] = "line"
+            line["id"] = child_ids[i]
+            line["parentAnnotationId"] = parent_id
+            line["props"] = [hexcolor]
+            layer_data.append(line)
+        closing = {}
         pointA = polygon[-1]
         pointB = polygon[0]
-        tmp_dict["id"] = child_ids[-1]
-        tmp_dict["pointA"] = pointA
-        tmp_dict["pointB"] = pointB
-        tmp_dict["type"] = "line"
-        tmp_dict["parentAnnotationId"] = parent_id
-        tmp_dict["props"] = [hexcolor]
-        data.append(tmp_dict)
-    return data
+        closing["pointA"] = pointA
+        closing["pointB"] = pointB
+        closing["type"] = "line"
+        closing["id"] = child_ids[-1]
+        closing["parentAnnotationId"] = parent_id
+        closing["props"] = [hexcolor]
+        layer_data.append(closing)
+        for d in layer_data:
+            print(d)
+    return layer_data
+
+
 
 def interpolate2d(points:list, new_len:int) -> list:
     '''
