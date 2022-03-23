@@ -1,5 +1,4 @@
 import numpy as np
-from statistics import mode
 from django.http.response import Http404
 
 
@@ -94,7 +93,6 @@ class Point:
 class Line:
 
     def __init__(self, coord_start, coord_end, id):
-        # print(coord_start)
         self.coord_start = np.array(coord_start)
         self.coord_end = np.array(coord_end)
         self.id = id

@@ -1,4 +1,5 @@
 import numpy as np
+from statistics import mode
 from django.contrib.auth.models import User
 from django.http import Http404
 from neuroglancer.models import  AnnotationPoints, AnnotationPointArchive, \
@@ -41,11 +42,11 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
+                    #move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                     # Do not remove these comments.
                     # Uncomment the line below for testing and comment out the line above and the @background
                     # decorator
-                    #move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
 
 def inactivate_annotations(animal, label):
     """
@@ -60,7 +61,7 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 
-@background(schedule=0)
+# @background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
     '''
     This is a simple method that just calls two other methods.
@@ -217,19 +218,21 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
                 ordering=0,
                 x=x, y=y, z=z))
-        if annotation.type == 'polygon': 
+        if annotation.type == 'polygon':
+            z = mode([ int(round(coord.coord_start[2]*z_scale)) for coord in annotation.childs])
             ordering = 1
             for childi in annotation.childs:
-                xa, ya, za = childi.coord_start * scales
+                print(annotation.childs)
+                xa, ya, _ = childi.coord_start * scales
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xa, y=ya, z=za, ordering=ordering))
+                x=xa, y=ya, z=z, ordering=ordering, child_ids=childi.id))
                 ordering += 1
-                
-                xb, yb, zb = childi.coord_end * scales
+                #
+                xb, yb, _ = childi.coord_end * scales
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xb, y=yb, z=zb, ordering=ordering))
+                x=xb, y=yb, z=z, ordering=ordering, child_ids=childi.id))
                 ordering += 1
     bulk_mgr.done()
 

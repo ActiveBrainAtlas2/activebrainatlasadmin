@@ -77,7 +77,6 @@ class Annotation(views.APIView):
 
     def get(self, request, prep_id, label, input_type_id, format=None):
         data = []
-        polygons = OrderedDict()
         try:
             animal = Animal.objects.get(pk=prep_id)
         except Animal.DoesNotExist:
@@ -92,13 +91,15 @@ class Annotation(views.APIView):
         scale_xy, z_scale = get_scales(prep_id)
         # Working with polygons/lines is much different        
         # first do the lines/polygons
+        polygons = OrderedDict()
         for row in rows:
             x = row.x / scale_xy
             y = row.y / scale_xy
             z = row.z / z_scale
             if 'polygon' in row.brain_region.abbreviation.lower():
                 segment_id = row.segment_id
-                polygons.setdefault(segment_id, []).append((x,y,z))
+                child_id = row.child_ids
+                polygons.setdefault(segment_id, []).append([x,y,z, child_id])
             
             else:
                 tmp_dict = {}
