@@ -206,10 +206,10 @@ class AnnotationAbstract(models.Model):
     input_type = models.ForeignKey(InputType, models.CASCADE, db_column="FK_input_id",
                                verbose_name="Input", blank=False, null=False)
     label = models.CharField(max_length=255)
-    segment_id = models.CharField(max_length=40, blank=True, null=True, 
-                                  db_column="segment_id", verbose_name="Polygon ID")
-    child_id = models.CharField(max_length=40, blank=True, null=True, 
-                                  db_column="child_id", verbose_name="Polygon child ID")
+    polygon_id = models.CharField(max_length=40, blank=True, null=True, 
+                                  db_column="polygon_id", verbose_name="Polygon ID")
+    volume_id = models.CharField(max_length=40, blank=True, null=True, 
+                                  db_column="volume_id", verbose_name="Volume ID")
     ordering = models.IntegerField(blank=False, null=False, default=0, verbose_name="polygon point ordering")
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")

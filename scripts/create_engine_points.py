@@ -43,7 +43,7 @@ def create_layer(animal, id, start, debug):
                 print(count, id, animal, ANNOTATION_ID, layer, x,y,section)
                 count += 1
             else:
-                LayerData.objects.create(prep_id=animal, segment_id=id, structure_id = ANNOTATION_ID, person_id=1,
+                LayerData.objects.create(prep_id=animal, polygon_id=id, structure_id = ANNOTATION_ID, person_id=1,
                                                 layer=layer, input_type_id = 5,
                                                 x=x,y=y,section=section)    
     

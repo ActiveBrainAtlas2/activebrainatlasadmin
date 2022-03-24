@@ -25,17 +25,16 @@ class AnnotationLayer:
         for annotationi in self.annotations:
             if annotationi['type'] == 'polygon':
                 annotations.append(self.parse_polygon(annotationi))
+            if annotationi['type'] == 'volume':
+                annotations.append(self.parse_volume(annotationi))
             elif annotationi['type'] == 'point':
                 annotations.append(self.parse_point(annotationi))
             elif annotationi['type'] == 'line':
                 annotations.append(self.parse_line(annotationi))
         self.annotations = np.array(annotations)
 
-        for annotationi in self.annotations:
-            if annotationi.type == 'polygon':
-                for childid in annotationi.child_ids:
-                    annotationi.childs.append(self.get_annotation_with_id(childid))
-                    self.delete_annotation_with_id(childid)
+        self.group_annotations('polygon')
+        self.group_annotations('volume')
     
     def parse_point(self, point_json):
         point = Point(point_json['point'], point_json['id'])
@@ -55,8 +54,16 @@ class AnnotationLayer:
         polygon = Polygon(polygon_json['id'], polygon_json['childAnnotationIds'], polygon_json['source'])
         if 'description' in polygon_json:
             polygon.description = polygon_json['description']
+        if 'parentAnnotationId' in polygon_json:
+            polygon.parent_id = polygon_json['parentAnnotationId']
         return polygon
     
+    def parse_volume(self, volume_json):
+        volume = Volume(volume_json['id'], volume_json['childAnnotationIds'], volume_json['source'])
+        if 'description' in volume_json:
+            volume.description = volume_json['description']
+        return volume
+
     def search_annotation_with_id(self, id):
         search_result = [annotationi.id == id for annotationi in self.annotations]
         if sum(search_result) == 0:
@@ -64,6 +71,13 @@ class AnnotationLayer:
         elif sum(search_result) > 1:
             print('more than one result found')
         return search_result
+    
+    def group_annotations(self,type):
+        for annotationi in self.annotations:
+            if annotationi.type == type:
+                for childid in annotationi.child_ids:
+                    annotationi.childs.append(self.get_annotation_with_id(childid))
+                    self.delete_annotation_with_id(childid)
     
     def get_annotation_with_id(self, id):
         search_result = self.search_annotation_with_id(id)
@@ -114,6 +128,21 @@ class Polygon:
         self.child_ids = child_ids
         self.childs = []
         self.type = 'polygon'
+        
+    def __str__(self):
+        return "Polygon ID is %s, source is %s" % (self.id, self.source)
+    
+    def to_json(self):
+        ...
+
+class Volume:
+
+    def __init__(self, id, child_ids, source):
+        self.source = source
+        self.id = id
+        self.child_ids = child_ids
+        self.childs = []
+        self.type = 'volume'
         
     def __str__(self):
         return "Polygon ID is %s, source is %s" % (self.id, self.source)

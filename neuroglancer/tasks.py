@@ -105,7 +105,7 @@ def restore_annotations(archive_id, prep_id, label):
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         bulk_mgr.add(AnnotationPoints(animal=row.animal, brain_region=row.brain_region,
-            label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
+            label=row.label, polygon_id=row.polygon_id, owner=row.owner, input_type=row.input_type,
             x=row.x, y=row.y, z=row.z))
     bulk_mgr.done()
     
@@ -186,7 +186,7 @@ def move_annotations(prep_id, owner_id, label):
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
-            label=row.label, segment_id=row.segment_id, owner=row.owner, input_type=row.input_type,
+            label=row.label, polygon_id=row.polygon_id,owner=row.owner, input_type=row.input_type,volume_id = row.volume_id,
             x=row.x, y=row.y, z=row.z, archive=archive,ordering = row.ordering))
     bulk_mgr.done()
     rows.delete()
@@ -209,7 +209,6 @@ def bulk_annotations(prep_id, layer, owner_id, label):
     polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
     layer = AnnotationLayer(layer)
     for annotation in layer.annotations:
-        segment_id = annotation.id
         if annotation.type == 'point':
             x, y, z = annotation.coord * scales
             brain_region = get_brain_region(annotation)
@@ -219,21 +218,27 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 ordering=0,
                 x=x, y=y, z=z))
         if annotation.type == 'polygon':
-            z = mode([ int(round(coord.coord_start[2]*z_scale)) for coord in annotation.childs])
+            polygon_id = annotation.id
+            z = mode([ int(round(pointi.coord_start[2]*z_scale)) for pointi in annotation.childs])
             ordering = 1
-            for childi in annotation.childs:
-                print(annotation.childs)
-                xa, ya, _ = childi.coord_start * scales
+            for pointi in annotation.childs:
+                xa, ya, _ = pointi.coord_start * scales
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xa, y=ya, z=z, ordering=ordering, child_ids=childi.id))
+                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, polygon_id=polygon_id,
+                x=xa, y=ya, z=z, ordering=ordering))
                 ordering += 1
-                #
-                xb, yb, _ = childi.coord_end * scales
-                bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
-                owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, segment_id=segment_id,
-                x=xb, y=yb, z=z, ordering=ordering, child_ids=childi.id))
-                ordering += 1
+        if annotation.type == 'volume':
+            volume_id = annotation.id
+            ordering = 1
+            for polygoni in annotation.childs:
+                polygon_id = polygoni.id
+                z = mode([ int(round(coord.coord_start[2]*z_scale)) for coord in polygoni.childs])
+                for childi in polygoni.childs:
+                    xa, ya, _ = childi.coord_start * scales
+                    bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
+                    owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, polygon_id=polygon_id,
+                    volume_id=volume_id,x=xa, y=ya, z=z, ordering=ordering))
+                    ordering += 1
     bulk_mgr.done()
 
 def get_brain_region(annotation):
