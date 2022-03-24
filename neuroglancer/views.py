@@ -6,7 +6,6 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
-from collections import OrderedDict
 
 import numpy as np
 from neuroglancer.models import Animal
@@ -91,31 +90,25 @@ class Annotation(views.APIView):
         scale_xy, z_scale = get_scales(prep_id)
         # Working with polygons/lines is much different        
         # first do the lines/polygons
-        polygons = OrderedDict()
+        polygon_points = []
         for row in rows:
-            x = row.x / scale_xy
-            y = row.y / scale_xy
-            z = row.z / z_scale
+            row.x = row.x / scale_xy
+            row.y = row.y / scale_xy
+            row.z = row.z / z_scale
             if 'polygon' in row.brain_region.abbreviation.lower():
-                segment_id = row.segment_id
-                if row.child_id is None:
-                    child_id = random_string()
-                else:
-                    child_id = row.child_id
-                polygons.setdefault(segment_id, []).append([x,y,z, child_id])
-            
+                polygon_points.append(row)
             else:
-                tmp_dict = {}
-                tmp_dict['id'] = random_string()
-                tmp_dict['point'] = [int(round(x)), int(round(y)), z]
-                tmp_dict['type'] = 'point'
+                point_annotation = {}
+                point_annotation['id'] = random_string()
+                point_annotation['point'] = [int(round(row.x)), int(round(row.y)), row.z]
+                point_annotation['type'] = 'point'
                 if 'COM' in label or 'Rough Alignment' in label:
-                    tmp_dict['description'] = row.brain_region.abbreviation
+                    point_annotation['description'] = row.brain_region.abbreviation
                 else:
-                    tmp_dict['description'] = ""
-                data.append(tmp_dict)
-        if len(polygons) > 0:
-            data = create_polygons(polygons)
+                    point_annotation['description'] = ""
+                data.append(point_annotation)
+        if len(polygon_points) > 0:
+            data = create_polygons(polygon_points)
             serializer = PolygonSerializer(data, many=True)
         else:
             serializer = AnnotationSerializer(data, many=True)

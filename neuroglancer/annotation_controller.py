@@ -4,7 +4,7 @@ from scipy.interpolate import splprep, splev
 from collections import OrderedDict, defaultdict
 import string
 import random
-
+hexcolor = "#FF0000"
 
 def next_item(odic, key):
     try:
@@ -14,41 +14,83 @@ def next_item(odic, key):
         result = next(iter(odic.values()))
     return result 
 
-def create_polygons(polygons:list) -> list:
+def create_polygons(polygon_points) -> list:
     '''
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
     :param polygons: dictionary of polygon: x,y,z values
     '''
-    layer_data = []
-    for parent_id, polygon in polygons.items(): 
-        hexcolor = "#FF0000"
-        source = {} # create initial parent/source starting point
-        ids = OrderedDict({line[3]: [line[0], line[1], line[2]]  for line in polygon})        
-        source["source"] = next(iter(ids.values()))
-        source["childAnnotationIds"] = list(ids.keys())
-        source["type"] = "polygon"
-        source["id"] = parent_id
-        source["props"] = [hexcolor]
-        layer_data.append(source)
-        children = defaultdict(list)
-        for line in polygon:
-            children[line[3]].append([line[0], line[1], line[2]])
-            
-        for child, value in children.items():
-            line = {}
-            line["pointA"] = value[0]
-            try:
-                line["pointB"] = value[1]
-            except IndexError:
-                line["pointB"] = value[0]
-                
-            line["type"] = "line"
-            line["id"] = child
-            line["parentAnnotationId"] = parent_id
-            line["props"] = [hexcolor]
-            layer_data.append(line)
-    return layer_data
+    polygons,volumes = parse_polygon_points(polygon_points)
+    annotation_layer_json = []
+    for polygon_id, polygon_points in polygons.items(): 
+        annotation_layer_json+= create_polygon_json(polygon_id,polygon_points)
+    i = 0
+    for volume_id,polygons in volumes.items():
+        annotation_layer_json+= create_volume_json(volume_id,polygons,i)
+    return annotation_layer_json
+
+def create_volume_json(volume_id,polygons,i):
+    volume_json = []
+    one_point = list(polygons.values())[0][0] 
+    parent_annotataions, _= create_parent_annotation_json(len(polygons),volume_id,one_point,type = 'volume',child_ids = list(polygons.keys()))
+    volume_json.append(parent_annotataions)
+    for polygon_id, polygon_points in polygons.items(): 
+        volume_json+= create_polygon_json(polygon_id,polygon_points)
+    return volume_json
+
+def parse_polygon_points(polygon_points):
+    polygons = {}
+    volumes = {}
+    for pointi in polygon_points:
+        polygon_id = pointi.polygon_id
+        coordinate = [pointi.x,pointi.y,pointi.z]
+        if pointi.volume_id is not None:
+            volume_id = pointi.volume_id
+            if not volume_id in volumes:
+                volumes[volume_id] = {}
+            if not polygon_id in volumes[volume_id]:
+                volumes[volume_id][polygon_id] = []
+            volumes[volume_id][polygon_id].append(coordinate)
+        else:
+            if not polygon_id in polygons:
+                polygons[polygon_id] = []
+            polygons[polygon_id].append(coordinate)
+    return polygons,volumes
+
+def create_parent_annotation_json(npoints,parent_id,source,type,child_ids = None):
+    parent_annotation = {}
+    if child_ids is None:
+        child_ids = [random_string() for _ in range(npoints)]
+    parent_annotation["source"] = source
+    parent_annotation["childAnnotationIds"] = child_ids
+    parent_annotation["type"] = type
+    parent_annotation["id"] = parent_id
+    parent_annotation["props"] = [hexcolor]
+    return parent_annotation,child_ids
+
+def create_polygon_json(polygon_id,polygon_points):
+    polygon_json = []
+    npoints = len(polygon_points)
+    parent_annotation,child_ids = create_parent_annotation_json(npoints,polygon_id,polygon_points[0],type = 'polygon')
+    polygon_json.append(parent_annotation)
+    for pointi in range(npoints-1):
+        line = {}
+        line["pointA"] = polygon_points[pointi]
+        line["pointB"] = polygon_points[pointi+1]
+        line["type"] = "line"
+        line["id"] = child_ids[pointi]
+        line["parentAnnotationId"] = polygon_id
+        line["props"] = [hexcolor]
+        polygon_json.append(line)
+    line = {}
+    line["pointA"] = polygon_points[-1]
+    line["pointB"] = polygon_points[0]
+    line["type"] = "line"
+    line["id"] = child_ids[-1]
+    line["parentAnnotationId"] = polygon_id
+    line["props"] = [hexcolor]
+    polygon_json.append(line)
+    return polygon_json
 
 
 def create_polygonsOK(polygons:list) -> list:
