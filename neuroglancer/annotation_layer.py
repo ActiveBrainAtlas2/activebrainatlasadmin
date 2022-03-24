@@ -1,3 +1,4 @@
+from tracemalloc import start
 import numpy as np
 from django.http.response import Http404
 
@@ -32,8 +33,8 @@ class AnnotationLayer:
             elif annotationi['type'] == 'line':
                 annotations.append(self.parse_line(annotationi))
         self.annotations = np.array(annotations)
-
         self.group_annotations('polygon')
+        self.reorder_polygon_points()
         self.group_annotations('volume')
     
     def parse_point(self, point_json):
@@ -75,10 +76,21 @@ class AnnotationLayer:
     def group_annotations(self,type):
         for annotationi in self.annotations:
             if annotationi.type == type:
+                annotationi.childs=[]
                 for childid in annotationi.child_ids:
                     annotationi.childs.append(self.get_annotation_with_id(childid))
                     self.delete_annotation_with_id(childid)
+                annotationi.childs = np.array(annotationi.childs)
     
+    def reorder_polygon_points(self):
+        for annotationi in self.annotations:
+            if annotationi.type == 'polygon':
+                start_points = np.array([pointi.coord_start for pointi in annotationi.childs])
+                end_points = np.array([pointi.coord_end for pointi in annotationi.childs])
+                sorter = ContourSorter(start_points=start_points,end_points=end_points,first_point=annotationi.source)
+                annotationi.childs = np.array(annotationi.childs)[sorter.sort_index]
+                annotationi.child_ids = annotationi.child_ids[sorter.sort_index]
+
     def get_annotation_with_id(self, id):
         search_result = self.search_annotation_with_id(id)
         return self.annotations[search_result][0]
@@ -125,8 +137,7 @@ class Polygon:
     def __init__(self, id, child_ids, source):
         self.source = source
         self.id = id
-        self.child_ids = child_ids
-        self.childs = []
+        self.child_ids = np.array(child_ids)
         self.type = 'polygon'
         
     def __str__(self):
@@ -140,8 +151,7 @@ class Volume:
     def __init__(self, id, child_ids, source):
         self.source = source
         self.id = id
-        self.child_ids = child_ids
-        self.childs = []
+        self.child_ids = np.array(child_ids)
         self.type = 'volume'
         
     def __str__(self):
@@ -149,3 +159,49 @@ class Volume:
     
     def to_json(self):
         ...
+
+class ContourSorter:
+    def __init__(self,start_points,end_points,first_point):
+        self.first_point = np.array(first_point)
+        self.start_points = np.array(start_points)
+        self.end_points = np.array(end_points)
+        self.check_input_dimensions()
+        self.npoints = len(self.start_points)
+        self.order = []
+        first_point_index = self.find_index_of_point_in_array(first_point,self.start_points)
+        self.order.append(first_point_index)
+        self.sort_points()
+
+    def check_input_dimensions(self):
+        if not self.start_points.shape[1] ==3:
+            self.start_points = self.start_points.T
+        if not self.end_points.shape[1] ==3:
+            self.end_points = self.end_points.T
+        assert len(self.start_points) == len(self.end_points)
+        assert len(self.start_points[0])==len(self.end_points[0])==len(self.first_point)==3
+
+    def find_index_of_point_in_array(self,point,array):
+        result = np.where(np.all(array==point,axis = 1))[0]
+        assert len(result)==1
+        return result[0]
+
+    def sort_points(self):
+        while len(self.order)<self.npoints:
+            last_point_index = self.order[-1]
+            next_point_index = self.find_index_of_next_point(last_point_index)
+            self.order.append(next_point_index)
+        self.sort_index = np.argsort(self.order)
+        check_if_contour_points_are_in_order(self.first_point,self.start_points[self.sort_index],self.end_points[self.sort_index])
+
+    def find_index_of_next_point(self,last_point_index):
+        last_end_point = self.end_points[last_point_index]
+        next_start_index = self.find_index_of_point_in_array(last_end_point,self.start_points)
+        return next_start_index
+    
+def check_if_contour_points_are_in_order(first_point,start_points,end_points):
+    assert len(start_points)==len(end_points)
+    assert len(start_points[0])==len(end_points[0])==len(first_point)==3
+    assert np.all(first_point == start_points[0])
+    npoints = len(first_point)
+    for i in range(npoints-1):
+        assert np.all(start_points[i+1] == end_points[i])
