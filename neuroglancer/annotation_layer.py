@@ -167,9 +167,9 @@ class ContourSorter:
         self.end_points = np.array(end_points)
         self.check_input_dimensions()
         self.npoints = len(self.start_points)
-        self.order = []
+        self.sort_index = []
         first_point_index = self.find_index_of_point_in_array(first_point,self.start_points)
-        self.order.append(first_point_index)
+        self.sort_index.append(first_point_index)
         self.sort_points()
 
     def check_input_dimensions(self):
@@ -186,11 +186,10 @@ class ContourSorter:
         return result[0]
 
     def sort_points(self):
-        while len(self.order)<self.npoints:
-            last_point_index = self.order[-1]
+        while len(self.sort_index)<self.npoints:
+            last_point_index = self.sort_index[-1]
             next_point_index = self.find_index_of_next_point(last_point_index)
-            self.order.append(next_point_index)
-        self.sort_index = np.argsort(self.order)
+            self.sort_index.append(next_point_index)
         check_if_contour_points_are_in_order(self.first_point,self.start_points[self.sort_index],self.end_points[self.sort_index])
 
     def find_index_of_next_point(self,last_point_index):
