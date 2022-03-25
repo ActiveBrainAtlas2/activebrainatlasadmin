@@ -17,14 +17,12 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
     AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
-    UrlModel,  BrainRegion, Points, MANUAL
+    UrlModel,  BrainRegion, Points
 from neuroglancer.dash_view import dash_scatter_view
-from neuroglancer.com_score_app import alignmentPlot
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
-
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
@@ -44,7 +42,6 @@ class UrlModelAdmin(admin.ModelAdmin):
 
     def pretty_url(self, instance):
         """Function to display pretty version of our data"""
-
         # Convert the data to sorted, indented JSON
         response = json.dumps(instance.url, sort_keys=True, indent=2)
         # Truncate the data. Alter as needed
@@ -63,7 +60,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_neuroglancer(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
-            host = "http://127.0.0.1:44631"
+            host = "http://127.0.0.1:39673"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -181,16 +178,12 @@ class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
-    #list_filter = (VettedFilter,)
     search_fields = ['abbreviation', 'description']
-
     def created_display(self, obj):
         return datetime_format(obj.created)
     created_display.short_description = 'Created'    
-
     def show_hexadecimal(self, obj):
         return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
-
     show_hexadecimal.short_description = 'Hexadecimal'
 
 def make_inactive(modeladmin, request, queryset):
