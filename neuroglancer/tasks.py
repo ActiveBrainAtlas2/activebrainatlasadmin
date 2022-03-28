@@ -14,6 +14,8 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
+from timeit import default_timer as timer
+
 
 def update_annotation_data(neuroglancerModel):
     """
@@ -42,11 +44,12 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    #move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                     # Do not remove these comments.
                     # Uncomment the line below for testing and comment out the line above and the @background
                     # decorator
-                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
+                    # move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
+
 
 def inactivate_annotations(animal, label):
     """
@@ -61,7 +64,7 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 
-# @background(schedule=0)
+@background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
     '''
     This is a simple method that just calls two other methods.
@@ -115,6 +118,7 @@ def restore_annotations(archive_id, prep_id, label):
     .filter(active=False)\
     .filter(label=label)\
     .delete()
+
     
 def move_annotations(prep_id, owner_id, label):
     '''
@@ -154,6 +158,7 @@ def move_annotations(prep_id, owner_id, label):
     annotation point archive. If so, we get that archive ID and
     that then is the parent ID for the new archive set.
     '''
+    start = timer()
     parent = 0
     # check online table
     rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
@@ -186,12 +191,16 @@ def move_annotations(prep_id, owner_id, label):
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         bulk_mgr.add(AnnotationPointArchive(animal=row.animal, brain_region=row.brain_region,
-            label=row.label, polygon_id=row.polygon_id,owner=row.owner, input_type=row.input_type,volume_id = row.volume_id,
-            x=row.x, y=row.y, z=row.z, archive=archive,ordering = row.ordering))
+            label=row.label, polygon_id=row.polygon_id, owner=row.owner, input_type=row.input_type, volume_id=row.volume_id,
+            x=row.x, y=row.y, z=row.z, archive=archive, ordering=row.ordering))
     bulk_mgr.done()
     rows.delete()
+    end = timer()
+    print(f'Bulk move took {end - start} seconds') 
+
 
 def bulk_annotations(prep_id, layer, owner_id, label):
+    start = timer()
     try:
         loggedInUser = User.objects.get(pk=owner_id)
     except User.DoesNotExist:
@@ -209,7 +218,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
     polygon_structure = BrainRegion.objects.get(pk=POLYGON_ID)
     layer = AnnotationLayer(layer)
     for annotation in layer.annotations:
-        if annotation.type == 'point':
+        if annotation._type == 'point':
             x, y, z = annotation.coord * scales
             brain_region = get_brain_region(annotation)
             if brain_region is not None:
@@ -217,9 +226,9 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 label=label, active=True, owner=loggedInUser, input_type_id=MANUAL,
                 ordering=0,
                 x=x, y=y, z=z))
-        if annotation.type == 'polygon':
+        if annotation._type == 'polygon':
             polygon_id = annotation.id
-            z = mode([ int(round(pointi.coord_start[2]*z_scale)) for pointi in annotation.childs])
+            z = mode([ int(round(pointi.coord_start[2] * z_scale)) for pointi in annotation.childs])
             ordering = 1
             for pointi in annotation.childs:
                 xa, ya, _ = pointi.coord_start * scales
@@ -227,19 +236,22 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, polygon_id=polygon_id,
                 x=xa, y=ya, z=z, ordering=ordering))
                 ordering += 1
-        if annotation.type == 'volume':
+        if annotation._type == 'volume':
             volume_id = annotation.id
             ordering = 1
             for polygoni in annotation.childs:
                 polygon_id = polygoni.id
-                z = mode([ int(round(coord.coord_start[2]*z_scale)) for coord in polygoni.childs])
+                z = mode([ int(round(coord.coord_start[2] * z_scale)) for coord in polygoni.childs])
                 for childi in polygoni.childs:
                     xa, ya, _ = childi.coord_start * scales
                     bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
                     owner=loggedInUser, active=True, input_type_id=MANUAL, label=label, polygon_id=polygon_id,
-                    volume_id=volume_id,x=xa, y=ya, z=z, ordering=ordering))
+                    volume_id=volume_id, x=xa, y=ya, z=z, ordering=ordering))
                     ordering += 1
     bulk_mgr.done()
+    end = timer()
+    print(f'Bulk insert took {end - start} seconds') 
+
 
 def get_brain_region(annotation):
     '''
@@ -249,7 +261,7 @@ def get_brain_region(annotation):
     :param annotation:
     '''
     brain_region = BrainRegion.objects.get(pk=POINT_ID)
-    if hasattr(annotation,'description'):
+    if hasattr(annotation, 'description'):
         abbreviation = str(annotation.description).replace('\n', '').strip()
         try:
             query_set = BrainRegion.objects.filter(abbreviation=abbreviation)
