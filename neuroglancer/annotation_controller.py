@@ -1,10 +1,10 @@
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
-from collections import OrderedDict, defaultdict
 import string
 import random
 hexcolor = "#FF0000"
+
 
 def next_item(odic, key):
     try:
@@ -14,36 +14,49 @@ def next_item(odic, key):
         result = next(iter(odic.values()))
     return result 
 
+
 def create_polygons(polygon_points) -> list:
     '''
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
     :param polygons: dictionary of polygon: x,y,z values
     '''
-    polygons,volumes = parse_polygon_points(polygon_points)
+    polygons, volumes = parse_polygon_points(polygon_points)
     annotation_layer_json = []
     for polygon_id, polygon_points in polygons.items(): 
-        annotation_layer_json+= create_polygon_json(polygon_id,polygon_points)
+        annotation_layer_json += create_polygon_json(polygon_id, polygon_points)
     i = 0
-    for volume_id,polygons in volumes.items():
-        annotation_layer_json+= create_volume_json(volume_id,polygons,i)
+    for volume_id, polygons in volumes.items():
+        annotation_layer_json += create_volume_json(volume_id, polygons, i)
     return annotation_layer_json
 
-def create_volume_json(volume_id,polygons,i):
+
+def create_volume_json(volume_id, polygons, i):
+    '''
+    
+    :param volume_id:
+    :param polygons:
+    :param i:
+    '''
     volume_json = []
     one_point = list(polygons.values())[0][0] 
-    parent_annotataions, _= create_parent_annotation_json(len(polygons),volume_id,one_point,type = 'volume',child_ids = list(polygons.keys()))
+    parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()))
     volume_json.append(parent_annotataions)
     for polygon_id, polygon_points in polygons.items(): 
-        volume_json+= create_polygon_json(polygon_id,polygon_points)
+        volume_json += create_polygon_json(polygon_id, polygon_points)
     return volume_json
 
+
 def parse_polygon_points(polygon_points):
+    '''
+    
+    :param polygon_points:
+    '''
     polygons = {}
     volumes = {}
     for pointi in polygon_points:
         polygon_id = pointi.polygon_id
-        coordinate = [pointi.x,pointi.y,pointi.z]
+        coordinate = [pointi.x, pointi.y, pointi.z]
         if pointi.volume_id is not None:
             volume_id = pointi.volume_id
             if not volume_id in volumes:
@@ -55,28 +68,43 @@ def parse_polygon_points(polygon_points):
             if not polygon_id in polygons:
                 polygons[polygon_id] = []
             polygons[polygon_id].append(coordinate)
-    return polygons,volumes
+    return polygons, volumes
 
-def create_parent_annotation_json(npoints,parent_id,source,type,child_ids = None):
+
+def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=None):
+    '''
+    
+    :param npoints:
+    :param parent_id:
+    :param source:
+    :param _type:
+    :param child_ids:
+    '''
     parent_annotation = {}
     if child_ids is None:
         child_ids = [random_string() for _ in range(npoints)]
     parent_annotation["source"] = source
     parent_annotation["childAnnotationIds"] = child_ids
-    parent_annotation["type"] = type
+    parent_annotation["type"] = _type
     parent_annotation["id"] = parent_id
     parent_annotation["props"] = [hexcolor]
-    return parent_annotation,child_ids
+    return parent_annotation, child_ids
 
-def create_polygon_json(polygon_id,polygon_points):
+
+def create_polygon_json(polygon_id, polygon_points):
+    '''
+    
+    :param polygon_id:
+    :param polygon_points:
+    '''
     polygon_json = []
     npoints = len(polygon_points)
-    parent_annotation,child_ids = create_parent_annotation_json(npoints,polygon_id,polygon_points[0],type = 'polygon')
+    parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon')
     polygon_json.append(parent_annotation)
-    for pointi in range(npoints-1):
+    for pointi in range(npoints - 1):
         line = {}
         line["pointA"] = polygon_points[pointi]
-        line["pointB"] = polygon_points[pointi+1]
+        line["pointB"] = polygon_points[pointi + 1]
         line["type"] = "line"
         line["id"] = child_ids[pointi]
         line["parentAnnotationId"] = polygon_id
@@ -105,7 +133,7 @@ def create_polygonsOK(polygons:list) -> list:
     for parent_id, polygon in polygons.items(): 
         n = len(polygon)
         hexcolor = "#FFF000"
-        source = {} # create initial parent/source starting point
+        source = {}  # create initial parent/source starting point
         source["source"] = list(polygon[0])
         child_ids = [random_string() for _ in range(n)]
         source["childAnnotationIds"] = child_ids
@@ -113,7 +141,7 @@ def create_polygonsOK(polygons:list) -> list:
         source["id"] = parent_id
         source["props"] = [hexcolor]
         layer_data.append(source)
-        for i in range(n-1):
+        for i in range(n - 1):
             line = {}
             pointA = polygon[i]
             pointB = polygon[i + 1]
@@ -139,7 +167,6 @@ def create_polygonsOK(polygons:list) -> list:
     return layer_data
 
 
-
 def interpolate2d(points:list, new_len:int) -> list:
     '''
     Interpolates a list of tuples to the specified length. The points param
@@ -151,7 +178,7 @@ def interpolate2d(points:list, new_len:int) -> list:
     unique_rows = np.unique(original_array, axis=0)
     '''
     points = np.array(points)
-    lastcolumn = np.round(points[:,-1])
+    lastcolumn = np.round(points[:, -1])
     z = mode(lastcolumn)
     points2d = np.delete(points, -1, axis=1)
     pu = points2d.astype(int)
@@ -164,48 +191,65 @@ def interpolate2d(points:list, new_len:int) -> list:
     u_new = np.linspace(u.min(), u.max(), new_len)
     x_array, y_array = splev(u_new, tck, der=0)
     arr_2d = np.concatenate([x_array[:, None], y_array[:, None]], axis=1)
-    arr_3d = np.c_[ arr_2d, np.zeros(new_len)+z ] 
+    arr_3d = np.c_[ arr_2d, np.zeros(new_len) + z ] 
     return list(map(tuple, arr_3d))
-
-
  
  
-# Given three collinear points p, q, r, 
-# the function checks if point q lies
-# on line segment 'pr'
 def onSegment(p:tuple, q:tuple, r:tuple) -> bool:
+    '''
+    # Given three collinear points p, q, r, 
+    # the function checks if point q lies
+    # on line segment 'pr' 
+    :param p:
+    :param q:
+    :param r:
+    '''
      
-    if ((q[0] <= max(p[0], r[0])) &
-        (q[0] >= min(p[0], r[0])) &
-        (q[1] <= max(p[1], r[1])) &
+    if ((q[0] <= max(p[0], r[0])) & 
+        (q[0] >= min(p[0], r[0])) & 
+        (q[1] <= max(p[1], r[1])) & 
         (q[1] >= min(p[1], r[1]))):
         return True
          
     return False
+
  
-# To find orientation of ordered triplet (p, q, r).
-# The function returns following values
-# 0 --> p, q and r are collinear
-# 1 --> Clockwise
-# 2 --> Counterclockwise
 def orientation(p:tuple, q:tuple, r:tuple) -> int:
+    '''
+    # To find orientation of ordered triplet (p, q, r).
+    # The function returns following values
+    # 0 --> p, q and r are collinear
+    # 1 --> Clockwise
+    # 2 --> Counterclockwise
+    
+    :param p:
+    :param q:
+    :param r:
+    '''
      
-    val = (((q[1] - p[1]) *
-            (r[0] - q[0])) -
-           ((q[0] - p[0]) *
+    val = (((q[1] - p[1]) * 
+            (r[0] - q[0])) - 
+           ((q[0] - p[0]) * 
             (r[1] - q[1])))
             
     if val == 0:
         return 0
     if val > 0:
-        return 1 # Collinear
+        return 1  # Collinear
     else:
-        return 2 # Clock or counterclock
+        return 2  # Clock or counterclock
+
  
 def doIntersect(p1, q1, p2, q2):
-     
+    '''
     # Find the four orientations needed for 
-    # general and special cases
+    # general and special cases    
+    :param p1:
+    :param q1:
+    :param p2:
+    :param q2:
+    '''
+     
     o1 = orientation(p1, q1, p2)
     o2 = orientation(p1, q1, q2)
     o3 = orientation(p2, q2, p1)
@@ -237,10 +281,14 @@ def doIntersect(p1, q1, p2, q2):
         return True
  
     return False
+
  
-# Returns true if the point p lies 
-# inside the polygon[] with n vertices
 def is_inside_polygon(points:list) -> bool:
+    '''
+    # Returns true if the point p lies 
+    # inside the polygon[] with n vertices    
+    :param points:
+    '''
      
     n = len(points)
     coords = np.array(points)
@@ -254,32 +302,32 @@ def is_inside_polygon(points:list) -> bool:
          
     # Define Infinite (Using INT_MAX 
     # caused overflow problems)
-    INT_MAX = 10000    # Create a point for line segment
+    INT_MAX = 10000  # Create a point for line segment
     # from p to infinite
     extreme = (INT_MAX, center[1])
     count = i = 0
      
     while True:
-        next = (i + 1) % n
+        _next = (i + 1) % n
          
         # Check if the line segment from 'p' to 
         # 'extreme' intersects with the line 
         # segment from 'polygon[i]' to 'polygon[next]'
         if (doIntersect(points[i],
-                        points[next],
+                        points[_next],
                         center, extreme)):
                              
             # If the point 'p' is collinear with line 
             # segment 'i-next', then check if it lies 
             # on segment. If it lies, return true, otherwise false
             if orientation(points[i], center,
-                           points[next]) == 0:
+                           points[_next]) == 0:
                 return onSegment(points[i], center,
-                                 points[next])
+                                 points[_next])
                                   
             count += 1
              
-        i = next
+        i = _next
          
         if (i == 0):
             break
@@ -289,6 +337,9 @@ def is_inside_polygon(points:list) -> bool:
 
 
 def random_string() -> str:
+    '''
+    Creates a 40 char string of random characters
+    '''
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
 
 
@@ -303,16 +354,26 @@ def sort_from_center(polygon:list) -> list:
     coords = np.unique(coords, axis=0)
     center = coords.mean(axis=0)
     centered = coords - center
-    angles = -np.arctan2(centered[:,1], centered[:,0])
+    angles = -np.arctan2(centered[:, 1], centered[:, 0])
     sorted_coords = coords[np.argsort(angles)]
     return list(map(tuple, sorted_coords))
 
 
 def zCrossProduct(a, b, c):
+    '''
+    Used in the in_convex function below
+    :param a:
+    :param b:
+    :param c:
+    '''
     return (a[0] - b[0]) * (b[1] - c[1]) - (a[1] - b[1]) * (b[0] - c[0])
 
 
 def is_convex(vertices:list) -> list:
+    '''
+    Tests if a polygon has all convex angles
+    :param vertices:
+    '''
     if len(vertices) < 4:
         return True
     signs = [zCrossProduct(a, b, c) > 0 for a, b, c in zip(vertices[2:], vertices[1:], vertices)]
