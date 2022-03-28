@@ -228,7 +228,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 x=x, y=y, z=z))
         if annotation._type == 'polygon':
             polygon_id = annotation.id
-            z = mode([ int(round(pointi.coord_start[2] * z_scale)) for pointi in annotation.childs])
+            z = mode([ int(np.floor(pointi.coord_start[2] * z_scale)) for pointi in annotation.childs])
             ordering = 1
             for pointi in annotation.childs:
                 xa, ya, _ = pointi.coord_start * scales
@@ -241,7 +241,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
             ordering = 1
             for polygoni in annotation.childs:
                 polygon_id = polygoni.id
-                z = mode([ int(round(coord.coord_start[2] * z_scale)) for coord in polygoni.childs])
+                z = mode([ int(np.floor(coord.coord_start[2] * z_scale)) for coord in polygoni.childs])
                 for childi in polygoni.childs:
                     xa, ya, _ = childi.coord_start * scales
                     bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
