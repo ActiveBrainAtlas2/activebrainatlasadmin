@@ -160,15 +160,20 @@ class Volume:
     def to_json(self):
         ...
 
+class ContourEndReached(Exception):
+    pass
+
 class ContourSorter:
     def __init__(self,start_points,end_points,first_point):
-        self.first_point = np.array(first_point)
+        # self.first_point = np.array(first_point)
+        self.first_point = np.array(start_points[0])
         self.start_points = np.array(start_points)
         self.end_points = np.array(end_points)
         self.check_input_dimensions()
         self.npoints = len(self.start_points)
         self.sort_index = []
-        first_point_index = self.find_index_of_point_in_array(first_point,self.start_points)
+        # first_point_index = self.find_index_of_point_in_array(first_point,self.start_points)
+        first_point_index = 0
         self.sort_index.append(first_point_index)
         self.sort_points()
 
@@ -180,21 +185,55 @@ class ContourSorter:
         assert len(self.start_points) == len(self.end_points)
         assert len(self.start_points[0])==len(self.end_points[0])==len(self.first_point)==3
 
-    def find_index_of_point_in_array(self,point,array):
+    def find_index_of_point_in_array(self,point,array,fuzzy = False):
         result = np.where(np.all(array==point,axis = 1))[0]
-        assert len(result)==1
-        return result[0]
+        if len(result)==1:
+            return result[0]
+        if len(result)>1:
+            idmin = np.argmin(np.abs(result-self.sort_index[-1]))
+            return result[idmin]
+        if len(result)==0:
+            if fuzzy:
+                return np.argmin(np.sum(np.abs(array-point),axis=1))
+            else:
+                raise ContourEndReached
+        
 
     def sort_points(self):
         while len(self.sort_index)<self.npoints:
-            last_point_index = self.sort_index[-1]
-            next_point_index = self.find_index_of_next_point(last_point_index)
-            self.sort_index.append(next_point_index)
-        check_if_contour_points_are_in_order(self.first_point,self.start_points[self.sort_index],self.end_points[self.sort_index])
+            current_point_index = self.sort_index[-1]
+            try:
+                next_point_index = self.find_index_of_next_point(current_point_index)
+                self.sort_index.append(next_point_index)
+            except ContourEndReached:
+                self.sort_index=[current_point_index]
+                self.first_point = self.start_points[current_point_index]
+                self.revere_sort()
+            
+        # check_if_contour_points_are_in_order(self.first_point,self.start_points[self.sort_index],self.end_points[self.sort_index])
 
-    def find_index_of_next_point(self,last_point_index):
-        last_end_point = self.end_points[last_point_index]
-        next_start_index = self.find_index_of_point_in_array(last_end_point,self.start_points)
+    def revere_sort(self):
+        while len(self.sort_index)<self.npoints:
+            current_point_index = self.sort_index[-1]
+            try:
+                previous_point_index = self.find_index_of_previous_point(current_point_index)
+                self.sort_index.append(previous_point_index)
+            except ContourEndReached:
+                previous_point_index = self.find_index_of_previous_point(current_point_index,fuzzy=True)
+                self.sort_index.append(previous_point_index)
+
+    def find_index_of_next_point(self,current_point_index):
+        current_point = self.end_points[current_point_index]
+        next_start_index = self.find_index_of_point_in_array(current_point,self.start_points)
+        return next_start_index
+    
+    def find_index_of_previous_point(self,current_point_index,fuzzy=False):
+        current_point = self.end_points[current_point_index]
+        if fuzzy:
+            print('fuzzy criteria used')
+            next_start_index = self.find_index_of_point_in_array(current_point,self.start_points,fuzzy)
+        else:    
+            next_start_index = self.find_index_of_point_in_array(current_point,self.start_points)
         return next_start_index
     
 def check_if_contour_points_are_in_order(first_point,start_points,end_points):
