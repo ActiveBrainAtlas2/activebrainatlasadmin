@@ -58,9 +58,10 @@ class UrlModelAdmin(admin.ModelAdmin):
     pretty_url.short_description = 'Formatted URL'
 
     def open_neuroglancer(self, obj):
-        host = "https://activebrainatlas.ucsd.edu/ng"
+        host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
-            host = "http://127.0.0.1:39673"
+            # stop changing this.
+            host = "http://127.0.0.1:8080"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
