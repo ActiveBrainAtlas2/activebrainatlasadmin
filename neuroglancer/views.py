@@ -94,7 +94,7 @@ class Annotation(views.APIView):
         for row in rows:
             row.x = row.x / scale_xy
             row.y = row.y / scale_xy
-            row.z = row.z / z_scale
+            row.z = row.z / z_scale +0.5
             if 'polygon' in row.brain_region.abbreviation.lower():
                 polygon_points.append(row)
             else:
