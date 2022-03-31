@@ -35,7 +35,7 @@ class AnnotationLayer:
         for annotationi in self.annotations:
             if annotationi['type'] == 'polygon':
                 annotations.append(self.parse_polygon(annotationi))
-            if annotationi['type'] == 'volume':
+            elif annotationi['type'] == 'volume':
                 annotations.append(self.parse_volume(annotationi))
             elif annotationi['type'] == 'point':
                 annotations.append(self.parse_point(annotationi))
