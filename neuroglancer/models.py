@@ -303,13 +303,9 @@ class BrainShape(AtlasModel):
     
     def midsection(self):
         png = f'{self.brain_region.abbreviation}.png'
-        testfile = f'/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{self.animal}/www/structures/{png}'
-        if os.path.isfile(testfile):
-            pngfile = f'https://activebrainatlas.ucsd.edu/data/{self.animal}/www/structures/{png}'
-            return mark_safe(
-            '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(pngfile) )
-        else:
-            return mark_safe('<div>Not available</div>')
+        pngfile = f'https://activebrainatlas.ucsd.edu/data/{self.animal}/www/structures/{png}'
+        return mark_safe(
+        '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(pngfile) )
     
     midsection.short_description = 'Midsection'
 
