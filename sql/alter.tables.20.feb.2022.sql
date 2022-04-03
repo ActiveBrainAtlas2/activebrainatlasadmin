@@ -95,4 +95,24 @@ ALTER TABLE annotations_point_archive ADD COLUMN volume_id char(40) DEFAULT NULL
 
 ALTER TABLE annotations_points CHANGE segment_id polygon_id char(40);
 ALTER TABLE annotations_point_archive CHANGE segment_id polygon_id char(40);
+## new table brain_shape
+DROP TABLE IF EXISTS brain_shape;
+CREATE TABLE `brain_shape` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `prep_id` varchar(20) NOT NULL,
+  `FK_structure_id` int(11) NOT NULL,
+  `created` DATETIME NOT NULL,
+  `updated` timestamp NOT NULL DEFAULT current_timestamp(),
+  `dimensions` varchar(50) NOT NULL,
+  `xoffset` float NOT NULL,
+  `yoffset` float NOT NULL,
+  `zoffset` float NOT NULL,
+  `numpy_data` LONGBLOB NOT NULL,
+  `active` tinyint(4) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `K__BS_prep_id` (`prep_id`),
+  KEY `K__BS_FK_structure_id` (`FK_structure_id`),
+  CONSTRAINT `FK__BS_prep_id` FOREIGN KEY (`prep_id`) REFERENCES `animal` (`prep_id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK__BS_FK_structure_id` FOREIGN KEY (`FK_structure_id`) REFERENCES `structure` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 

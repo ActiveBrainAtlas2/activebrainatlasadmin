@@ -17,7 +17,7 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, InputType, \
     AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
-    UrlModel,  BrainRegion, Points
+    UrlModel,  BrainRegion, BrainShape, Points
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
@@ -186,6 +186,20 @@ class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     def show_hexadecimal(self, obj):
         return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
     show_hexadecimal.short_description = 'Hexadecimal'
+
+@admin.register(BrainShape)
+class BrainShapeAdmin(AtlasAdminModel):
+    list_display = ('animal', 'brain_region', 'dimensions', 'midsection', 'created')
+    ordering = ['animal', 'brain_region__abbreviation']
+    exclude = ['numpy_data']
+    search_fields = ['animal', 'brain_region__abbreviation']
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 def make_inactive(modeladmin, request, queryset):
     queryset.update(active=False)
