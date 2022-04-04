@@ -44,11 +44,11 @@ def update_annotation_data(neuroglancerModel):
                 if animal is not None and loggedInUser is not None and \
                     label != 'annotation':
                     inactivate_annotations(animal, label)
-                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
+                    # move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                     # Do not remove these comments.
                     # Uncomment the line below for testing and comment out the line above and the @background
                     # decorator
-                    # move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
+                    move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label)
 
 
 def inactivate_annotations(animal, label):
@@ -64,7 +64,7 @@ def inactivate_annotations(animal, label):
     .update(active=False)
 
 
-@background(schedule=0)
+# @background(schedule=0)
 def move_and_insert_annotations(prep_id, layer, owner_id, label):
     '''
     This is a simple method that just calls two other methods.
@@ -220,6 +220,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
     for annotation in layer.annotations:
         if annotation._type == 'point':
             x, y, z = annotation.coord * scales
+            z = int(z)
             brain_region = get_brain_region(annotation)
             if brain_region is not None:
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
@@ -228,7 +229,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 x=x, y=y, z=z))
         if annotation._type == 'polygon':
             polygon_id = annotation.id
-            z = mode([ int(np.floor(pointi.coord_start[2] * z_scale)) for pointi in annotation.childs])
+            z = mode([ int(np.floor(pointi.coord_start[2])* z_scale) for pointi in annotation.childs])
             ordering = 1
             for pointi in annotation.childs:
                 xa, ya, _ = pointi.coord_start * scales
@@ -241,7 +242,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
             ordering = 1
             for polygoni in annotation.childs:
                 polygon_id = polygoni.id
-                z = mode([ int(np.floor(coord.coord_start[2] * z_scale)) for coord in polygoni.childs])
+                z = mode([ int(np.floor(coord.coord_start[2]) * z_scale) for coord in polygoni.childs])
                 for childi in polygoni.childs:
                     xa, ya, _ = childi.coord_start * scales
                     bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
