@@ -43,8 +43,8 @@ class AnnotationLayer:
                 annotations.append(self.parse_line(annotationi))
         self.annotations = np.array(annotations)
         self.group_annotations('polygon')
-        # self.reorder_polygon_points()
-        self.check_polygon_points()
+        self.reorder_polygon_points()
+        # self.check_polygon_points()
         self.group_annotations('volume')
     
     def parse_point(self, point_json):
@@ -307,4 +307,5 @@ def check_if_contour_points_are_in_order(first_point, start_points, end_points):
     assert np.all(first_point == start_points[0])
     npoints = len(first_point)
     for i in range(npoints - 1):
-        assert np.all(start_points[i + 1] == end_points[i])
+        print(start_points[i + 1], end_points[i])
+        assert np.all(np.isclose(start_points[i + 1], end_points[i],atol=0.1))
