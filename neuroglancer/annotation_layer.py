@@ -43,7 +43,8 @@ class AnnotationLayer:
                 annotations.append(self.parse_line(annotationi))
         self.annotations = np.array(annotations)
         self.group_annotations('polygon')
-        self.reorder_polygon_points()
+        # self.reorder_polygon_points()
+        self.check_polygon_points()
         self.group_annotations('volume')
     
     def parse_point(self, point_json):
@@ -126,6 +127,17 @@ class AnnotationLayer:
                 sorter = ContourSorter(start_points=start_points, end_points=end_points, first_point=annotationi.source)
                 annotationi.childs = np.array(annotationi.childs)[sorter.sort_index]
                 annotationi.child_ids = annotationi.child_ids[sorter.sort_index]
+
+    def check_polygon_points(self):
+        '''
+        
+        '''
+        for annotationi in self.annotations:
+            if annotationi._type == 'polygon':
+                start_points = np.array([pointi.coord_start for pointi in annotationi.childs])
+                end_points = np.array([pointi.coord_end for pointi in annotationi.childs])
+                first_point=annotationi.source
+                check_if_contour_points_are_in_order(first_point,start_points,end_points)
 
     def get_annotation_with_id(self, id):
         '''
