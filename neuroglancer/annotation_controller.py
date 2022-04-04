@@ -25,13 +25,13 @@ def create_polygons(polygon_points) -> list:
     annotation_layer_json = []
     for polygon_id, polygon_points in polygons.items(): 
         annotation_layer_json += create_polygon_json(polygon_id, polygon_points)
-    i = 0
-    for volume_id, polygons in volumes.items():
-        annotation_layer_json += create_volume_json(volume_id, polygons, i)
+    for volume_id_and_label, polygons in volumes.items():
+        volume_id,label = volume_id_and_label
+        annotation_layer_json += create_volume_json(volume_id, polygons, label)
     return annotation_layer_json
 
 
-def create_volume_json(volume_id, polygons, i):
+def create_volume_json(volume_id, polygons, label):
     '''
     
     :param volume_id:
@@ -40,10 +40,11 @@ def create_volume_json(volume_id, polygons, i):
     '''
     volume_json = []
     one_point = list(polygons.values())[0][0] 
-    parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()))
+    parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, \
+        _type='volume', child_ids=list(polygons.keys()),description=label)
     volume_json.append(parent_annotataions)
     for polygon_id, polygon_points in polygons.items(): 
-        volume_json += create_polygon_json(polygon_id, polygon_points)
+        volume_json += create_polygon_json(polygon_id, polygon_points,parent_id=volume_id)
     return volume_json
 
 
@@ -59,11 +60,12 @@ def parse_polygon_points(polygon_points):
         coordinate = [pointi.x, pointi.y, pointi.z]
         if pointi.volume_id is not None:
             volume_id = pointi.volume_id
-            if not volume_id in volumes:
-                volumes[volume_id] = {}
-            if not polygon_id in volumes[volume_id]:
-                volumes[volume_id][polygon_id] = []
-            volumes[volume_id][polygon_id].append(coordinate)
+            volume_label = pointi.label
+            if not (volume_id,volume_label) in volumes:
+                volumes[(volume_id,volume_label)] = {}
+            if not polygon_id in volumes[(volume_id,volume_label)]:
+                volumes[(volume_id,volume_label)][polygon_id] = []
+            volumes[(volume_id,volume_label)][polygon_id].append(coordinate)
         else:
             if not polygon_id in polygons:
                 polygons[polygon_id] = []
@@ -71,7 +73,7 @@ def parse_polygon_points(polygon_points):
     return polygons, volumes
 
 
-def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=None):
+def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,parent_id = None,description = None):
     '''
     
     :param npoints:
@@ -81,17 +83,21 @@ def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=N
     :param child_ids:
     '''
     parent_annotation = {}
+    if parent_id is not None:
+        parent_annotation['parentAnnotationId'] = parent_id
+    if description is not None:
+        parent_annotation['description'] = description
     if child_ids is None:
         child_ids = [random_string() for _ in range(npoints)]
     parent_annotation["source"] = source
     parent_annotation["childAnnotationIds"] = child_ids
     parent_annotation["type"] = _type
-    parent_annotation["id"] = parent_id
+    parent_annotation["id"] = id
     parent_annotation["props"] = [hexcolor]
     return parent_annotation, child_ids
 
 
-def create_polygon_json(polygon_id, polygon_points):
+def create_polygon_json(polygon_id, polygon_points,parent_id = None):
     '''
     
     :param polygon_id:
@@ -99,7 +105,8 @@ def create_polygon_json(polygon_id, polygon_points):
     '''
     polygon_json = []
     npoints = len(polygon_points)
-    parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon')
+    parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0],\
+         _type='polygon',parent_id = parent_id)
     polygon_json.append(parent_annotation)
     for pointi in range(npoints - 1):
         line = {}

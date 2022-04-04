@@ -46,6 +46,7 @@ class PolygonSerializer(serializers.Serializer):
     type = serializers.CharField()
     parentAnnotationId = serializers.CharField(required=False)
     props = serializers.ListField()
+    description = serializers.CharField(required=False)
 
 class AnnotationsSerializer(serializers.Serializer):
     """
