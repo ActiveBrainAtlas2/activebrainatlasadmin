@@ -229,7 +229,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 x=x, y=y, z=z))
         if annotation._type == 'polygon':
             polygon_id = annotation.id
-            z = mode([ int(np.floor(pointi.coord_start[2])* z_scale) for pointi in annotation.childs])
+            z = mode([ int(np.floor(pointi.coord_start[2]) * z_scale) for pointi in annotation.childs])
             ordering = 1
             for pointi in annotation.childs:
                 xa, ya, _ = pointi.coord_start * scales

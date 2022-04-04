@@ -14,13 +14,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 
 from activebrainatlas.views import SessionVarView
 from workflow.gantt_view import gantt
+# from rest_framework_jwt.views import refresh_jwt_token
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,7 +33,10 @@ urlpatterns = [
     path('', include('brain.urls')),
     path('', include('neuroglancer.urls')),
     path('', include('workflow.urls')),
-    re_path(r'^celery-progress/', include('celery_progress.urls')), 
+    # re_path(r'^celery-progress/', include('celery_progress.urls')), 
+    # path('auth/', include('rest_auth.urls')),
+    # path('auth/signup/', include('rest_auth.registration.urls')),
+    # path('auth/refresh-token/', refresh_jwt_token),
 ]
 
 urlpatterns +=  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

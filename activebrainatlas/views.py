@@ -10,6 +10,7 @@ class SessionVarView(TemplateView):
         data = {'user_id':0, 'username': None}
         if request.user.is_authenticated:
             data = {'user_id':request.user.id, 'username': request.user.username}
+        
         if settings.DEBUG:
             userid = 1
             browser = str(request.META['HTTP_USER_AGENT']).lower()
@@ -17,5 +18,5 @@ class SessionVarView(TemplateView):
                 userid = 2
             user = User.objects.get(pk=userid) 
             data = {'user_id':user.id, 'username': user.username}
-
+        
         return JsonResponse(data)
