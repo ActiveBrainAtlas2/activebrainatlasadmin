@@ -107,6 +107,7 @@ CREATE TABLE `brain_shape` (
   `xoffset` float NOT NULL,
   `yoffset` float NOT NULL,
   `zoffset` float NOT NULL,
+  `transformed` tinyint(4) NOT NULL DEFAULT 0,
   `numpy_data` LONGBLOB NOT NULL,
   `active` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),

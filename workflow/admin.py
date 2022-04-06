@@ -14,8 +14,8 @@ from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, \
     Problem, FileLog, TableMetadata
 
 from workflow.forms import PipelineForm
-from celery import chain
-from workflow.tasks import setup, make_meta, make_tifs, make_scenes
+# from celery import chain
+#from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 
 
 class WorkflowAdminModel(admin.ModelAdmin):
@@ -65,7 +65,7 @@ class TaskAdmin(admin.ModelAdmin):
                 print(f'type of animal is {type(animal)}')
                 # do celery stuff here.
                 animal = animal.prep_id
-                
+                """
                 result = chain(
                     setup.si(animal),
                     make_meta.si(animal),
@@ -85,6 +85,7 @@ class TaskAdmin(admin.ModelAdmin):
                     celery_task_ids[i] = task_id
                 celery_task_ids = celery_task_ids
                 title = f'Active Brain Atlas {animal} Pipeline'
+                """
                 form = None
 
         else:

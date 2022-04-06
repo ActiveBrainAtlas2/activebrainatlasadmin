@@ -1,20 +1,16 @@
-import os, sys, time
-from datetime import datetime
-import re
-from multiprocessing.pool import Pool
-from subprocess import Popen
-from decimal import Decimal
-import traceback
-from celery.exceptions import Ignore
-from celery_progress.backend import ProgressRecorder
-from brain.models import ScanRun, Section, Slide, SlideCziToTif
-from celery.app import shared_task
-from celery.utils.log import get_task_logger
-from celery import states, current_task
+#import os, time
+#from datetime import datetime
+#import re
+#from multiprocessing.pool import Pool
+#from subprocess import Popen
+# from celery.exceptions import Ignore
+# from celery_progress.backend import ProgressRecorder
+#from brain.models import ScanRun, Section, Slide, SlideCziToTif
+#from celery.app import shared_task
+#from celery.utils.log import get_task_logger
 from django.conf import settings
-from time import sleep
+#from time import sleep
 
-import random
 
 if settings.DEBUG:
     from abakit.utilities.file_location import FileLocationManager
@@ -23,9 +19,10 @@ if settings.DEBUG:
 
     SCALING_FACTOR = 0.03125
     PROGRESS_STATE = 'PROGRESS'
-    logger = get_task_logger(__name__)
+    #logger = get_task_logger(__name__)
 
 
+    """
     @shared_task(bind=True)
     def setup(self, animal):
         progress_recorder = ProgressRecorder(self)
@@ -39,20 +36,20 @@ if settings.DEBUG:
         except FileNotFoundError as fe:
             error = f'Error: {fe}'
             logger.error(error)
-            raise Ignore()
+            # raise Ignore()
         
         for i in range(len(files)):
             progress_recorder.set_progress(i, len(files), description=description)
             sleep(1)
         return len(files)
 
-
     """
-    Start of import of methods to set up celery queue
-    """
-
-    @shared_task(bind=True)
+    ### Start of import of methods to set up celery queue
+    
+    
+    #@shared_task(bind=True)
     def make_meta(self, animal):
+        pass
         """
         Scans the czi dir to extract the meta information for each tif file
         Args:
@@ -60,6 +57,7 @@ if settings.DEBUG:
             remove: boolean to determine if we should remove the scan run ID
 
         Returns: nothing
+        """
         """
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
@@ -126,12 +124,13 @@ if settings.DEBUG:
                     section_number += 1
         return section_number
 
-    """
-    from create_tifs.py
-    """
+        """
+    ##### from create_tifs.py
+    
 
-    @shared_task(bind=True)
+    #@shared_task(bind=True)
     def make_tifs(self, animal, channel, njobs):
+        pass
         """
         This method will:
             1. Fetch the sections from the database
@@ -144,6 +143,7 @@ if settings.DEBUG:
 
         Returns:
             number of tifs created
+        """
         """
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
@@ -183,9 +183,9 @@ if settings.DEBUG:
             p.map(workernoshell, commands)
 
         return len(sections)
+    """
 
-
-
+    """
     @shared_task
     def bfconvert(scene_index, channel_index, input_path, output_path):
         cmd = ['/usr/local/share/bftools/bfconvert', '-bigtiff', '-separate', '-series', str(scene_index),
@@ -193,11 +193,12 @@ if settings.DEBUG:
         proc = Popen(cmd, shell=False, stderr=None, stdout=None)
         proc.wait()
         #run(cmd)
+    """
 
 
-
-    @shared_task(bind=True)
+    #@shared_task(bind=True)
     def make_scenes(self, animal, njobs):
+        pass
         """
         This will create some PNG files from the tif files.
         The PNG files are downsampled to 3.125% of the original size.
@@ -206,6 +207,7 @@ if settings.DEBUG:
             njobs: how many procs to spawn.
         Returns:
             the number of PNG files created.
+        """
         """
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
@@ -234,6 +236,7 @@ if settings.DEBUG:
             p.map(workernoshell, commands)
 
         return len(tifs)
+        """
 
 else:
     def setup():
