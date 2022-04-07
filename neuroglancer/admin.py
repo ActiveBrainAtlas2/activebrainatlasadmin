@@ -61,7 +61,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:39055"
+            host = "http://127.0.0.1:41225"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'

@@ -8,7 +8,7 @@ from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID
-from neuroglancer.annotation_layer import AnnotationLayer
+from abakit.lib.annotation_layer import AnnotationLayer
 from background_task import background
 import logging
 logging.basicConfig()

@@ -17,7 +17,7 @@ from time import sleep
 import random
 
 if settings.DEBUG:
-    from abakit.utilities.file_location import FileLocationManager
+    from abakit.lib.FileLocationManager import FileLocationManager
     from abakit.utilities.shell_tools import workernoshell
     from abakit.utilities.czi_tools import get_czi_metadata, get_fullres_series_indices
 

@@ -1,3 +1,4 @@
+import json
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -6,7 +7,6 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
-
 import numpy as np
 from neuroglancer.models import Animal
 from neuroglancer.serializers import AnimalInputSerializer, \
@@ -15,8 +15,13 @@ from neuroglancer.serializers import AnimalInputSerializer, \
 from neuroglancer.models import InputType, UrlModel, AnnotationPoints, \
     BrainRegion
 from neuroglancer.annotation_controller import create_polygons, random_string    
-    
+from abakit.lib.annotation_layer import AnnotationLayer
 import logging
+from abakit.atlas.VolumeMaker import VolumeMaker
+from abakit.atlas.NgSegmentMaker import NgConverter
+import numpy as np
+from abakit.lib.annotation_layer import AnnotationLayer
+import os
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
@@ -155,17 +160,23 @@ class Rotation(views.APIView):
     Where DK39 is the prep_id, manual is the input_type and 2 is the owner_id
     """
 
-    def get(self, request, prep_id, input_type, owner_id, format=None):
+    def get(self, request, prep_id, input_type, owner_id,inverse = False, format=None):
 
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id, input_type_id=input_type_id,
                            owner_id=owner_id)
+        if inverse:
+            R,t = inverse_rigid_transform(R,t)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
-
         return JsonResponse(data)
+
+def inverse_rigid_transform(R,t):
+    Rt = np.linalg.inv(R)
+    tt = -Rt@t
+    return Rt,tt
 
 
 class Rotations(views.APIView):
@@ -216,8 +227,6 @@ def get_input_type_id(input_type):
 
     return input_type_id
 
-
-        
 def load_layers(request):
     layers = []
     url_id = request.GET.get('id')
@@ -270,3 +279,31 @@ class AnnotationStatus(views.APIView):
             'brain_regions': list_of_landmarks_name, 'counts': counts})
         
         # return HttpResponse(has_annotation)
+
+class ContoursToVolume(views.APIView):
+    def get(self, request, url_id,volume_id):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                layer = AnnotationLayer(layeri)
+                volume = layer.get_annotation_with_id(volume_id)
+                if volume is not None:
+                    break
+        folder_name = self.make_volumes(volume,urlModel.animal)
+        segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
+        return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
+
+    def make_volumes(self,volume,animal = 'DK55'):
+        vmaker = VolumeMaker(animal)
+        structure,contours = volume.get_volume_name_and_contours()
+        vmaker.set_aligned_contours({structure:contours})
+        vmaker.compute_COMs_origins_and_volumes()
+        res = vmaker.get_resolution()
+        segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
+        folder_name = f'{animal}_{structure}'
+        output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
+        maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
+        maker.create_neuroglancer_files(output_dir,segment_properties)
+        return folder_name
