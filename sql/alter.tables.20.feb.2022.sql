@@ -107,6 +107,7 @@ CREATE TABLE `brain_shape` (
   `xoffset` float NOT NULL,
   `yoffset` float NOT NULL,
   `zoffset` float NOT NULL,
+  `transformed` tinyint(4) NOT NULL DEFAULT 0,
   `numpy_data` LONGBLOB NOT NULL,
   `active` tinyint(4) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
@@ -114,5 +115,35 @@ CREATE TABLE `brain_shape` (
   KEY `K__BS_FK_structure_id` (`FK_structure_id`),
   CONSTRAINT `FK__BS_prep_id` FOREIGN KEY (`prep_id`) REFERENCES `animal` (`prep_id`) ON UPDATE CASCADE,
   CONSTRAINT `FK__BS_FK_structure_id` FOREIGN KEY (`FK_structure_id`) REFERENCES `structure` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `animal` (
+  `prep_id` varchar(20) NOT NULL COMMENT 'Name for lab mouse/rat, max 20 chars',
+  `performance_center` enum('CSHL','Salk','UCSD','HHMI','Duke') DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL COMMENT 'the mouse''s date of birth',
+  `species` enum('mouse','rat') DEFAULT NULL,
+  `strain` varchar(50) DEFAULT NULL,
+  `sex` enum('M','F') DEFAULT NULL COMMENT '(M/F) either ''M'' for male, ''F'' for female',
+  `genotype` varchar(100) DEFAULT NULL COMMENT 'transgenic description, usually "C57"; We will need a genotype table',
+  `breeder_line` varchar(100) DEFAULT NULL COMMENT 'We will need a local breeding table',
+  `vender` enum('Jackson','Charles River','Harlan','NIH','Taconic') DEFAULT NULL,
+  `stock_number` varchar(100) DEFAULT NULL COMMENT 'if not from a performance center',
+  `tissue_source` enum('animal','brain','slides') DEFAULT NULL,
+  `ship_date` date DEFAULT NULL,
+  `shipper` enum('FedEx','UPS') DEFAULT NULL,
+  `tracking_number` varchar(100) DEFAULT NULL,
+  `aliases_1` varchar(100) DEFAULT NULL COMMENT 'names given by others',
+  `aliases_2` varchar(100) DEFAULT NULL,
+  `aliases_3` varchar(100) DEFAULT NULL,
+  `aliases_4` varchar(100) DEFAULT NULL,
+  `aliases_5` varchar(100) DEFAULT NULL,
+  `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
+  `active` tinyint(4) NOT NULL DEFAULT 1,
+  `created` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`prep_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+ALTER TABLE animal DROP PRIMARY KEY;
+ALTER TABLE animal ADD COLUMN id int(11) auto_increment primary key first;
 
