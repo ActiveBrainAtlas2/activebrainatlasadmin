@@ -296,7 +296,7 @@ class ContoursToVolume(views.APIView):
         return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
 
     def make_volumes(self,volume,animal = 'DK55'):
-        vmaker = VolumeMaker(animal)
+        vmaker = VolumeMaker(animal,check_path = False)
         structure,contours = volume.get_volume_name_and_contours()
         vmaker.set_aligned_contours({structure:contours})
         vmaker.compute_COMs_origins_and_volumes()
