@@ -160,14 +160,14 @@ class Rotation(views.APIView):
     Where DK39 is the prep_id, manual is the input_type and 2 is the owner_id
     """
 
-    def get(self, request, prep_id, input_type, owner_id,inverse = False, format=None):
+    def get(self, request, prep_id, input_type, owner_id,inverse = 0, format=None):
 
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id, input_type_id=input_type_id,
                            owner_id=owner_id)
-        if inverse:
+        if inverse ==1:
             R,t = inverse_rigid_transform(R,t)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
