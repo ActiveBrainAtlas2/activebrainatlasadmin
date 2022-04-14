@@ -261,7 +261,7 @@ class MarkedCell(AnnotationAbstract):
         return u'{} {}'.format(self.annotation_session, self.label)
 
 class PolygonSequence(AnnotationAbstract):
-    polygon_index = models.IntegerField(blank=True, null=True)
+    polygon_index = models.CharField(max_length=40, blank=True, null=True)
     point_order = models.IntegerField(blank=False, null=False, default=0)
 
     class SourceChoices(models.TextChoices):
