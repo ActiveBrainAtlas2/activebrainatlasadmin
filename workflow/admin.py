@@ -14,8 +14,8 @@ from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, \
     Problem, FileLog, TableMetadata
 
 from workflow.forms import PipelineForm
-from celery import chain
-from workflow.tasks import setup, make_meta, make_tifs, make_scenes
+# from celery import chain
+# from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 
 
 class WorkflowAdminModel(admin.ModelAdmin):
@@ -51,6 +51,7 @@ class TaskAdmin(admin.ModelAdmin):
     def prep_id(self, instance):
         return instance.prep.prep_id
 
+    """
     def view_pipeline(self, request):
         celery_task_ids = {}
         animal = None
@@ -99,13 +100,13 @@ class TaskAdmin(admin.ModelAdmin):
             celery_task_ids = celery_task_ids
         )
         return TemplateResponse(request, "pipeline.html", context)
-
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
             path('pipeline/', self.admin_site.admin_view(self.view_pipeline))
         ]
         return my_urls + urls
+    """
        
 
 @admin.register(TaskView)

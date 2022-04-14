@@ -15,9 +15,10 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
-from neuroglancer.models import AlignmentScore, InputType, \
-    AnnotationPoints, AnnotationPointArchive, ArchiveSet, \
-    UrlModel,  BrainRegion, Points
+from neuroglancer.models import AlignmentScore, \
+        AnnotationSession, AnnotationPointArchive, ArchiveSet, \
+        UrlModel,  BrainRegion, Points, \
+        PolygonSequence, MarkedCell, StructureCom
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
@@ -173,6 +174,10 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+@admin.register(AnnotationSession)
+class AnnotationSessionAdmin(AtlasAdminModel, ExportCsvMixin):
+    list_display = ('animal', 'brain_region', 'annotator', 'created')
+
 @admin.register(BrainRegion)
 class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
@@ -195,112 +200,32 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-##### This is not being used right now
-##### @admin.register(Transformation)
-class TransformationAdmin(AtlasAdminModel):
-    list_display = ('prep_id', 'person', 'input_type', 'com_name','active','created', 'com_count')
-    ordering = ['com_name']
-    readonly_fields = ['created', 'updated']
-    list_filter = ['created', 'active']
-    search_fields = ['prep_id', 'com_name']
+@admin.register(MarkedCell)
+class MarkedCellAdmin(admin.ModelAdmin):
+    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
+    ordering = ['label', 'z']
+    search_fields = ['label']
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "prep":
-            kwargs["queryset"] = Animal.objects.filter(layerdata__active=True).distinct().order_by()
-        if db_field.name == "person":
-            UserModel = get_user_model()
-            com_users = AnnotationPoints.objects.values_list('owner', flat=True).distinct().order_by()
-            kwargs["queryset"] = UserModel.objects.filter(id__in=com_users)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+@admin.register(PolygonSequence)
+class PolygonSequenceAdmin(admin.ModelAdmin):
+    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
+    ordering = ['label', 'z']
+    search_fields = ['label']
 
-    def com_count(self, obj):
-        count = AnnotationPoints.objects.filter(prep_id=obj.prep_id)\
-            .filter(input_type=obj.input_type).filter(layer='COM')\
-            .filter(owner_id=obj.owner_id).filter(active=True).count()
-        return count
+@admin.register(StructureCom)
+class StructureComAdmin(admin.ModelAdmin):
+    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
+    ordering = ['label', 'z']
+    search_fields = ['label']
 
-    com_count.short_description = "Active COMS"
-
-    def save_model(self, request, obj, form, change):
-        obj.user = request.user
-        count = AnnotationPoints.objects.filter(prep=obj.prep)\
-            .filter(input_type=obj.input_type).filter(layer='COM')\
-            .filter(owner=obj.owner).filter(active=True).count()        
-        if count < 1:
-            messages.add_message(request, messages.WARNING, 'There no COMs associated with that animal/user/input type combination. Please correct it.')
-            return
-        else:
-            super().save_model(request, obj, form, change)
-            AnnotationPoints.objects.filter(prep=obj.prep)\
-                .filter(input_type=obj.input_type).filter(layer='COM')\
-                .filter(owner=obj.owner).filter(active=True).update(transformation=obj)
-
-@admin.register(InputType)
-class InputTypeAdmin(AtlasAdminModel):
-    list_display = ('id', 'input_type', 'description', 'active','created')
-    ordering = ['id']
-    readonly_fields = ['created', 'updated']
-    list_filter = ['created', 'active']
-    search_fields = ['input_type', 'description']
-
-@admin.register(AnnotationPoints)
-class AnnotationPointsAdmin(AtlasAdminModel):
-    list_display = ('animal', 'brain_region', 'label', 'owner', 'x_f', 'y_f', 'z_f')
-    ordering = ['animal', 'label','brain_region__abbreviation', 'z']
-    list_filter = ['input_type']
-    search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
-    scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
-    def save_model(self, request, obj, form, change):
-        obj.owner = request.user
-        super().save_model(request, obj, form, change)
-
-    def x_f(self, obj):
-        initial = str(obj.animal.prep_id[0:2]).lower()
-        number = int(round(obj.x / self.scales[initial]))
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-    def y_f(self, obj):
-        initial = str(obj.animal.prep_id[0:2]).lower()
-        number = int(round(obj.y / self.scales[initial]))
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-    def z_f(self, obj):
-        number = int(obj.z / 20)
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-
-    x_f.short_description = "X"
-    y_f.short_description = "Y"
-    z_f.short_description = "Z"
+"""
 @admin.register(AnnotationPointArchive)
-class AnnotationPointArchiveAdmin(AtlasAdminModel):
+class AnnotationPointArchiveAdmin(admin.ModelAdmin):
     # change_list_template = 'layer_data_group.html'
-    list_display = ('animal', 'brain_region', 'label', 'owner', 'x_f', 'y_f', 'z_f')
-    ordering = ['animal', 'label','brain_region__abbreviation', 'z']
-    list_filter = ['input_type']
-    search_fields = ['animal__prep_id', 'brain_region__abbreviation', 'label', 'owner__username']
-    scales = {'dk':0.325, 'md':0.452, 'at':10, 'ch':0.325}
-    
-    def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-
-    def x_f(self, obj):
-        initial = str(obj.animal.prep_id[0:2]).lower()
-        number = int(round(obj.x / self.scales[initial]))
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-    def y_f(self, obj):
-        initial = str(obj.animal.prep_id[0:2]).lower()
-        number = int(round(obj.y / self.scales[initial]))
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-    def z_f(self, obj):
-        number = int(obj.z / 20)
-        return format_html(f"<div style='text-align:left;'>{number:,}</div>")
-
-    x_f.short_description = "X"
-    y_f.short_description = "Y"
-    z_f.short_description = "Z"
-
+    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
+    ordering = ['label', 'z']
+    search_fields = ['label']
+"""
 
 @admin.action(description='Restore the selected archive')
 def restore_archive(modeladmin, request, queryset):
@@ -324,8 +249,8 @@ def restore_archive(modeladmin, request, queryset):
             
 @admin.register(ArchiveSet)
 class ArchiveSetAdmin(AtlasAdminModel):
-    list_display = ['animal', 'label', 'input_type', 'created', 'updatedby', 'archive_count']
-    ordering = ['animal', 'label', 'input_type', 'parent', 'created', 'updatedby']
+    list_display = ['animal', 'label', 'created', 'updatedby', 'archive_count']
+    ordering = ['animal', 'label', 'parent', 'created', 'updatedby']
     list_filter = ['created']
     search_fields = ['animal', 'label']
     actions = [restore_archive]
@@ -336,8 +261,6 @@ class ArchiveSetAdmin(AtlasAdminModel):
 
     archive_count.short_description = "# Points"
 
-
-    
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
     change_list_template = "alignment_score.html"
@@ -354,7 +277,6 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
 admin.site.unregister(Task)
 admin.site.unregister(CompletedTask)
 
-
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     display_filter = ['task_name']
@@ -369,7 +291,6 @@ class CompletedTaskAdmin(admin.ModelAdmin):
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
-
 
     def has_add_permission(self, request):
         return False

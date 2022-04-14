@@ -6,14 +6,14 @@ from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
 from django.http import Http404
+from django.apps import apps
 
 import numpy as np
 from neuroglancer.models import Animal
 from neuroglancer.serializers import AnimalInputSerializer, \
     AnnotationSerializer, AnnotationsSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
-from neuroglancer.models import InputType, UrlModel, AnnotationPoints, \
-    BrainRegion
+from neuroglancer.models import UrlModel, BrainRegion, StructureCom
 from neuroglancer.annotation_controller import create_polygons, random_string    
     
 import logging
@@ -74,18 +74,20 @@ class Annotation(views.APIView):
          2 is the input type ID
     """
 
-    def get(self, request, prep_id, label, input_type_id, format=None):
+    def get(self, request, obj, prep_id, label, format=None):
         data = []
+        annotation_model = apps.get_model(app_label='neuroglancer', model_name=obj)
         try:
             animal = Animal.objects.get(pk=prep_id)
         except Animal.DoesNotExist:
+            print('No animal, returning empty list')
             return data
-
-        rows = AnnotationPoints.objects.filter(animal=animal)\
-                    .filter(label=label)\
-                    .filter(input_type_id=input_type_id)\
-                    .filter(active=True)\
-                    .order_by('ordering')
+        try:
+            rows = annotation_model.objects.filter(annotation_session__animal=animal)\
+                        .filter(label=label)
+        except:
+            print('bad query')
+        print('len rows', len(rows))
         
         scale_xy, z_scale = get_scales(prep_id)
         # Working with polygons/lines is much different        
@@ -95,7 +97,7 @@ class Annotation(views.APIView):
             row.x = row.x / scale_xy
             row.y = row.y / scale_xy
             row.z = row.z / z_scale +0.5
-            if 'polygon' in row.brain_region.abbreviation.lower():
+            if 'polygon' in row.annotation_session.brain_region.abbreviation.lower():
                 polygon_points.append(row)
             else:
                 point_annotation = {}
@@ -103,7 +105,7 @@ class Annotation(views.APIView):
                 point_annotation['point'] = [int(round(row.x)), int(round(row.y)), row.z]
                 point_annotation['type'] = 'point'
                 if 'COM' in label or 'Rough Alignment' in label:
-                    point_annotation['description'] = row.brain_region.abbreviation
+                    point_annotation['description'] = row.annotation_session.brain_region.abbreviation
                 else:
                     point_annotation['description'] = ""
                 data.append(point_annotation)
@@ -118,10 +120,6 @@ class Annotation(views.APIView):
 
 class Annotations(views.APIView):
     """
-    Fetch UrlModel and return a set of two dictionaries. 
-    One is from the layer_data
-    table and the other is the COMs that have been set as transformations.
-    {'id': 213, 'description': 'DK39 COM Test', 'label': 'COM'}
     url is of the the form:
     https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
     """
@@ -131,17 +129,13 @@ class Annotations(views.APIView):
         This will get the layer_data
         """
         data = []
-        state_layers = AnnotationPoints.objects.order_by('animal__prep_id', 'label', 'input_type_id')\
-            .filter(active=True).filter(input_type_id__in=[1, 3, 5 , 6 , 7, 4, 11])\
-            .filter(label__isnull=False)\
-            .values('animal__prep_id', 'label', 'input_type__input_type', 'input_type_id')\
-            .distinct()
-        for state_layer in state_layers:
+        coms = StructureCom.objects.order_by('annotation_session')\
+            .values('annotation_session__animal__prep_id', 'label', 'source').distinct()
+        for com in coms:
             data.append({
-                "prep_id":state_layer['animal__prep_id'],
-                "label":state_layer['label'],
-                "input_type":state_layer['input_type__input_type'],
-                "input_type_id":state_layer['input_type_id'],
+                "prep_id":com['annotation_session__animal__prep_id'],
+                "label":com['label'],
+                "source":com['source'],
                 })
         serializer = AnnotationsSerializer(data, many=True)
         return Response(serializer.data)
@@ -150,18 +144,16 @@ class Annotations(views.APIView):
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
     It will return the json rotation and translation matrix
-    Fetch center of mass for the prep_id, input_type and owner_id.
-    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/DK39/manual/2
-    Where DK39 is the prep_id, manual is the input_type and 2 is the owner_id
+    Fetch center of mass for the prep_id.
+    url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotation/DK39
+    Where DK39 is the prep_id
     """
 
-    def get(self, request, prep_id, input_type, owner_id, format=None):
+    def get(self, request, prep_id, format=None):
 
-        input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
-        R, t = align_atlas(prep_id, input_type_id=input_type_id,
-                           owner_id=owner_id)
+        R, t = align_atlas(prep_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
 
@@ -169,54 +161,22 @@ class Rotation(views.APIView):
 
 
 class Rotations(views.APIView):
-    """
-    Fetch distinct prep_id, input_type, owner_id and username:
+    '''
     url is of the the form https://activebrainatlas.ucsd.edu/activebrainatlas/rotations
-    Note: animal is an animal object, while the prep_id is the name of the animal
-    """
+    '''
 
     def get(self, request, format=None):
         data = []
-        com_manual = AnnotationPoints.objects.order_by('animal__prep_id', 'owner_id', 'input_type_id')\
-            .filter(label='COM').filter(owner_id=2)\
-            .filter(active=True).filter(input_type__input_type__in=['manual'])\
-            .values('animal__prep_id', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
-        com_detected = AnnotationPoints.objects.order_by('animal__prep_id', 'owner_id', 'input_type_id')\
-            .filter(label='COM').filter(owner_id=23)\
-            .filter(active=True).filter(input_type__input_type__in=['detected'])\
-            .values('animal__prep_id', 'input_type__input_type', 'owner_id', 'owner__username').distinct()
-        for com in com_manual:
+        coms = StructureCom.objects.order_by('annotation_session')\
+            .values('annotation_session__animal__prep_id', 'label', 'source').distinct()
+        for com in coms:
             data.append({
-                "prep_id":com['animal__prep_id'],
-                "input_type":com['input_type__input_type'],
-                "owner_id":com['owner_id'],
-                "username":com['owner__username'],
-                })
-        for com in com_detected:
-            data.append({
-                "prep_id":com['animal__prep_id'],
-                "input_type":com['input_type__input_type'],
-                "owner_id":com['owner_id'],
-                "username":com['owner__username'],
+                "prep_id":com['annotation_session__animal__prep_id'],
+                "label":com['label'],
+                "source":com['source'],
                 })
         serializer = RotationSerializer(data, many=True)
         return Response(serializer.data)
-
-
-def get_input_type_id(input_type):
-    input_type_id = 0
-    try:
-        input_types = InputType.objects.filter(input_type=input_type).filter(active=True).all()
-    except InputType.DoesNotExist:
-        raise Http404
-
-    if len(input_types) > 0:
-        input_type = input_types[0]
-        input_type_id = input_type.id
-
-    return input_type_id
-
-
         
 def load_layers(request):
     layers = []
@@ -225,7 +185,6 @@ def load_layers(request):
     if urlModel.layers is not None:
         layers = urlModel.layers
     return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
-
 
 def public_list(request):
     """
@@ -263,8 +222,8 @@ class AnnotationStatus(views.APIView):
                 prep_id = list_of_animals[animali]
                 brain_region = list_of_landmarks_id[landmarki]
                 has_annotation[landmarki, animali] = \
-                    AnnotationPoints.objects.all().filter(active=True).filter(prep=prep_id)\
-                        .filter(layer='COM').filter(brain_region=brain_region).exists() 
+                    StructureCom.objects.all().filter(prep=prep_id)\
+                        .filter(brain_region=brain_region).exists() 
                 counts = has_annotation.sum(axis=0)
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals, \
             'brain_regions': list_of_landmarks_name, 'counts': counts})

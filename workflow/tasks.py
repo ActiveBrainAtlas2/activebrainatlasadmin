@@ -1,30 +1,33 @@
+'''
+This code is here if we want to use celery. Otherwise, it is all commented out.
+Celery is a bit of a job to get going so the code is inactive.
+'''
+"""
 import os, sys, time
 from datetime import datetime
 import re
 from multiprocessing.pool import Pool
 from subprocess import Popen
-from decimal import Decimal
-import traceback
 from celery.exceptions import Ignore
 from celery_progress.backend import ProgressRecorder
 from brain.models import ScanRun, Section, Slide, SlideCziToTif
 from celery.app import shared_task
 from celery.utils.log import get_task_logger
 from celery import states, current_task
-from django.conf import settings
 from time import sleep
-
 import random
 
+from django.conf import settings
+
 if settings.DEBUG:
+    
     from abakit.utilities.file_location import FileLocationManager
     from abakit.utilities.shell_tools import workernoshell
     from abakit.utilities.czi_tools import get_czi_metadata, get_fullres_series_indices
 
     SCALING_FACTOR = 0.03125
     PROGRESS_STATE = 'PROGRESS'
-    logger = get_task_logger(__name__)
-
+    # logger = get_task_logger(__name__)
 
     @shared_task(bind=True)
     def setup(self, animal):
@@ -47,20 +50,18 @@ if settings.DEBUG:
         return len(files)
 
 
-    """
-    Start of import of methods to set up celery queue
-    """
-
+    
+    # Start of import of methods to set up celery queue
     @shared_task(bind=True)
     def make_meta(self, animal):
-        """
+        '''
         Scans the czi dir to extract the meta information for each tif file
         Args:
             animal: the animal as primary key
             remove: boolean to determine if we should remove the scan run ID
 
         Returns: nothing
-        """
+        '''
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
         scan_run = ScanRun.objects.filter(prep_id=animal)[0]
@@ -126,13 +127,11 @@ if settings.DEBUG:
                     section_number += 1
         return section_number
 
-    """
-    from create_tifs.py
-    """
-
+    
+    # from create_tifs.py
     @shared_task(bind=True)
     def make_tifs(self, animal, channel, njobs):
-        """
+        '''
         This method will:
             1. Fetch the sections from the database
             2. Yank the tif out of the czi file according to the index and channel with the bioformats tool.
@@ -144,7 +143,7 @@ if settings.DEBUG:
 
         Returns:
             number of tifs created
-        """
+        '''
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
         INPUT = fileLocationManager.czi
@@ -184,8 +183,6 @@ if settings.DEBUG:
 
         return len(sections)
 
-
-
     @shared_task
     def bfconvert(scene_index, channel_index, input_path, output_path):
         cmd = ['/usr/local/share/bftools/bfconvert', '-bigtiff', '-separate', '-series', str(scene_index),
@@ -194,11 +191,9 @@ if settings.DEBUG:
         proc.wait()
         #run(cmd)
 
-
-
     @shared_task(bind=True)
     def make_scenes(self, animal, njobs):
-        """
+        '''
         This will create some PNG files from the tif files.
         The PNG files are downsampled to 3.125% of the original size.
         Args:
@@ -206,7 +201,7 @@ if settings.DEBUG:
             njobs: how many procs to spawn.
         Returns:
             the number of PNG files created.
-        """
+        '''
         progress_recorder = ProgressRecorder(self)
         fileLocationManager = FileLocationManager(animal)
         INPUT = fileLocationManager.tif
@@ -234,6 +229,7 @@ if settings.DEBUG:
             p.map(workernoshell, commands)
 
         return len(tifs)
+        
 
 else:
     def setup():
@@ -244,3 +240,4 @@ else:
         pass 
     def make_scenes():
         pass
+"""
