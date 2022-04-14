@@ -2,8 +2,9 @@ import numpy as np
 from statistics import mode
 from django.contrib.auth.models import User
 from django.http import Http404
-from neuroglancer.models import  AnnotationPoints, AnnotationPointArchive, \
-    ArchiveSet, BrainRegion, InputType
+from neuroglancer.models import  AnnotationPointArchive, \
+        ArchiveSet, BrainRegion, \
+        PolygonSequence, MarkedCell, StructureCom
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales

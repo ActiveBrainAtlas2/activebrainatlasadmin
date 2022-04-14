@@ -27,12 +27,10 @@ urlpatterns = [
     path(r'graph', gantt),
     path(r'gantt', TemplateView.as_view(template_name='gantt.html')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
-    # path(r'urldata', UrlDataView.as_view(), name='get-data'),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
     path('', include('brain.urls')),
     path('', include('neuroglancer.urls')),
     path('', include('workflow.urls')),
-    re_path(r'^celery-progress/', include('celery_progress.urls')), 
 ]
 
 urlpatterns +=  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

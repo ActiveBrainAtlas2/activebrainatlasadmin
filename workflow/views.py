@@ -1,10 +1,11 @@
 import json
 from django.shortcuts import render
 from django.http import HttpResponse
-from celery import chain
-from celery.result import AsyncResult
-from workflow.tasks import setup, make_meta, make_tifs, make_scenes
+# from celery import chain
+# from celery.result import AsyncResult
+# from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 
+"""
 def progress_view(request):
     animal = 'DK54'
     channel = 1
@@ -42,5 +43,5 @@ def get_progress(request, task_id):
         'details': result.info,
     }
     return HttpResponse(json.dumps(response_data), content_type='application/json')
-
+"""
 

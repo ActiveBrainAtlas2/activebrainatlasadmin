@@ -2,7 +2,8 @@
 Some important static methods used throughout the Django project.
 """
 import numpy as np
-from neuroglancer.models import BrainRegion, AnnotationPoints, LAUREN_ID
+from neuroglancer.models import BrainRegion, LAUREN_ID, \
+            PolygonSequence, MarkedCell, StructureCom
 from brain.models import Animal, ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 MANUAL = 1
 CORRECTED = 2
 
-def align_atlas(animal, input_type_id=None, owner_id=None):
+def align_atlas(animal):
     """
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
@@ -23,12 +24,10 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
     :return: a 3x3 matrix and a 1x3 matrix
     """
 
-    atlas_centers = get_annotation_dict('atlas',
-                                     input_type_id=MANUAL,
-                                     owner_id=LAUREN_ID)
-    reference_centers = get_annotation_dict(animal,
-                                         input_type_id=input_type_id,
-                                         owner_id=owner_id)
+    atlas_centers = get_annotation_dict('atlas')
+    print('atlas centers', atlas_centers)
+    reference_centers = get_annotation_dict(animal)
+    print('atlas centers', reference_centers)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -51,12 +50,10 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
     return R, t
 
 
-def get_annotation_dict(prep_id, input_type_id=0, owner_id=None, label='COM'):
+def get_annotation_dict(prep_id, label='COM'):
     '''
     This method replaces get_centers_dict and get_layer_data_row
     :param prep_id: string name of animal
-    :param input_type_id: integer foreign key to the input_type table 
-    :param owner_id: formerly person_id, integer of the user ID
     :param label: formerly layer, the string name of the layer
     '''
     row_dict = {}
@@ -66,18 +63,14 @@ def get_annotation_dict(prep_id, input_type_id=0, owner_id=None, label='COM'):
         logger.error(f'Error, {prep_id} does not exist in DB. Method: get_annotation_dict is returning an empty dictionary.')
         return row_dict
     
-    rows = AnnotationPoints.objects.filter(animal=animal).filter(label='COM')\
-            .order_by('brain_region')
-    if input_type_id > 0:
-        rows = rows.filter(input_type_id=input_type_id)
-    if owner_id is not None:
-        rows = rows.filter(owner_id=owner_id)
+    rows = StructureCom.objects.filter(annotation_session__animal=animal)\
+            .order_by('annotation_session__brain_region')
     brain_region_dict = {}
     brain_regions = BrainRegion.objects.filter(active=True).all()
     for brain_region in brain_regions:
         brain_region_dict[brain_region.id] = brain_region.abbreviation
     for row in rows:
-        brain_region_id = row.brain_region_id
+        brain_region_id = row.annotation_session.brain_region.id
         abbreviation = brain_region_dict[brain_region_id]
         row_dict[abbreviation] = [row.x, row.y, row.z]
     return row_dict

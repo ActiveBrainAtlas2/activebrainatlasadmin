@@ -2,7 +2,7 @@ from neuroglancer.tasks import update_annotation_data
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
-from neuroglancer.models import AnnotationPoints, BrainRegion, UrlModel
+from neuroglancer.models import BrainRegion, StructureCom, UrlModel
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -53,8 +53,7 @@ class AnnotationsSerializer(serializers.Serializer):
     """
     prep_id = serializers.CharField()
     label = serializers.CharField()
-    input_type = serializers.CharField()
-    input_type_id = serializers.IntegerField()
+    source = serializers.CharField()
 
 
 class BrainRegionSerializer(serializers.ModelSerializer):
@@ -67,7 +66,7 @@ class BrainRegionSerializer(serializers.ModelSerializer):
 class AnnotationPointsSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = AnnotationPoints
+        # model = AnnotationPoints
         fields = '__all__'
 
 
@@ -75,15 +74,15 @@ class RotationModelSerializer(serializers.ModelSerializer):
     username = serializers.CharField(read_only=True, source="person__username")
 
     class Meta:
-        model = AnnotationPoints
-        fields = ['animal', 'input_type_id', 'owner_id', 'username']
+        model = StructureCom
+        fields = '__all__'
+        # fields = ['animal', 'input_type_id', 'owner_id', 'username']
 
 
 class RotationSerializer(serializers.Serializer):
     prep_id = serializers.CharField()
-    input_type = serializers.CharField()
-    owner_id = serializers.IntegerField()
-    username = serializers.CharField()
+    label = serializers.CharField()
+    source = serializers.CharField()
 
 
 class UrlSerializer(serializers.ModelSerializer):
