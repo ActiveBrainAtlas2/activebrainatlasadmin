@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 MANUAL = 1
 CORRECTED = 2
 
-def align_atlas(animal, input_type_id=None, owner_id=None):
+def align_stack_to_atlas(animal, input_type_id=None, owner_id=None,reverse = False):
     """
     This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
@@ -38,13 +38,15 @@ def align_atlas(animal, input_type_id=None, owner_id=None):
         resolution = scanRun.resolution
         reference_scales = (resolution, resolution, scanRun.zresolution)
         brain_regions = sorted(reference_centers.keys())
-        # align animal to atlas
         common_keys = atlas_centers.keys() & reference_centers.keys()
         dst_point_set = np.array([atlas_centers[s] for s in brain_regions if s in common_keys]).T
         src_point_set = np.array([reference_centers[s] for s in brain_regions if s in common_keys]).T
+        if reverse:
+            copy = dst_point_set
+            dst_point_set = src_point_set
+            src_point_set = copy
         R, t = umeyama(src_point_set, dst_point_set)
-        t = t / np.array([reference_scales]).T # production version
-
+        t = t / np.array([reference_scales]).T 
     else:
         R = np.eye(3)
         t = np.zeros((3,1))

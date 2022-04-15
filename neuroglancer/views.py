@@ -1,5 +1,5 @@
 import json
-from neuroglancer.atlas import align_atlas, get_scales
+from neuroglancer.atlas import align_stack_to_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
@@ -46,7 +46,7 @@ class AlignAtlasView(views.APIView):
         animal = serializer.validated_data['animal']
         data = {}
         # if request.user.is_authenticated and animal:
-        R, t = align_atlas(animal)
+        R, t = align_stack_to_atlas(animal)
         rl = R.tolist()
         tl = t.tolist()
         data['rotation'] = rl
@@ -160,24 +160,16 @@ class Rotation(views.APIView):
     Where DK39 is the prep_id, manual is the input_type and 2 is the owner_id
     """
 
-    def get(self, request, prep_id, input_type, owner_id,inverse = False, format=None):
+    def get(self, request, prep_id, input_type, owner_id,reverse = False, format=None):
 
         input_type_id = get_input_type_id(input_type)
         data = {}
         # if request.user.is_authenticated and animal:
-        R, t = align_atlas(prep_id, input_type_id=input_type_id,
-                           owner_id=owner_id)
-        if inverse:
-            R,t = inverse_rigid_transform(R,t)
+        R, t = align_stack_to_atlas(prep_id, input_type_id=input_type_id,
+                           owner_id=owner_id,reverse=reverse)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
         return JsonResponse(data)
-
-def inverse_rigid_transform(R,t):
-    Rt = np.linalg.inv(R)
-    tt = -Rt@t
-    return Rt,tt
-
 
 class Rotations(views.APIView):
     """
