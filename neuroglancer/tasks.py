@@ -42,7 +42,7 @@ def update_annotation_data(neuroglancerModel):
             if 'annotations' in state_layer:
                 label = str(state_layer['name']).strip()
                 if animal is not None and loggedInUser is not None and \
-                    label != 'annotation':
+                    not 'annotation' in label:
                     inactivate_annotations(animal, label)
                     # move_and_insert_annotations(animal.prep_id, state_layer, owner_id, label, verbose_name="Bulk annotation move and insert",  creator=loggedInUser)
                     # Do not remove these comments.
