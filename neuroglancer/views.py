@@ -24,7 +24,7 @@ from abakit.lib.annotation_layer import AnnotationLayer
 import os
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
+from neuroglancer.tasks import move_annotations,bulk_annotations
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -299,3 +299,24 @@ class ContoursToVolume(views.APIView):
         maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
         maker.create_neuroglancer_files(output_dir,segment_properties)
         return folder_name
+
+class SaveAnnotation(views.APIView):
+    def get(self, request, url_id,annotation_layer_name):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        found = False
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                if layeri['name'] == annotation_layer_name:
+                    prep_id = Animal.objects.get(pk=urlModel.animal).prep_id
+                    owner = urlModel.owner.id
+                    print('========================================================================================')
+                    print((prep_id,owner))
+                    move_annotations(prep_id, owner, annotation_layer_name)
+                    bulk_annotations(prep_id, layeri, owner, annotation_layer_name)
+                    found = True
+        if found:
+            return Response('success')
+        else:
+            return Response(f'layer not found {(annotation_layer_name)}')
