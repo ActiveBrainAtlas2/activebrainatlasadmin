@@ -13,6 +13,8 @@ urlpatterns = [
     path('annotations', views.Annotations.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/', views.Rotation.as_view()),
     path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>', views.Rotation.as_view()),
+    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<str:reference_scales>', views.Rotation.as_view()),
+    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>/<str:reference_scales>', views.Rotation.as_view()),
     path('rotations', views.Rotations.as_view()),
     path('landmark_list',views.LandmarkList.as_view()),
     path('annotation_status',views.AnnotationStatus.as_view(),name = 'status'),
