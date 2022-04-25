@@ -318,6 +318,8 @@ class SaveAnnotation(views.APIView):
                     prep_id = Animal.objects.get(pk=urlModel.animal).prep_id
                     owner = urlModel.owner.id
                     print('========================================================================================')
+                    print(annotation_layer_name)
+                    print(layeri)
                     print((prep_id,owner))
                     move_annotations(prep_id, owner, annotation_layer_name)
                     bulk_annotations(prep_id, layeri, owner, annotation_layer_name)

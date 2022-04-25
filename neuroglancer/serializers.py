@@ -1,4 +1,4 @@
-from neuroglancer.tasks import update_annotation_data
+# from neuroglancer.tasks import update_annotation_data
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
@@ -138,6 +138,6 @@ class UrlSerializer(serializers.ModelSerializer):
             obj.save()
         except APIException:
             logger.error('Could not save Neuroglancer model')
-        update_annotation_data(obj)
+        # update_annotation_data(obj)
         obj.url = None
         return obj
