@@ -25,6 +25,7 @@ import os
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 from neuroglancer.tasks import move_annotations,bulk_annotations
+from brain.models import ScanRun
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -169,6 +170,11 @@ class Rotation(views.APIView):
                            owner_id=owner_id,reverse=reverse==1,reference_scales = eval(reference_scales))
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
+        result = ScanRun.objects.filter(prep_id=prep_id).first()
+        if result:
+            data['resolution'] = [result.resolution,result.resolution,result.zresolution]
+        else:
+            data['resolution'] = None
         return JsonResponse(data)
 
 class Rotations(views.APIView):
