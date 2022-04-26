@@ -163,7 +163,7 @@ def move_annotations(prep_id, owner_id, label):
     # check online table
     rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
         .filter(animal=animal)\
-        .filter(label=label)
+        .filter(label=label).filter(owner=owner_id)
         
     if rows is not None and len(rows) > 0: 
         # now check the point archive table
@@ -196,7 +196,7 @@ def move_annotations(prep_id, owner_id, label):
     bulk_mgr.done()
     rows.delete()
     end = timer()
-    print(f'Bulk move took {end - start} seconds') 
+    # print(f'Bulk move took {end - start} seconds') 
 
 
 def bulk_annotations(prep_id, layer, owner_id, label):
@@ -253,7 +253,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                     ordering += 1
     bulk_mgr.done()
     end = timer()
-    print(f'Bulk insert took {end - start} seconds') 
+    # print(f'Bulk insert took {end - start} seconds') 
 
 
 def get_brain_region(annotation):

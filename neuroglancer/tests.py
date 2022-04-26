@@ -11,7 +11,8 @@ from neuroglancer.views import random_string
 from random import uniform
 import os
 from datetime import datetime
-
+import neuroglancer
+from abakit.lib.python_util import read_file
 
 class TestUrlModel(TransactionTestCase):
     client = Client()
@@ -42,7 +43,6 @@ class TestUrlModel(TransactionTestCase):
                                                    number_of_slides=100)
         if query_set is not None and len(query_set) > 0:
             self.scan_run = query_set[0]
-
             
         # input type
         try:
@@ -51,6 +51,8 @@ class TestUrlModel(TransactionTestCase):
             self.input_type = InputType.objects.create(input_type=self.input_type_name)
         if query_set is not None and len(query_set) > 0:
             self.input_type = query_set[0]
+        else:
+            self.input_type = InputType.objects.create(input_type=self.input_type_name)
         
         # brain_region    
         try:
@@ -114,7 +116,7 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotation_url_with_bad_animal(self):
-        response = self.client.get("/rotation/DK52XXX/manual/2")
+        response = self.client.get("/rotation/DK52/manual/100/")
         data = str(response.content, encoding='utf8')
         data = json.loads(data)
         translation = data['translation']
@@ -142,14 +144,8 @@ class TestUrlModel(TransactionTestCase):
 
     
     def test_rotation_url_with_good_animal(self):
-        url = f'/rotation/{self.animal.prep_id}/manual/{self.owner.id}'
-        print('url is ', url)
+        url = f'/rotation/{self.animal.prep_id}/manual/2/'
         response = self.client.get(url)
-        data = str(response.content, encoding='utf8')
-        data = json.loads(data)
-        translation = data['translation']
-        s = np.sum(translation)
-        # self.assertNotEqual(s, 0.0, msg="Translation is not equal to zero")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     
@@ -251,3 +247,27 @@ class TestUrlModel(TransactionTestCase):
         self.assertGreater(len(response.data), 1, msg="Get neuroglancer did not return valid data.")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
+    def test_was_published_recently_with_future_question(self):
+        """
+        was_published_recently() returns False for questions whose pub_date
+        is in the future.
+        """
+        print(neuroglancer.__file__)
+        test_folder = os.path.dirname(__file__)
+        ng_state_file = test_folder + '/tests/test_neuroglancer_state_volume'
+        test_neuroglancer_state = read_file(ng_state_file)
+        test_neuroglancer_state = json.loads(test_neuroglancer_state)
+        url = UrlModel(url = test_neuroglancer_state,comments='test',owner = self.owner)
+        url.save()
+        response = self.client.get(f'/save_annotations/{url.id}/test')
+        assert response.json() == 'success'
+        points = AnnotationPoints.objects.filter(animal = 'Atlas',label = 'line',owner = self.owner)
+        atlas = ScanRun.objects.filter(prep_id = 'Atlas')[0]
+        resolution = np.array([atlas.resolution,atlas.resolution,atlas.zresolution])
+        points_coord = np.floor([[i.x,i.y,i.z] for i in points])/resolution
+        answers = []
+        for i in [2,3,4]:
+            answers.append(test_neuroglancer_state['layers'][1]['annotations'][i]['pointA'])
+        answers = np.floor(answers)
+        for i in points_coord:
+            assert i in answers

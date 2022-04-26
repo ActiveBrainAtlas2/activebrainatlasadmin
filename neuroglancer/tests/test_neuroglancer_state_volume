@@ -1,0 +1,176 @@
+{
+  "dimensions": {
+    "x": [
+      4.52e-7,
+      "m"
+    ],
+    "y": [
+      4.52e-7,
+      "m"
+    ],
+    "z": [
+      0.00002,
+      "m"
+    ]
+  },
+  "position": [
+    19100.5,
+    14000.5,
+    223.5
+  ],
+  "crossSectionScale": 1,
+  "projectionScale": 65536,
+  "layers": [
+    {
+      "type": "image",
+      "source": "precomputed://https://activebrainatlas.ucsd.edu/data/Atlas/neuroglancer_data/C1",
+      "tab": "source",
+      "channelDimensions": {
+        "c^": [
+          1,
+          ""
+        ]
+      },
+      "name": "C1"
+    },
+    {
+      "type": "annotation",
+      "source": {
+        "url": "local://annotations",
+        "transform": {
+          "outputDimensions": {
+            "x": [
+              4.52e-7,
+              "m"
+            ],
+            "y": [
+              4.52e-7,
+              "m"
+            ],
+            "z": [
+              0.00002,
+              "m"
+            ]
+          }
+        }
+      },
+      "tool": "annotateVolume",
+      "annotations": [
+        {
+          "source": [
+            19135.5,
+            13882,
+            223.49996948242188
+          ],
+          "childAnnotationIds": [
+            "1a718a35a9e7fae4f02991da444943e0046149c3"
+          ],
+          "type": "volume",
+          "id": "460ae65fde328f0fb18c0f57a565e6369e1ac253",
+          "description": "line",
+          "props": [
+            "#ffff00"
+          ]
+        },
+        {
+          "source": [
+            19135.5,
+            13882,
+            223.49996948242188
+          ],
+          "childAnnotationIds": [
+            "f26b22c79695d361db6c9e1b68775f2260b31c61",
+            "aa3d2b917dff023862d4fb8f8738a947b76a42ec",
+            "245d89d7217c456d7d4ca2c77c35e8a57f2ede80"
+          ],
+          "type": "polygon",
+          "id": "1a718a35a9e7fae4f02991da444943e0046149c3",
+          "description": "line",
+          "parentAnnotationId": "460ae65fde328f0fb18c0f57a565e6369e1ac253",
+          "props": [
+            "#ffff00"
+          ]
+        },
+        {
+          "pointA": [
+            19135.5,
+            13882,
+            223.49996948242188
+          ],
+          "pointB": [
+            19092.5,
+            13977,
+            223.49996948242188
+          ],
+          "type": "line",
+          "id": "f26b22c79695d361db6c9e1b68775f2260b31c61",
+          "description": "line",
+          "parentAnnotationId": "1a718a35a9e7fae4f02991da444943e0046149c3",
+          "props": [
+            "#ffff00"
+          ]
+        },
+        {
+          "pointA": [
+            19092.5,
+            13977,
+            223.49996948242188
+          ],
+          "pointB": [
+            19288.5,
+            14026,
+            223.49996948242188
+          ],
+          "type": "line",
+          "id": "aa3d2b917dff023862d4fb8f8738a947b76a42ec",
+          "description": "line",
+          "parentAnnotationId": "1a718a35a9e7fae4f02991da444943e0046149c3",
+          "props": [
+            "#ffff00"
+          ]
+        },
+        {
+          "pointA": [
+            19288.5,
+            14026,
+            223.49996948242188
+          ],
+          "pointB": [
+            19135.5,
+            13882,
+            223.49996948242188
+          ],
+          "type": "line",
+          "id": "245d89d7217c456d7d4ca2c77c35e8a57f2ede80",
+          "description": "line",
+          "parentAnnotationId": "1a718a35a9e7fae4f02991da444943e0046149c3",
+          "props": [
+            "#ffff00"
+          ]
+        }
+      ],
+      "annotationProperties": [
+        {
+          "id": "color",
+          "type": "rgb",
+          "default": "#ffff00"
+        }
+      ],
+      "name": "test"
+    }
+  ],
+  "selectedLayer": {
+    "layer": "annotation",
+    "visible": true
+  },
+  "layout": "4panel",
+  "selection": {
+    "layers": {
+      "annotation": {
+        "annotationId": "1a718a35a9e7fae4f02991da444943e0046149c3",
+        "annotationSource": 0,
+        "annotationSubsource": "default"
+      }
+    }
+  }
+}
