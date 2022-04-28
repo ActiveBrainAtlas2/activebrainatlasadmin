@@ -4,12 +4,12 @@ from statistics import mode
 from django.contrib.auth.models import User
 from django.http import Http404
 from django.apps import apps
-from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, BrainRegion, PolygonSequence,StructureCom,PolygonSequence,MarkedCell
+from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, BrainRegion, PolygonSequence,StructureCom,PolygonSequence,MarkedCell,get_region_from_abbreviation
 from brain.models import Animal
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID
-from abakit.lib.annotation_layer import AnnotationLayer
+from abakit.lib.annotation_layer import AnnotationLayer,Annotation
 from background_task import background
 import logging
 logging.basicConfig()
@@ -36,7 +36,7 @@ class AnnotationManager:
         self.bulk_mgr = BulkCreateManager(chunk_size=100)
 
     def set_current_layer(self,state_layer):
-        assert hasattr(state_layer,'name')
+        assert 'name' in state_layer
         self.label = str(state_layer['name']).strip()
         self.current_layer = AnnotationLayer(state_layer)
     
@@ -62,7 +62,7 @@ class AnnotationManager:
 
 
     # @background(schedule=0)
-    def archive_and_insert_annotations(self, label):
+    def archive_and_insert_annotations(self):
         '''
         This is a simple method that just calls two other methods.
         The reason for this method's existence is just to make sure the CPU/time
@@ -72,28 +72,28 @@ class AnnotationManager:
         :param owner_id: int of the auth user primary key
         :param label: char string of the name of the layer
         '''
+        marked_cells = []
         for annotationi in self.current_layer.annotations:
             if annotationi.is_point():
-                marked_cells = []
                 if self.is_structure_com(annotationi):
-                    brain_region = self.get_brain_region(annotationi.get_description())
+                    brain_region = get_region_from_abbreviation(annotationi.get_description())
                     new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='STRUCTURE_COM')
                     self.add_com(annotationi,new_session)
                 else:
                     marked_cells.append(annotationi)
-                    self.add_marked_cells(marked_cells)
             if annotationi.is_polygon():
-                brain_region = self.get_brain_region('polygon')
+                brain_region = get_region_from_abbreviation('polygon')
                 new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
                 self.add_polygons(annotationi,new_session)
             if annotationi.is_volume():
-                brain_region = self.get_brain_region(annotationi.get_description())
+                brain_region = get_region_from_abbreviation(annotationi.get_description())
                 new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
                 self.add_volumes(annotationi,new_session)
-            if len(marked_cells)>0:
-                brain_region = self.get_brain_region('point')
-                new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='MARKED_CELL')
-                self.add_volumes(annotationi,new_session)
+        if len(marked_cells)>0:
+            new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='MARKED_CELL')
+            for annotationi in marked_cells:
+                brain_region = get_region_from_abbreviation('point')
+                self.add_marked_cells(annotationi,new_session)
         self.bulk_mgr.done()
     
     def is_structure_com(self,annotationi):
@@ -105,21 +105,21 @@ class AnnotationManager:
         else:
             return False
 
-    def get_parent_id_for_current_session_and_achrive_points(self,session):
-        if session is not None:
-            self.archive_annotations(session)
-            parent=session.id
+    def get_parent_id_for_current_session_and_achrive_points(self,annotation_session):
+        if annotation_session is not None:
+            self.archive_annotations(annotation_session)
+            parent=annotation_session.id
         else:
             parent = 0
         return parent
     
     def get_new_session_and_archive_points(self,brain_region,annotation_type):
-        session = self.get_existing_session(brain_region=brain_region,annotation_type=annotation_type)
-        parent = self.get_parent_id_for_current_session_and_achrive_points(session)
+        annotation_session = self.get_existing_session(brain_region=brain_region,annotation_type=annotation_type)
+        parent = self.get_parent_id_for_current_session_and_achrive_points(annotation_session)
         new_session = self.create_new_session(brain_region=brain_region,annotation_type=annotation_type,parent=parent)
         return new_session
         
-    def archive_annotations(self,session:AnnotationSession):
+    def archive_annotations(self,annotation_session:AnnotationSession):
         '''
         Move existing annotations into the archive. First we get the existing
         rows and then we insert those into the archive table. This is a background
@@ -133,43 +133,42 @@ class AnnotationManager:
         an appropriate parent in archive_set. After we get the animal,
         we need to create an archive
         '''
-        data_model = session.get_session_model()
-        rows = data_model.objects.filter(annotation_session__id=session.id)    
-        field_names = [f.name for f in data_model._meta.get_fields() if not f.name =='active']
+        data_model = annotation_session.get_session_model()
+        rows = data_model.objects.filter(annotation_session__id=annotation_session.id)    
+        field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
         if rows is not None and len(rows) > 0: 
             for row in rows:
                 fields = [getattr(row,namei) for namei in field_names]
                 input = dict(zip(field_names,fields))
-                self.bulk_mgr.add(AnnotationPointArchive(**input,active = 0))
+                self.bulk_mgr.add(AnnotationPointArchive(**input))
         self.bulk_mgr.done()
         rows.delete()
 
-    def add_com(self,annotationi,session):
+    def add_com(self,annotationi:Annotation,annotation_session:AnnotationSession):
         x, y, z = annotationi.coord * self.scales
-        self.bulk_mgr.add(StructureCom(annotation_session=session,
+        self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                         source='MANUAL', x=x, y=y, z=z))
     
-    def add_marked_cells(self,annotationi,session,label):
+    def add_marked_cells(self,annotationi:Annotation,annotation_session:AnnotationSession):
         x, y, z = annotationi.coord * self.scales
-        self.bulk_mgr.add(MarkedCell(annotation_session=session,
-                        label=label, x=x, y=y, z=z))
+        self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,source='HUMAN-POSITIVE', x=x, y=y, z=z))
     
-    def add_polygons(self,annotationi,session):
+    def add_polygons(self,annotationi:Annotation,annotation_session:AnnotationSession):
         z = mode([ int(np.floor(pointi.coord_start[2]) * self.z_scale) for pointi in annotationi.childs])
         ordering = 1
         for pointi in annotationi.childs:
             xa, ya, _ = pointi.coord_start * self.scales
-            self.bulk_mgr.add(PolygonSequence(annotation_session=session,x=xa, y=ya, z=z, point_order=ordering, polygon_index=1))
+            self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,x=xa, y=ya, z=z, point_order=ordering, polygon_index=1))
             ordering+=1
     
-    def add_volumes(self,annotationi,session):
+    def add_volumes(self,annotationi:Annotation,annotation_session:AnnotationSession):
         polygon_index = 1
         for polygoni in annotationi.childs:
             ordering = 1
             z = mode([ int(np.floor(coord.coord_start[2]) * self.z_scale) for coord in polygoni.childs])
             for childi in polygoni.childs:
                 xa, ya, _ = childi.coord_start * self.scales
-                self.bulk_mgr.add(PolygonSequence(annotation_session=session,
+                self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,
                                                     x=xa, y=ya, z=z, point_order=ordering, polygon_index=polygon_index))
                 ordering += 1
             polygon_index+=1
@@ -202,17 +201,17 @@ def restore_annotations(session_id):
     :param label: char staring of layer name
     '''
     try:
-        session = AnnotationSession.objects.get(pk=session_id)
+        annotation_session = AnnotationSession.objects.get(pk=session_id)
     except AnnotationSession.DoesNotExist:
-        print('No session to fetch')
+        print('No annotation_session to fetch')
         raise Http404
-    data_model = session.get_session_model()
-    data_model.objects.filter(annotation_session=session).filter(active=True).delete()
-    field_names = [f.name for f in data_model._meta.get_fields() if not f.name =='active']
-    rows = AnnotationPointArchive.objects.filter(session=session)
+    data_model = annotation_session.get_session_model()
+    data_model.objects.filter(annotation_session=annotation_session).delete()
+    field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
+    rows = AnnotationPointArchive.objects.filter(annotation_session=annotation_session)
     bulk_mgr = BulkCreateManager(chunk_size=100)
     for row in rows:
         fields = [getattr(row,namei) for namei in field_names]
         input = dict(zip(field_names,fields))
-        bulk_mgr.add(data_model(**input,active = 1))
+        bulk_mgr.add(data_model(**input))
     bulk_mgr.done()

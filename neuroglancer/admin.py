@@ -16,12 +16,12 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, \
-        AnnotationSession, AnnotationPointArchive, ArchiveSet, \
+        AnnotationSession, AnnotationPointArchive, \
         UrlModel,  BrainRegion, Points, \
         PolygonSequence, MarkedCell, StructureCom
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
-from neuroglancer.tasks import restore_annotations
+from neuroglancer.AnnotationManager import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
@@ -62,7 +62,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:33681"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -71,7 +71,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_multiuser(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng_multi"
         if settings.DEBUG:
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:33681"
 
         comments = "Testing"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
@@ -202,21 +202,21 @@ make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(MarkedCell)
 class MarkedCellAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
+    ordering = ['source', 'z']
+    search_fields = ['source']
 
 @admin.register(PolygonSequence)
 class PolygonSequenceAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
+    ordering = ['source', 'z']
+    search_fields = ['source']
 
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
+    ordering = ['source', 'z']
+    search_fields = ['source']
 
 """
 @admin.register(AnnotationPointArchive)
@@ -247,19 +247,19 @@ def restore_archive(modeladmin, request, queryset):
         restore_annotations(archive.id, archive.animal.prep_id, archive.label)
         messages.info(request, f'The {archive.label} layer for {archive.animal.prep_id} has been restored. ID={archive.id}')
             
-@admin.register(ArchiveSet)
-class ArchiveSetAdmin(AtlasAdminModel):
-    list_display = ['animal', 'label', 'created', 'updatedby', 'archive_count']
-    ordering = ['animal', 'label', 'parent', 'created', 'updatedby']
-    list_filter = ['created']
-    search_fields = ['animal', 'label']
-    actions = [restore_archive]
+# @admin.register(ArchiveSet)
+# class ArchiveSetAdmin(AtlasAdminModel):
+#     list_display = ['animal', 'label', 'created', 'updatedby', 'archive_count']
+#     ordering = ['animal', 'label', 'parent', 'created', 'updatedby']
+#     list_filter = ['created']
+#     search_fields = ['animal', 'label']
+#     actions = [restore_archive]
     
-    def archive_count(self, obj):
-        count = AnnotationPointArchive.objects.filter(archive=obj).count()
-        return count
+#     def archive_count(self, obj):
+#         count = AnnotationPointArchive.objects.filter(archive=obj).count()
+#         return count
 
-    archive_count.short_description = "# Points"
+#     archive_count.short_description = "# Points"
 
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

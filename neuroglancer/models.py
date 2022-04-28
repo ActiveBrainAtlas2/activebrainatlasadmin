@@ -95,7 +95,6 @@ class UrlModel(models.Model):
                 result = dfs[0]
             else:
                 result = pd.concat(dfs)
-
         return result
 
     @property
@@ -108,7 +107,6 @@ class UrlModel(models.Model):
                 if 'annotations' in layer:
                     layer_name = layer['name']
                     layer_list.append(layer_name)
-
         return layer_list
 
     class Meta:
@@ -169,6 +167,9 @@ class BrainRegion(AtlasModel):
     def __str__(self):
         return f'{self.description} {self.abbreviation}'
     
+def get_region_from_abbreviation(abbreviation):
+    return BrainRegion.objects.filter(abbreviation=abbreviation).first()
+    
 class AnnotationSession(models.Model):
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
@@ -215,7 +216,6 @@ class AnnotationAbstract(models.Model):
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
-    active = models.BooleanField(default = True, db_column='active')
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
     
@@ -287,16 +287,13 @@ class StructureCom(AnnotationAbstract):
 
 
 class AnnotationPointArchive(AnnotationAbstract):
-    session = models.ForeignKey(AnnotationSession, models.CASCADE, 
-                               verbose_name="Annotation Session", blank=False, null=False, 
-                               db_column='FK_archive_set_id')
     class Meta:
         managed = False
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
         constraints = [
-                models.UniqueConstraint(fields=['annotation_session', 'archive'], name='unique backup')
+                models.UniqueConstraint(fields=['annotation_session'], name='unique backup')
             ]        
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.label)
@@ -330,8 +327,6 @@ class BrainShape(AtlasModel):
         '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(pngfile) )
     
     midsection.short_description = 'Midsection'
-
-
 
 class AlignmentScore(models.Model):
     class Meta:
