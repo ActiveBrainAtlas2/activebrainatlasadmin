@@ -17,7 +17,7 @@ The preprocesing pipeline turns Zeiss microscope images in CZI format to the Seu
 
 --No Tests so far
 
-## Abakit
+## Abakit   (Yoav: What is Abakit?)
 Abakit contains a set of commonly used tool in both Django and Pre-processing repository.  The modules include main classes in Atlas creation, contouring, brain registration and transforamation.
 
 {[test_ng_segment_maker.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_ng_segment_maker.py)}  Tests the ability Ng segment maker class that turns a 3D mask array into the Seung lab precomputed segmentation layer format.  A segmentation layer is a neuroglancer layer that displays 3D volumes.  The test create a mockup 3D volume, turns it into the precomputed format, and check that the correct set of folders are created.
