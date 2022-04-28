@@ -256,10 +256,9 @@ class TestUrlModel(TransactionTestCase):
         self.assertGreater(len(response.data), 1, msg="Get neuroglancer did not return valid data.")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
     
-    def test_was_published_recently_with_future_question(self):
+    def test_polygon_saving(self):
         """
-        was_published_recently() returns False for questions whose pub_date
-        is in the future.
+        This test saves a neuroglancer state with a test volume, and checks that the volume points are saved correctly in the annotation points table
         """
         print(neuroglancer.__file__)
         test_folder = os.path.dirname(__file__)
