@@ -83,14 +83,17 @@ class TestUrlModel(TransactionTestCase):
         self.lauren.save()
 
     def test_neuroglancer_url(self):
+        '''Tests the API endpoint that returns a list of available neuroglancer urls'''
         response = self.client.get("/neuroglancer")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotations_url(self):
+        '''Tests the API endpoint that returns a list of available transformations'''
         response = self.client.get("/rotations")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_annotations_url(self):
+        '''Tests API endpoint that query available annotations '''
         label = 'XXX'
         for com in self.coms:
             brain_region = BrainRegion.objects.get(pk=com)
@@ -114,6 +117,7 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_rotation_url_with_bad_animal(self):
+        '''Tests the API endpoint with a nonexistant animal and checks that the identity transform is returned'''
         response = self.client.get("/rotation/DK52XXX/manual/2")
         data = str(response.content, encoding='utf8')
         data = json.loads(data)
@@ -123,6 +127,7 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     def test_create_annotation(self):
+        '''Tests the ability to add annotations '''
         n = 10
         for _ in range(n):
             x = uniform(0, 65000)
@@ -137,11 +142,13 @@ class TestUrlModel(TransactionTestCase):
         self.assertGreaterEqual(c, n, msg=f'Error: Annotation point table has less than {n} entries.')
         
     def test_brain_region_count(self):
+        '''Tests that there is entry in the BrainRegion table'''
         n = BrainRegion.objects.count()
         self.assertGreater(n, 0, msg='Error: Brain region table is empty')
 
     
     def test_rotation_url_with_good_animal(self):
+        '''Tests the API endpoint that returns a specific transformation'''
         url = f'/rotation/{self.animal.prep_id}/manual/{self.owner.id}'
         print('url is ', url)
         response = self.client.get(url)
@@ -154,6 +161,7 @@ class TestUrlModel(TransactionTestCase):
         
     
     def test_annotation_url(self):
+        '''Tests the saving of one url and the corresponding annotations'''
         label = 'premotor'
         n = 10
         for _ in range(n):
@@ -176,6 +184,7 @@ class TestUrlModel(TransactionTestCase):
 
     
     def test_annotation_Atlas_url(self):
+        '''Tests the that the number of atlas coms is as expected'''
         label = 'COM'
         AnnotationPoints.objects\
             .filter(animal=self.atlas)\
