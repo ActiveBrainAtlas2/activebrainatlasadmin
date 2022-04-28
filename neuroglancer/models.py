@@ -188,13 +188,29 @@ class AnnotationSession(models.Model):
 
     def __str__(self):
         return f'{self.animal} {self.brain_region} {self.annotation_type}'
+    
+    def is_polygon_sequence(self):
+        return self.annotation_type == 'POLYGON_SEQUENCE'
+    
+    def is_marked_cell(self):
+        return self.annotation_type == 'MARKED_CELL'
+    
+    def is_structure_com(self):
+        return self.annotation_type == 'STRUCTURE_COM'
+    
+    def get_session_model(self):
+        if self.is_polygon_sequence():
+            return PolygonSequence
+        elif self.is_marked_cell():
+            return MarkedCell
+        elif self.is_structure_com():
+            return StructureCom
 
 class AnnotationAbstract(models.Model):
     '''
     Abstract model for the 3 new annotation data models
     '''
     id = models.BigAutoField(primary_key=True)
-    label = models.CharField(max_length=255)
     source = models.CharField(max_length=255)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
@@ -205,38 +221,6 @@ class AnnotationAbstract(models.Model):
     
     class Meta:
         abstract = True
-
-
-class ArchiveSet(models.Model):
-    '''
-    ANTICIPATED OPERATION: 
-    1) USER SAVES ANNOTATION POINTS IN NEUROGLANCER 
-    2) NEW ENTRY IN archive_set TABLE (PARENT 'archive_id' - 0 IF FIRST; UPDATE USER; TIMESTAMP ) 
-    3) ALL CURRENT POINTS FOR USER ARE MOVED TO annotations_points_archive 
-    4) NEW POINTS ARE ADDED TO annotations_points *    
-    - CONSIDERATIONS: *      
-        A) IF LATENCY -> DB MODIFICATIONS MAY BE QUEUED AND MADE VIA CRON JOB (DURING OFF-PEAK)
-        B) annotations_points_archive, archive_sets WILL NOT BE STORED ON LIVE DB
-    #2 - INSERT entry into archive_sets table   
-    This will store the versioning  is the 
-    'SELECT INTO' with concurrent/subsequent entry into #2 (archive_sets table).  
-    After INSERT, we should receive the id of the insert (id field).  
-    This will be the unique key to identify an archive set.
-    '''
-    id = models.BigAutoField(primary_key=True)
-    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    label = models.CharField(max_length=255)
-    created = models.DateTimeField(auto_now_add=True)
-    parent =  models.IntegerField(db_column='FK_parent')
-    updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, 
-                               verbose_name="Updated by", blank=False, null=False, 
-                               db_column='FK_update_user_id')
-    class Meta:
-        managed = False
-        db_table = 'archive_set'
-        verbose_name = 'Archive set'
-        verbose_name_plural = 'Archive sets'
-
 
 class MarkedCell(AnnotationAbstract):
 
@@ -263,7 +247,6 @@ class MarkedCell(AnnotationAbstract):
 class PolygonSequence(AnnotationAbstract):
     polygon_index = models.CharField(max_length=40, blank=True, null=True)
     point_order = models.IntegerField(blank=False, null=False, default=0)
-
     class SourceChoices(models.TextChoices):
             NA = 'NA', gettext_lazy('NA')
 
@@ -304,10 +287,9 @@ class StructureCom(AnnotationAbstract):
 
 
 class AnnotationPointArchive(AnnotationAbstract):
-    archive = models.ForeignKey(ArchiveSet, models.CASCADE, 
-                               verbose_name="Archive Set", blank=False, null=False, 
+    session = models.ForeignKey(AnnotationSession, models.CASCADE, 
+                               verbose_name="Annotation Session", blank=False, null=False, 
                                db_column='FK_archive_set_id')
-
     class Meta:
         managed = False
         db_table = 'annotations_point_archive'
@@ -318,6 +300,9 @@ class AnnotationPointArchive(AnnotationAbstract):
             ]        
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.label)
+    polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
+    point_order = models.IntegerField(blank=False, null=False, default=0)
+    source = models.CharField(max_length=255)
 
 class BrainShape(AtlasModel):
     id = models.BigAutoField(primary_key=True)

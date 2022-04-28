@@ -106,7 +106,7 @@ class UrlSerializer(serializers.ModelSerializer):
         )
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            obj = self.take_care_of_owner(obj, owner)
+            obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
     def update(self, obj, validated_data):
@@ -118,10 +118,10 @@ class UrlSerializer(serializers.ModelSerializer):
         obj.comments = validated_data.get('comments', obj.comments)
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            obj = self.take_care_of_owner(obj, owner)
+            obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
-    def take_care_of_owner(self, obj, owner):
+    def save_neuroglancer_state(self, obj, owner):
         '''
         Takes care of tasks that are in both create and update
         :param obj: the neuroglancerModel object
@@ -136,6 +136,5 @@ class UrlSerializer(serializers.ModelSerializer):
             obj.save()
         except APIException:
             logger.error('Could not save Neuroglancer model')
-        update_annotation_data(obj)
         obj.url = None
         return obj

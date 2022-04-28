@@ -5,9 +5,7 @@ from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
-from django.http import Http404
 from django.apps import apps
-
 import numpy as np
 from neuroglancer.models import Animal
 from neuroglancer.serializers import AnimalInputSerializer, \
@@ -15,12 +13,13 @@ from neuroglancer.serializers import AnimalInputSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom
 from neuroglancer.annotation_controller import create_polygons, random_string    
-    
+from abakit.lib.annotation_layer import AnnotationLayer
+from abakit.atlas.VolumeMaker import VolumeMaker
+from abakit.atlas.NgSegmentMaker import NgConverter
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-
+from neuroglancer.AnnotationManager import AnnotationManager
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -229,3 +228,49 @@ class AnnotationStatus(views.APIView):
             'brain_regions': list_of_landmarks_name, 'counts': counts})
         
         # return HttpResponse(has_annotation)
+
+class ContoursToVolume(views.APIView):
+    def get(self, request, url_id,volume_id):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                layer = AnnotationLayer(layeri)
+                volume = layer.get_annotation_with_id(volume_id)
+                if volume is not None:
+                    break
+        folder_name = self.make_volumes(volume,urlModel.animal)
+        segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
+        return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
+
+    def make_volumes(self,volume,animal = 'DK55'):
+        vmaker = VolumeMaker(animal,check_path = False)
+        structure,contours = volume.get_volume_name_and_contours()
+        vmaker.set_aligned_contours({structure:contours})
+        vmaker.compute_COMs_origins_and_volumes()
+        res = vmaker.get_resolution()
+        segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
+        folder_name = f'{animal}_{structure}'
+        output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
+        maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
+        maker.create_neuroglancer_files(output_dir,segment_properties)
+        return folder_name
+
+class SaveAnnotation(views.APIView):
+    def get(self, request, url_id,annotation_layer_name):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        found = False
+        manager = AnnotationManager(urlModel)
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                if layeri['name'] == annotation_layer_name:
+                    manager.set_current_layer(layeri)
+                    manager.update_data_in_current_layer()
+                    found = True
+        if found:
+            return Response('success')
+        else:
+            return Response(f'layer not found {(annotation_layer_name)}')
