@@ -10,7 +10,7 @@ The Django repository consists of individual apps. The functions of each and the
 ### Neuroglancer App
    Handles the storage of neuroglancer session states, parses and stores the user annotations created in these sessions.  
 
-{[test.py](https://github.com/ActiveBrainAtlas2/activebrainatlasadmin/blob/master/neuroglancer/tests.py)}  Tests various API end points related to querying the list of available neuroglancer states, annotations, transformations and add user annotations.  See details in documentations
+{[test.py](https://github.com/ActiveBrainAtlas2/activebrainatlasadmin/blob/master/neuroglancer/tests.py)}  Tests various API end points related to querying the list of available neuroglancer states, annotations, transformations and add user annotations.  See details in documentations  Yoav design document no1
 
 ## Pre-processing Pipeline
 The preprocesing pipeline turns Zeiss microscope images in CZI format to the Seung lab precomputed neuroglancer formats 
@@ -20,10 +20,10 @@ The preprocesing pipeline turns Zeiss microscope images in CZI format to the Seu
 ## Abakit   (Yoav: What is Abakit?)
 Abakit contains a set of commonly used tool in both Django and Pre-processing repository.  The modules include main classes in Atlas creation, contouring, brain registration and transforamation.
 
-{[test_ng_segment_maker.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_ng_segment_maker.py)}  Tests the ability Ng segment maker class that turns a 3D mask array into the Seung lab precomputed segmentation layer format.  A segmentation layer is a neuroglancer layer that displays 3D volumes.  The test create a mockup 3D volume, turns it into the precomputed format, and check that the correct set of folders are created.
+{[test_ng_segment_maker.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_ng_segment_maker.py)}  Tests the ability Ng segment maker class that turns a 3D mask array into the Seung lab precomputed segmentation layer format.  A segmentation layer is a neuroglancer layer that displays 3D volumes.  The test create a mockup 3D volume, turns it into the precomputed format, and check that the correct set of folders are created. Yoav design document no7
 
-{[test_volume_maker.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_maker.py)}  Tests the VolumeMaker class which turns a set of contours to a 3D mask.  The class finds the smallest bounding box for the shape and returns a origin in the same coordinate of the contours that signals where the 3D mask should be placed.  The test create a set of mockup contours and checks if the correct 3d mask is created.
+{[test_volume_maker.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_maker.py)}  Tests the VolumeMaker class which turns a set of contours to a 3D mask.  The class finds the smallest bounding box for the shape and returns a origin in the same coordinate of the contours that signals where the 3D mask should be placed.  The test create a set of mockup contours and checks if the correct 3d mask is created. Yoav design document no2
 
-{[test_volume_to_contour.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_to_contour.py)}  Tests the VolumeToContour class which turns a 3D mask to a set of contours.  The test create a mockup volume and checks if the correct contours are generated.
+{[test_volume_to_contour.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_to_contour.py)}  Tests the VolumeToContour class which turns a 3D mask to a set of contours.  The test create a mockup volume and checks if the correct contours are generated. Yoav design document no3
 
-{[test_transformation.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_to_contour.py)} Tests the transformation class used to store the Stack to Atlas or Atlas to Stack transforms.  The test retrives one of the transformation from the database, applies the forward and reverse transform to a group of random points, and check if the same points are recovered.
+{[test_transformation.py](https://github.com/ActiveBrainAtlas2/abakit/blob/master/src/abakit/atlas/tests/test_volume_to_contour.py)} Tests the transformation class used to store the Stack to Atlas or Atlas to Stack transforms.  The test retrives one of the transformation from the database, applies the forward and reverse transform to a group of random points, and check if the same points are recovered. Yoav design document no5
