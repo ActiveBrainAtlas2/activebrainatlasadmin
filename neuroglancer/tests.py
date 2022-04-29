@@ -261,6 +261,8 @@ class TestUrlModel(TransactionTestCase):
         This test saves a neuroglancer state with a test volume, and checks that the volume points are saved correctly in the annotation points table
         """
         print(neuroglancer.__file__)
+        points = AnnotationPoints.objects.filter(animal = 'Atlas',label = 'line',owner = self.owner)
+        points.delete()
         test_folder = os.path.dirname(__file__)
         ng_state_file = test_folder + '/tests/test_neuroglancer_state_volume'
         test_neuroglancer_state = read_file(ng_state_file)
