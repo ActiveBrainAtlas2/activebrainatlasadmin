@@ -163,7 +163,7 @@ def move_annotations(prep_id, owner_id, label):
     # check online table
     rows = AnnotationPoints.objects.filter(input_type__id=MANUAL)\
         .filter(animal=animal)\
-        .filter(label=label).filter(owner=owner_id)
+        .filter(label=label).filter(owner=loggedInUser)
         
     if rows is not None and len(rows) > 0: 
         # now check the point archive table
@@ -194,6 +194,7 @@ def move_annotations(prep_id, owner_id, label):
             label=row.label, polygon_id=row.polygon_id, owner=row.owner, input_type=row.input_type, volume_id=row.volume_id,
             x=row.x, y=row.y, z=row.z, archive=archive, ordering=row.ordering))
     bulk_mgr.done()
+    print(f'{len(rows)} rows deleted')
     rows.delete()
     end = timer()
     # print(f'Bulk move took {end - start} seconds') 
