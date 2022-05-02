@@ -240,7 +240,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
                 ordering += 1
         if annotation._type == 'volume':
             volume_label = annotation.description
-            move_annotations(animal, owner_id, volume_label)
+            move_annotations(prep_id, owner_id, volume_label)
             volume_id = annotation.id
             for polygoni in annotation.childs:
                 polygon_id = polygoni.id
