@@ -218,7 +218,18 @@ class AnnotationAbstract(models.Model):
     z = models.FloatField(verbose_name="Z (um)")
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
-    
+    @property
+    def animal(self):
+        return '%s'%self.annotation_session.animal.prep_id
+    @property
+    def brain_region(self):
+        return '%s'%self.annotation_session.brain_region.abbreviation
+    @property
+    def annotator(self):
+        return '%s'%self.annotation_session.annotator.username
+    @property
+    def created(self):
+        return '%s'%self.annotation_session.created
     class Meta:
         abstract = True
 
@@ -263,7 +274,7 @@ class PolygonSequence(AnnotationAbstract):
         verbose_name_plural = 'Polygon sequences'
 
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
 
 class StructureCom(AnnotationAbstract):
     class SourceChoices(models.TextChoices):
@@ -283,7 +294,7 @@ class StructureCom(AnnotationAbstract):
         verbose_name_plural = 'Structure COMs'
 
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
 
 
 class AnnotationPointArchive(AnnotationAbstract):
@@ -296,7 +307,7 @@ class AnnotationPointArchive(AnnotationAbstract):
                 models.UniqueConstraint(fields=['annotation_session'], name='unique backup')
             ]        
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
     polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
     point_order = models.IntegerField(blank=False, null=False, default=0)
     source = models.CharField(max_length=255)
