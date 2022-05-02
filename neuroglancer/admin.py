@@ -174,10 +174,6 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-@admin.register(AnnotationSession)
-class AnnotationSessionAdmin(AtlasAdminModel, ExportCsvMixin):
-    list_display = ('animal', 'brain_region', 'annotator', 'created')
-
 @admin.register(BrainRegion)
 class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
@@ -202,21 +198,21 @@ make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(MarkedCell)
 class MarkedCellAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
-    ordering = ['source', 'z']
-    search_fields = ['source']
+    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    search_fields = ('animal','annotator','brain_region', 'source','created')
 
 @admin.register(PolygonSequence)
 class PolygonSequenceAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
-    ordering = ['source', 'z']
-    search_fields = ['source']
+    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    search_fields = ('animal','annotator','brain_region', 'source','created')
 
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'source', 'x', 'y', 'z')
-    ordering = ['source', 'z']
-    search_fields = ['source']
+    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    search_fields = ('animal','annotator','brain_region', 'source','created')
 
 """
 @admin.register(AnnotationPointArchive)
@@ -247,19 +243,19 @@ def restore_archive(modeladmin, request, queryset):
         restore_annotations(archive.id, archive.animal.prep_id, archive.label)
         messages.info(request, f'The {archive.label} layer for {archive.animal.prep_id} has been restored. ID={archive.id}')
             
-# @admin.register(ArchiveSet)
-# class ArchiveSetAdmin(AtlasAdminModel):
-#     list_display = ['animal', 'label', 'created', 'updatedby', 'archive_count']
-#     ordering = ['animal', 'label', 'parent', 'created', 'updatedby']
-#     list_filter = ['created']
-#     search_fields = ['animal', 'label']
-#     actions = [restore_archive]
-    
-#     def archive_count(self, obj):
-#         count = AnnotationPointArchive.objects.filter(archive=obj).count()
-#         return count
 
-#     archive_count.short_description = "# Points"
+@admin.register(AnnotationSession)
+class AnnotationSessionAdmin(AtlasAdminModel):
+    list_display = ['animal', 'annotation_type', 'created','annotator','archive_count']
+    ordering = ['animal', 'annotation_type', 'parent', 'created','annotator']
+    list_filter = ['animal', 'annotation_type', 'created','annotator']
+    search_fields = ['animal', 'annotation_type','annotator']
+    actions = [restore_archive]
+    
+    def archive_count(self, obj):
+        count = AnnotationPointArchive.objects.filter(annotation_session=obj).count()
+        return count
+    archive_count.short_description = "# Points"
 
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):

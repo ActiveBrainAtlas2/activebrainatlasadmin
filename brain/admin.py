@@ -66,7 +66,6 @@ class AtlasAdminModel(admin.ModelAdmin):
             'all': ('admin/css/thumbnail.css',)
         }
 
-
 @admin.register(Animal)
 class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('prep_id', 'comments', 'histogram', 'created')
