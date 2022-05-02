@@ -180,7 +180,7 @@ class AnnotationSession(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
-
+    active = models.IntegerField(default=0)
     class Meta:
         managed = False
         db_table = 'annotation_session'
