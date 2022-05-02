@@ -20,4 +20,5 @@ urlpatterns = [
     path('annotation_status',views.AnnotationStatus.as_view(),name = 'status'),
     path('contour_to_segmentation/<int:url_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
     path('save_annotations/<int:url_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),
+    path('cell_types',views.GetCellTypes.as_view(),name = 'cell_types'),
 ]

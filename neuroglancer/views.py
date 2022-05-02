@@ -11,7 +11,7 @@ from neuroglancer.models import Animal
 from neuroglancer.serializers import AnimalInputSerializer, \
     AnnotationSerializer, AnnotationsSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
-from neuroglancer.models import UrlModel, BrainRegion, StructureCom
+from neuroglancer.models import UrlModel, BrainRegion, StructureCom,CellType
 from neuroglancer.annotation_controller import create_polygons, random_string    
 from abakit.lib.annotation_layer import AnnotationLayer
 from abakit.atlas.VolumeMaker import VolumeMaker
@@ -274,3 +274,10 @@ class SaveAnnotation(views.APIView):
             return Response('success')
         else:
             return Response(f'layer not found {(annotation_layer_name)}')
+
+class GetCellTypes(views.APIView):
+    def get(self, request, format=None):
+        data = {}
+        cell_types = CellType.objects.filter(active=True).all()
+        data['cell_type'] = [i.cell_type for i in cell_types]
+        return JsonResponse(data)
