@@ -116,6 +116,8 @@ class AnnotationManager:
     def get_new_session_and_archive_points(self,brain_region,annotation_type):
         annotation_session = self.get_existing_session(brain_region=brain_region,annotation_type=annotation_type)
         parent = self.get_parent_id_for_current_session_and_achrive_points(annotation_session)
+        parent.active = 0
+        parent.save()
         new_session = self.create_new_session(brain_region=brain_region,annotation_type=annotation_type,parent=parent)
         return new_session
         
