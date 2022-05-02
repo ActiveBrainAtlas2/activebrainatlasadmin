@@ -241,10 +241,10 @@ def bulk_annotations(prep_id, layer, owner_id, label):
             volume_label = annotation.description
             move_annotations(animal, owner_id, volume_label)
             volume_id = annotation.id
-            ordering = 1
             for polygoni in annotation.childs:
                 polygon_id = polygoni.id
                 z = mode([ int(np.floor(coord.coord_start[2]) * z_scale) for coord in polygoni.childs])
+                ordering = 1
                 for childi in polygoni.childs:
                     xa, ya, _ = childi.coord_start * scales
                     bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=polygon_structure,
