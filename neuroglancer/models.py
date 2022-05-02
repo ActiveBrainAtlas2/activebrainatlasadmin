@@ -151,6 +151,20 @@ class Points(UrlModel):
         verbose_name = 'Points'
         verbose_name_plural = 'Points'
 
+class CellType(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    cell_type = models.CharField(max_length=200)
+    description = models.TextField(max_length=2001, blank=False, null=False)
+    active = models.IntegerField(default=0)
+    created = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        managed = False
+        db_table = 'cell_type'
+        verbose_name = 'Cell Type'
+        verbose_name_plural = 'Cell Types'
+    def __str__(self):
+        return f'{self.cell_type}'
+
 class BrainRegion(AtlasModel):
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
@@ -212,7 +226,7 @@ class AnnotationAbstract(models.Model):
     Abstract model for the 3 new annotation data models
     '''
     id = models.BigAutoField(primary_key=True)
-    source = models.CharField(max_length=255)
+    # source = models.CharField(max_length=255)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
@@ -236,16 +250,18 @@ class AnnotationAbstract(models.Model):
 class MarkedCell(AnnotationAbstract):
 
     class SourceChoices(models.TextChoices):
-            MACHINE_SURE = 'MACHINE-SURE', gettext_lazy('MACHINE-SURE')
-            MACHINE_UNSURE = 'MACHINE-UNSURE', gettext_lazy('MACHINE-UNSURE')
-            HUMAN_POSITIVE = 'HUMAN-POSITIVE', gettext_lazy('HUMAN-POSITIVE')
-            HUMAN_NEGATIVE = 'HUMAN-NEGATIVE', gettext_lazy('HUMAN-NEGATIVE')
+            MACHINE_SURE = 'MACHINE_SURE', gettext_lazy('Machine Sure')
+            MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
+            HUMAN_POSITIVE = 'HUMAN_POSITIVE', gettext_lazy('Human Positive')
+            HUMAN_NEGATIVE = 'HUMAN_NEGATIVE', gettext_lazy('Human Negative')
 
     source = models.CharField(
         max_length=25,
         choices=SourceChoices.choices,
         default=SourceChoices.MACHINE_SURE,
     )    
+    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
+                               verbose_name="Cell Type", blank=False, null=False)
     class Meta:
         managed = False
         db_table = 'marked_cells'

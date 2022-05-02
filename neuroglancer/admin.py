@@ -198,21 +198,31 @@ make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(MarkedCell)
 class MarkedCellAdmin(admin.ModelAdmin):
-    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    list_display = ('animal','annotator','cell_type','brain_region', 'x', 'y', 'z', 'source','created')
+    # list_filter = ['cell_type']
     # ordering = ('animal','annotator','brain_region', 'source','created')
-    search_fields = ('animal','annotator','brain_region', 'source','created')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    list_filter = ['cell_type__cell_type','source']
 
 @admin.register(PolygonSequence)
 class PolygonSequenceAdmin(admin.ModelAdmin):
     list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
     # ordering = ('animal','annotator','brain_region', 'source','created')
-    search_fields = ('animal','annotator','brain_region', 'source','created')
+    # list_filter = ['animal', 'annotator', 'brain_region','source']
+    # list_display = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'source')
+
 
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
     list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # list_filter = ['animal', 'annotator', 'brain_region','source']
     # ordering = ('animal','annotator','brain_region', 'source','created')
-    search_fields = ('animal','annotator','brain_region', 'source','created')
+    # list_display = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'source')
 
 """
 @admin.register(AnnotationPointArchive)
