@@ -179,7 +179,7 @@ class AnnotationSession(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
-
+    active = models.BooleanField(default = True, db_column='active')
     class Meta:
         managed = False
         db_table = 'annotation_session'
@@ -199,7 +199,6 @@ class AnnotationAbstract(models.Model):
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
-    active = models.BooleanField(default = True, db_column='active')
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
     
@@ -237,26 +236,30 @@ class ArchiveSet(models.Model):
         verbose_name = 'Archive set'
         verbose_name_plural = 'Archive sets'
 
+class CellType(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    cell_type = models.CharField(max_length=25)
+    description = models.CharField(max_length=255)
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True)
 
 class MarkedCell(AnnotationAbstract):
-
     class SourceChoices(models.TextChoices):
             MACHINE_SURE = 'MACHINE-SURE', gettext_lazy('MACHINE-SURE')
             MACHINE_UNSURE = 'MACHINE-UNSURE', gettext_lazy('MACHINE-UNSURE')
             HUMAN_POSITIVE = 'HUMAN-POSITIVE', gettext_lazy('HUMAN-POSITIVE')
             HUMAN_NEGATIVE = 'HUMAN-NEGATIVE', gettext_lazy('HUMAN-NEGATIVE')
-
     source = models.CharField(
         max_length=25,
         choices=SourceChoices.choices,
         default=SourceChoices.MACHINE_SURE,
     )    
+    cell_type = models.ForeignKey(CellType, models.CASCADE, null=True, db_column="FK_cell_type_id", verbose_name="Cell Type")
     class Meta:
         managed = False
         db_table = 'marked_cells'
         verbose_name = 'Marked cell'
         verbose_name_plural = 'Marked cells'
-
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.label)
 
@@ -281,6 +284,7 @@ class PolygonSequence(AnnotationAbstract):
 
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.label)
+
 
 class StructureCom(AnnotationAbstract):
     class SourceChoices(models.TextChoices):

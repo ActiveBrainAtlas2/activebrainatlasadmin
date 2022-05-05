@@ -9,9 +9,9 @@ from django.http import Http404
 from django.apps import apps
 
 import numpy as np
-from neuroglancer.models import Animal
+from neuroglancer.models import Animal, AnnotationSession
 from neuroglancer.serializers import AnimalInputSerializer, \
-    AnnotationSerializer, AnnotationsSerializer, \
+    AnnotationSerializer, ComListSerializer,MarkedCellSerializer,PolygonListSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom
 from neuroglancer.annotation_controller import create_polygons, random_string    
@@ -30,26 +30,6 @@ class UrlViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class AlignAtlasView(views.APIView):
-    """This will be run when a user clicks the align link/button in Neuroglancer
-    It will return the json rotation and translation matrix"""
-
-    def get(self, request, *args, **kwargs):
-        # Validate the incoming input (provided through query parameters)
-        serializer = AnimalInputSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        animal = serializer.validated_data['animal']
-        data = {}
-        # if request.user.is_authenticated and animal:
-        R, t = align_atlas(animal)
-        rl = R.tolist()
-        tl = t.tolist()
-        data['rotation'] = rl
-        data['translation'] = tl
-
-        return JsonResponse(data)
-
-
 class UrlDataView(views.APIView):
     """This will be run when a a ID is sent to:
     https://site.com/activebrainatlas/urldata?id=999
@@ -63,7 +43,7 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-class Annotation(views.APIView):
+class GetCOM(views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
     url is of the the form
@@ -74,17 +54,16 @@ class Annotation(views.APIView):
          2 is the input type ID
     """
 
-    def get(self, request, obj, prep_id, label, format=None):
+    def get(self, request, obj, prep_id, annotator,source, format=None):
         data = []
-        annotation_model = apps.get_model(app_label='neuroglancer', model_name=obj)
         try:
             animal = Animal.objects.get(pk=prep_id)
         except Animal.DoesNotExist:
             print('No animal, returning empty list')
             return data
         try:
-            rows = annotation_model.objects.filter(annotation_session__animal=animal)\
-                        .filter(label=label)
+            rows = StructureCom.objects.filter(annotation_session__animal=animal)\
+                        .filter(source=source).filter(annotator=source)
         except:
             print('bad query')
         print('len rows', len(rows))
@@ -118,7 +97,7 @@ class Annotation(views.APIView):
         return Response(serializer.data)
         # return JsonResponse(data, safe=False)
 
-class Annotations(views.APIView):
+class GetComList(views.APIView):
     """
     url is of the the form:
     https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
@@ -130,16 +109,61 @@ class Annotations(views.APIView):
         """
         data = []
         coms = StructureCom.objects.order_by('annotation_session')\
-            .values('annotation_session__animal__prep_id', 'label', 'source').distinct()
+            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username', 'source').distinct()
         for com in coms:
             data.append({
                 "prep_id":com['annotation_session__animal__prep_id'],
-                "label":com['label'],
+                "annotator":com['annotation_session__annotator__username'],
                 "source":com['source'],
                 })
-        serializer = AnnotationsSerializer(data, many=True)
+        serializer = ComListSerializer(data, many=True)
         return Response(serializer.data)
 
+
+class GetPolygonList(views.APIView):
+    """
+    url is of the the form:
+    https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
+    """
+
+    def get(self, request, format=None):
+        """
+        This will get the layer_data
+        """
+        data = []
+        active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='POLYGON_SEQUENCE')\
+            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source').distinct()
+        for sessioni in active_sessions:
+            data.append({
+                "prep_id":sessioni['animal__prep_id'],
+                "annotator":sessioni['annotator__username'],
+                "brain_region":sessioni['brain_region__abbreviation'],
+                "source":sessioni['source'],
+                })
+        serializer = PolygonListSerializer(data, many=True)
+        return Response(serializer.data)
+
+class GetMarkedCellList(views.APIView):
+    """
+    url is of the the form:
+    https://activebrainatlas.ucsd.edu/activebrainatlas/annotations
+    """
+
+    def get(self, request, format=None):
+        """
+        This will get the layer_data
+        """
+        data = []
+        active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='MARKED_CELL')\
+            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source').distinct()
+        for sessioni in active_sessions:
+            data.append({
+                "prep_id":sessioni['annotation_session__animal__prep_id'],
+                "annotator":sessioni['annotator__username'],
+                "source":sessioni['source'],
+                })
+        serializer = MarkedCellSerializer(data, many=True)
+        return Response(serializer.data)
 
 class Rotation(views.APIView):
     """This will be run when a user clicks the align link/button in Neuroglancer
