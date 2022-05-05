@@ -110,14 +110,17 @@ class TestUrlModel(TransactionTestCase):
 
 
     def test_01_neuroglancer_url(self):
+        '''tests the API that returns the list of available neuroglancer states'''
         response = self.client.get("/neuroglancer")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_02_rotations_url(self):
+        '''Test the API that returns the list of available transformations'''
         response = self.client.get("/rotations")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_03_annotations_url(self):
+        '''Test the API that retrieves a specific transformation'''
         label = 'XXX'
         for com in self.coms:
             brain_region = BrainRegion.objects.get(pk=com)
@@ -141,6 +144,7 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_04_rotation_url_with_bad_animal(self):
+        '''Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned'''
         response = self.client.get("/rotation/DK52XXX")
         data = str(response.content, encoding='utf8')
         data = json.loads(data)
@@ -150,6 +154,7 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     def test_05_create_structure_com(self):
+        '''Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned'''
         n = 10
         for _ in range(n):
             x = uniform(0, 65000)
@@ -231,44 +236,3 @@ class TestUrlModel(TransactionTestCase):
         print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0, msg="Atlas coms are of wrong size")
-        
-"""
-    
-    def test_10_create_post_get_state(self):
-        '''
-        Ensure we can create a new neuroglancer_state object.
-        neuroglancer_state is the new, url is the old
-        owner is the new, person_id is the old
-        '''
-        # clear object from DB just in case
-        UrlModel.objects.filter(comments=self.label).delete()
-        parent_path = os.getcwd()
-        jfile = f'{parent_path}/scripts/363.json'
-        state = json.load(open(jfile))
-        fields = ['url', 'owner', 'comments', 'id', 'created']
-        
-        data = {}
-        data['url'] = json.dumps(state)
-        data['user_date'] = '999999'
-        data['comments'] = self.label
-        data['owner'] = self.owner.id
-        data['created'] = datetime.now()
-        data['updated'] =  datetime.now()
-        
-        response = self.client.post('/neuroglancer', data, format='json')
-        if response.status_code != status.HTTP_201_CREATED:
-            print('ERROR', response.data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        urlModel = UrlModel.objects.filter(comments=self.label)
-        n = UrlModel.objects.filter(comments=self.label).count()
-        self.assertEqual(n, 1)
-        self.assertEqual(urlModel[0].comments, self.label)
-        self.state_id = urlModel[0].id
-        url = "/neuroglancer/" + str(self.state_id)
-        response = self.client.get(url)
-        for field in fields:
-            if field not in response.data:
-                print(f'{field} is not in response.data')
-        self.assertGreater(len(response.data), 1, msg="Get neuroglancer did not return valid data.")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-"""

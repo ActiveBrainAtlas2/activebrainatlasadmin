@@ -16,12 +16,12 @@ import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from brain.models import Animal
 from neuroglancer.models import AlignmentScore, \
-        AnnotationSession, AnnotationPointArchive, ArchiveSet, \
+        AnnotationSession, AnnotationPointArchive, \
         UrlModel,  BrainRegion, Points, \
         PolygonSequence, MarkedCell, StructureCom
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
-from neuroglancer.tasks import restore_annotations
+from neuroglancer.AnnotationManager import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
@@ -62,7 +62,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:33681"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -71,7 +71,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_multiuser(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng_multi"
         if settings.DEBUG:
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:33681"
 
         comments = "Testing"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
@@ -174,10 +174,6 @@ class PointsAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-@admin.register(AnnotationSession)
-class AnnotationSessionAdmin(AtlasAdminModel, ExportCsvMixin):
-    list_display = ('animal', 'brain_region', 'annotator', 'created')
-
 @admin.register(BrainRegion)
 class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
@@ -202,21 +198,31 @@ make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(MarkedCell)
 class MarkedCellAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('animal','annotator','cell_type','brain_region', 'x', 'y', 'z', 'source','created')
+    # list_filter = ['cell_type']
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    list_filter = ['cell_type__cell_type','source']
 
 @admin.register(PolygonSequence)
 class PolygonSequenceAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    # list_filter = ['animal', 'annotator', 'brain_region','source']
+    # list_display = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'source')
+
 
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
+    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
+    # list_filter = ['animal', 'annotator', 'brain_region','source']
+    # ordering = ('animal','annotator','brain_region', 'source','created')
+    # list_display = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'source')
 
 """
 @admin.register(AnnotationPointArchive)
@@ -247,18 +253,18 @@ def restore_archive(modeladmin, request, queryset):
         restore_annotations(archive.id, archive.animal.prep_id, archive.label)
         messages.info(request, f'The {archive.label} layer for {archive.animal.prep_id} has been restored. ID={archive.id}')
             
-@admin.register(ArchiveSet)
-class ArchiveSetAdmin(AtlasAdminModel):
-    list_display = ['animal', 'label', 'created', 'updatedby', 'archive_count']
-    ordering = ['animal', 'label', 'parent', 'created', 'updatedby']
-    list_filter = ['created']
-    search_fields = ['animal', 'label']
+
+@admin.register(AnnotationSession)
+class AnnotationSessionAdmin(AtlasAdminModel):
+    list_display = ['animal', 'annotation_type', 'created','annotator','archive_count']
+    ordering = ['animal', 'annotation_type', 'parent', 'created','annotator']
+    list_filter = ['animal', 'annotation_type', 'created','annotator']
+    search_fields = ['animal', 'annotation_type','annotator']
     actions = [restore_archive]
     
     def archive_count(self, obj):
-        count = AnnotationPointArchive.objects.filter(archive=obj).count()
+        count = AnnotationPointArchive.objects.filter(annotation_session=obj).count()
         return count
-
     archive_count.short_description = "# Points"
 
 @admin.register(AlignmentScore)

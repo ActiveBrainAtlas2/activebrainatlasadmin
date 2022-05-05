@@ -5,22 +5,23 @@ from rest_framework import permissions
 from django.http import JsonResponse, HttpResponse
 from rest_framework.response import Response
 from django.utils.html import escape
-from django.http import Http404
 from django.apps import apps
-
 import numpy as np
-from neuroglancer.models import Animal, AnnotationSession
+from neuroglancer.models import Animal, AnnotationSession, MarkedCell, PolygonSequence
 from neuroglancer.serializers import AnimalInputSerializer, \
     AnnotationSerializer, ComListSerializer,MarkedCellSerializer,PolygonListSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
-from neuroglancer.models import UrlModel, BrainRegion, StructureCom
+from neuroglancer.models import UrlModel, BrainRegion, StructureCom,CellType
 from neuroglancer.annotation_controller import create_polygons, random_string    
-    
+from neuroglancer.AnnotationBase import AnnotationBase
+from abakit.lib.annotation_layer import AnnotationLayer
+from abakit.atlas.VolumeMaker import VolumeMaker
+from abakit.atlas.NgSegmentMaker import NgConverter
 import logging
+from django.contrib.auth.models import User
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-
+from neuroglancer.AnnotationManager import AnnotationManager
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -43,7 +44,23 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-class GetCOM(views.APIView):
+def create_point_annotation(coordinates,description):
+    point_annotation = {}
+    point_annotation['id'] = random_string()
+    point_annotation['point'] = coordinates
+    point_annotation['type'] = 'point'
+    point_annotation['description'] = description
+    return point_annotation
+
+def apply_scales_to_annotation_rows(rows,prep_id):
+    scale_xy, z_scale = get_scales(prep_id)
+    for row in rows:
+        row.x = row.x / scale_xy
+        row.y = row.y / scale_xy
+        row.z = row.z / z_scale +0.5
+    data = create_polygons(rows)
+
+class GetVolume(AnnotationBase,views.APIView):
     """
     Fetch LayerData model and return parsed annotation layer.
     url is of the the form
@@ -54,48 +71,54 @@ class GetCOM(views.APIView):
          2 is the input type ID
     """
 
-    def get(self, request, obj, prep_id, annotator,source, format=None):
-        data = []
+    def get(self, request, obj, session_id, format=None):
         try:
-            animal = Animal.objects.get(pk=prep_id)
-        except Animal.DoesNotExist:
-            print('No animal, returning empty list')
-            return data
-        try:
-            rows = StructureCom.objects.filter(annotation_session__animal=animal)\
-                        .filter(source=source).filter(annotator=source)
+            session = AnnotationSession.objects.get(pk=session_id)
+            rows = PolygonSequence.objects.filter(annotation_session__pk=session_id)
         except:
             print('bad query')
         print('len rows', len(rows))
-        
-        scale_xy, z_scale = get_scales(prep_id)
-        # Working with polygons/lines is much different        
-        # first do the lines/polygons
-        polygon_points = []
-        for row in rows:
-            row.x = row.x / scale_xy
-            row.y = row.y / scale_xy
-            row.z = row.z / z_scale +0.5
-            if 'polygon' in row.annotation_session.brain_region.abbreviation.lower():
-                polygon_points.append(row)
-            else:
-                point_annotation = {}
-                point_annotation['id'] = random_string()
-                point_annotation['point'] = [int(round(row.x)), int(round(row.y)), row.z]
-                point_annotation['type'] = 'point'
-                if 'COM' in label or 'Rough Alignment' in label:
-                    point_annotation['description'] = row.annotation_session.brain_region.abbreviation
-                else:
-                    point_annotation['description'] = ""
-                data.append(point_annotation)
-        if len(polygon_points) > 0:
-            data = create_polygons(polygon_points)
-            serializer = PolygonSerializer(data, many=True)
-        else:
-            serializer = AnnotationSerializer(data, many=True)
-
+        apply_scales_to_annotation_rows(rows,session.animal.prep_id)
+        data = create_polygons(rows)
+        serializer = PolygonSerializer(data, many=True)
         return Response(serializer.data)
-        # return JsonResponse(data, safe=False)
+
+class GetCOM(AnnotationBase,views.APIView):
+    def get(self, request, obj, prep_id, annotator_id,source, format=None):
+        self.set_animal_from_id(prep_id)
+        self.set_annotator_from_id(annotator_id)
+        try:
+            rows = StructureCom.objects.filter(annotation_session__animal=self.animal)\
+                        .filter(source=source).filter(annotator=self.annotator)
+        except:
+            print('bad query')
+        print('len rows', len(rows))
+        apply_scales_to_annotation_rows(rows,self.animal.prep_id)
+        data = []
+        for row in rows:
+            coordinates = [int(round(row.x)), int(round(row.y)), row.z]
+            description = row.annotation_session.brain_region.abbreviation
+            point_annotation = create_point_annotation(coordinates,description)
+            data.append(point_annotation)
+        serializer = AnnotationSerializer(data, many=True)
+        return Response(serializer.data)
+
+class GetMarkedCell(AnnotationBase,views.APIView):
+    def get(self, request, obj, session_id, format=None):
+        try:
+            session = AnnotationSession.objects.get(pk=session_id)
+            rows = MarkedCell.objects.filter(annotation_session__pk=session_id)
+        except:
+            print('bad query')
+        print('len rows', len(rows))
+        apply_scales_to_annotation_rows(rows,session.animal.prep_id)
+        data = []
+        for row in rows:
+            coordinates = [int(round(row.x)), int(round(row.y)), row.z]
+            point_annotation = create_point_annotation(coordinates,'')
+            data.append(point_annotation)
+        serializer = AnnotationSerializer(data, many=True)
+        return Response(serializer.data)
 
 class GetComList(views.APIView):
     """
@@ -132,9 +155,10 @@ class GetPolygonList(views.APIView):
         """
         data = []
         active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='POLYGON_SEQUENCE')\
-            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source').distinct()
+            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source','id').all()
         for sessioni in active_sessions:
             data.append({
+                'id' : sessioni['id'],
                 "prep_id":sessioni['animal__prep_id'],
                 "annotator":sessioni['annotator__username'],
                 "brain_region":sessioni['brain_region__abbreviation'],
@@ -155,9 +179,10 @@ class GetMarkedCellList(views.APIView):
         """
         data = []
         active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='MARKED_CELL')\
-            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source').distinct()
+            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source','id').all()
         for sessioni in active_sessions:
             data.append({
+                'id' : sessioni['id'],
                 "prep_id":sessioni['annotation_session__animal__prep_id'],
                 "annotator":sessioni['annotator__username'],
                 "source":sessioni['source'],
@@ -253,3 +278,56 @@ class AnnotationStatus(views.APIView):
             'brain_regions': list_of_landmarks_name, 'counts': counts})
         
         # return HttpResponse(has_annotation)
+
+class ContoursToVolume(views.APIView):
+    def get(self, request, url_id,volume_id):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                layer = AnnotationLayer(layeri)
+                volume = layer.get_annotation_with_id(volume_id)
+                if volume is not None:
+                    break
+        folder_name = self.make_volumes(volume,urlModel.animal)
+        segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
+        return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
+
+    def make_volumes(self,volume,animal = 'DK55'):
+        vmaker = VolumeMaker(animal,check_path = False)
+        structure,contours = volume.get_volume_name_and_contours()
+        vmaker.set_aligned_contours({structure:contours})
+        vmaker.compute_COMs_origins_and_volumes()
+        res = vmaker.get_resolution()
+        segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
+        folder_name = f'{animal}_{structure}'
+        output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
+        maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
+        maker.create_neuroglancer_files(output_dir,segment_properties)
+        return folder_name
+
+class SaveAnnotation(views.APIView):
+    def get(self, request, url_id,annotation_layer_name):
+        urlModel = UrlModel.objects.get(pk=url_id)
+        state_json = urlModel.url
+        layers = state_json['layers']
+        found = False
+        manager = AnnotationManager(urlModel)
+        for layeri in layers:
+            if layeri['type'] == 'annotation':
+                if layeri['name'] == annotation_layer_name:
+                    manager.set_current_layer(layeri)
+                    manager.update_data_in_current_layer()
+                    found = True
+        if found:
+            return Response('success')
+        else:
+            return Response(f'layer not found {(annotation_layer_name)}')
+
+class GetCellTypes(views.APIView):
+    def get(self, request, format=None):
+        data = {}
+        cell_types = CellType.objects.filter(active=True).all()
+        data['cell_type'] = [i.cell_type for i in cell_types]
+        return JsonResponse(data)
