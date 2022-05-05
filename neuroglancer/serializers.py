@@ -1,4 +1,3 @@
-from neuroglancer.tasks import update_annotation_data
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
@@ -94,13 +93,6 @@ class RotationModelSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # fields = ['animal', 'input_type_id', 'owner_id', 'username']
 
-
-class RotationSerializer(serializers.Serializer):
-    prep_id = serializers.CharField()
-    label = serializers.CharField()
-    source = serializers.CharField()
-
-
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url *probably* can't be in the UrlModel when it is returned
@@ -122,7 +114,7 @@ class UrlSerializer(serializers.ModelSerializer):
         )
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            obj = self.take_care_of_owner(obj, owner)
+            obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
     def update(self, obj, validated_data):
@@ -134,10 +126,10 @@ class UrlSerializer(serializers.ModelSerializer):
         obj.comments = validated_data.get('comments', obj.comments)
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            obj = self.take_care_of_owner(obj, owner)
+            obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
-    def take_care_of_owner(self, obj, owner):
+    def save_neuroglancer_state(self, obj, owner):
         '''
         Takes care of tasks that are in both create and update
         :param obj: the neuroglancerModel object
@@ -152,6 +144,5 @@ class UrlSerializer(serializers.ModelSerializer):
             obj.save()
         except APIException:
             logger.error('Could not save Neuroglancer model')
-        update_annotation_data(obj)
         obj.url = None
         return obj

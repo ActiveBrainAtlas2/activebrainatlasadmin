@@ -4,12 +4,12 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from django_mysql.models import EnumField
 import re
 import json
 import pandas as pd
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
+from django_mysql.models import EnumField
 
 LAUREN_ID = 16
 MANUAL = 1
@@ -95,7 +95,6 @@ class UrlModel(models.Model):
                 result = dfs[0]
             else:
                 result = pd.concat(dfs)
-
         return result
 
     @property
@@ -108,7 +107,6 @@ class UrlModel(models.Model):
                 if 'annotations' in layer:
                     layer_name = layer['name']
                     layer_list.append(layer_name)
-
         return layer_list
 
     class Meta:
@@ -153,6 +151,20 @@ class Points(UrlModel):
         verbose_name = 'Points'
         verbose_name_plural = 'Points'
 
+class CellType(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    cell_type = models.CharField(max_length=200)
+    description = models.TextField(max_length=2001, blank=False, null=False)
+    active = models.IntegerField(default=0)
+    created = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        managed = False
+        db_table = 'cell_type'
+        verbose_name = 'Cell Type'
+        verbose_name_plural = 'Cell Types'
+    def __str__(self):
+        return f'{self.cell_type}'
+
 class BrainRegion(AtlasModel):
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
@@ -169,6 +181,9 @@ class BrainRegion(AtlasModel):
     def __str__(self):
         return f'{self.description} {self.abbreviation}'
     
+def get_region_from_abbreviation(abbreviation):
+    return BrainRegion.objects.filter(abbreviation=abbreviation).first()
+    
 class AnnotationSession(models.Model):
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
@@ -179,7 +194,7 @@ class AnnotationSession(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
-    active = models.BooleanField(default = True, db_column='active')
+    active = models.IntegerField(default=0)
     class Meta:
         managed = False
         db_table = 'annotation_session'
@@ -188,73 +203,64 @@ class AnnotationSession(models.Model):
 
     def __str__(self):
         return f'{self.animal} {self.brain_region} {self.annotation_type}'
+    
+    def is_polygon_sequence(self):
+        return self.annotation_type == 'POLYGON_SEQUENCE'
+    
+    def is_marked_cell(self):
+        return self.annotation_type == 'MARKED_CELL'
+    
+    def is_structure_com(self):
+        return self.annotation_type == 'STRUCTURE_COM'
+    
+    def get_session_model(self):
+        if self.is_polygon_sequence():
+            return PolygonSequence
+        elif self.is_marked_cell():
+            return MarkedCell
+        elif self.is_structure_com():
+            return StructureCom
 
 class AnnotationAbstract(models.Model):
     '''
     Abstract model for the 3 new annotation data models
     '''
     id = models.BigAutoField(primary_key=True)
-    label = models.CharField(max_length=255)
-    source = models.CharField(max_length=255)
+    # source = models.CharField(max_length=255)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
-    
+    @property
+    def animal(self):
+        return '%s'%self.annotation_session.animal.prep_id
+    @property
+    def brain_region(self):
+        return '%s'%self.annotation_session.brain_region.abbreviation
+    @property
+    def annotator(self):
+        return '%s'%self.annotation_session.annotator.username
+    @property
+    def created(self):
+        return '%s'%self.annotation_session.created
     class Meta:
         abstract = True
 
-
-class ArchiveSet(models.Model):
-    '''
-    ANTICIPATED OPERATION: 
-    1) USER SAVES ANNOTATION POINTS IN NEUROGLANCER 
-    2) NEW ENTRY IN archive_set TABLE (PARENT 'archive_id' - 0 IF FIRST; UPDATE USER; TIMESTAMP ) 
-    3) ALL CURRENT POINTS FOR USER ARE MOVED TO annotations_points_archive 
-    4) NEW POINTS ARE ADDED TO annotations_points *    
-    - CONSIDERATIONS: *      
-        A) IF LATENCY -> DB MODIFICATIONS MAY BE QUEUED AND MADE VIA CRON JOB (DURING OFF-PEAK)
-        B) annotations_points_archive, archive_sets WILL NOT BE STORED ON LIVE DB
-    #2 - INSERT entry into archive_sets table   
-    This will store the versioning  is the 
-    'SELECT INTO' with concurrent/subsequent entry into #2 (archive_sets table).  
-    After INSERT, we should receive the id of the insert (id field).  
-    This will be the unique key to identify an archive set.
-    '''
-    id = models.BigAutoField(primary_key=True)
-    animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
-    label = models.CharField(max_length=255)
-    created = models.DateTimeField(auto_now_add=True)
-    parent =  models.IntegerField(db_column='FK_parent')
-    updatedby = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, 
-                               verbose_name="Updated by", blank=False, null=False, 
-                               db_column='FK_update_user_id')
-    class Meta:
-        managed = False
-        db_table = 'archive_set'
-        verbose_name = 'Archive set'
-        verbose_name_plural = 'Archive sets'
-
-class CellType(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    cell_type = models.CharField(max_length=25)
-    description = models.CharField(max_length=255)
-    active = models.BooleanField(default = True, db_column='active')
-    created = models.DateTimeField(auto_now_add=True)
-
 class MarkedCell(AnnotationAbstract):
     class SourceChoices(models.TextChoices):
-            MACHINE_SURE = 'MACHINE-SURE', gettext_lazy('MACHINE-SURE')
-            MACHINE_UNSURE = 'MACHINE-UNSURE', gettext_lazy('MACHINE-UNSURE')
-            HUMAN_POSITIVE = 'HUMAN-POSITIVE', gettext_lazy('HUMAN-POSITIVE')
-            HUMAN_NEGATIVE = 'HUMAN-NEGATIVE', gettext_lazy('HUMAN-NEGATIVE')
+            MACHINE_SURE = 'MACHINE_SURE', gettext_lazy('Machine Sure')
+            MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
+            HUMAN_POSITIVE = 'HUMAN_POSITIVE', gettext_lazy('Human Positive')
+            HUMAN_NEGATIVE = 'HUMAN_NEGATIVE', gettext_lazy('Human Negative')
+
     source = models.CharField(
         max_length=25,
         choices=SourceChoices.choices,
         default=SourceChoices.MACHINE_SURE,
     )    
-    cell_type = models.ForeignKey(CellType, models.CASCADE, null=True, db_column="FK_cell_type_id", verbose_name="Cell Type")
+    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
+                               verbose_name="Cell Type", blank=False, null=False)
     class Meta:
         managed = False
         db_table = 'marked_cells'
@@ -266,7 +272,6 @@ class MarkedCell(AnnotationAbstract):
 class PolygonSequence(AnnotationAbstract):
     polygon_index = models.CharField(max_length=40, blank=True, null=True)
     point_order = models.IntegerField(blank=False, null=False, default=0)
-
     class SourceChoices(models.TextChoices):
             NA = 'NA', gettext_lazy('NA')
 
@@ -283,7 +288,7 @@ class PolygonSequence(AnnotationAbstract):
         verbose_name_plural = 'Polygon sequences'
 
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
 
 
 class StructureCom(AnnotationAbstract):
@@ -304,24 +309,23 @@ class StructureCom(AnnotationAbstract):
         verbose_name_plural = 'Structure COMs'
 
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
 
 
 class AnnotationPointArchive(AnnotationAbstract):
-    archive = models.ForeignKey(ArchiveSet, models.CASCADE, 
-                               verbose_name="Archive Set", blank=False, null=False, 
-                               db_column='FK_archive_set_id')
-
     class Meta:
         managed = False
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
         constraints = [
-                models.UniqueConstraint(fields=['annotation_session', 'archive'], name='unique backup')
+                models.UniqueConstraint(fields=['annotation_session'], name='unique backup')
             ]        
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{} {}'.format(self.annotation_session, self.source)
+    polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
+    point_order = models.IntegerField(blank=False, null=False, default=0)
+    source = models.CharField(max_length=255)
 
 class BrainShape(AtlasModel):
     id = models.BigAutoField(primary_key=True)
@@ -349,8 +353,6 @@ class BrainShape(AtlasModel):
         '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(pngfile) )
     
     midsection.short_description = 'Midsection'
-
-
 
 class AlignmentScore(models.Model):
     class Meta:
