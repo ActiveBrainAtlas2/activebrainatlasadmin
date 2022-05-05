@@ -47,14 +47,30 @@ class PolygonSerializer(serializers.Serializer):
     parentAnnotationId = serializers.CharField(required=False)
     props = serializers.ListField()
 
-class AnnotationsSerializer(serializers.Serializer):
+class ComListSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
     prep_id = serializers.CharField()
-    label = serializers.CharField()
+    annotator = serializers.CharField()
     source = serializers.CharField()
 
+class MarkedCellSerializer(serializers.Serializer):
+    """
+    This one feeds the dropdown
+    """
+    prep_id = serializers.CharField()
+    annotator = serializers.CharField()
+    source = serializers.CharField()
+
+class PolygonListSerializer(serializers.Serializer):
+    """
+    This one feeds the dropdown
+    """
+    prep_id = serializers.CharField()
+    annotator = serializers.CharField()
+    source = serializers.CharField()
+    brain_region = serializers.CharField()
 
 class BrainRegionSerializer(serializers.ModelSerializer):
 
