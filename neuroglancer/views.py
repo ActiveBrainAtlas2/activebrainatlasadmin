@@ -20,6 +20,7 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 from neuroglancer.AnnotationManager import AnnotationManager
+import os 
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -250,6 +251,8 @@ class ContoursToVolume(views.APIView):
         vmaker.set_aligned_contours({structure:contours})
         vmaker.compute_COMs_origins_and_volumes()
         res = vmaker.get_resolution()
+        print('=============================================')
+        print(res)
         segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
         folder_name = f'{animal}_{structure}'
         output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
