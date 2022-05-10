@@ -4,12 +4,12 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from django_mysql.models import EnumField
 import re
 import json
 import pandas as pd
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
+from django_mysql.models import EnumField
 
 LAUREN_ID = 16
 MANUAL = 1
@@ -19,6 +19,7 @@ LINE_ID = 53
 POLYGON_ID = 54
 
 class UrlModel(models.Model):
+    '''Model corresponding to the neuroglancer json states stored in the neuroglancer_url table'''
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
@@ -144,7 +145,7 @@ class UrlModel(models.Model):
         return results
 
 class Points(UrlModel):
-
+    '''Model corresponding to the annotation points table in the database'''
     class Meta:
         managed = False
         proxy = True
@@ -152,6 +153,7 @@ class Points(UrlModel):
         verbose_name_plural = 'Points'
 
 class CellType(models.Model):
+    '''Model corresponding to the cell type table in the database'''
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
@@ -248,7 +250,6 @@ class AnnotationAbstract(models.Model):
         abstract = True
 
 class MarkedCell(AnnotationAbstract):
-
     class SourceChoices(models.TextChoices):
             MACHINE_SURE = 'MACHINE_SURE', gettext_lazy('Machine Sure')
             MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
@@ -267,7 +268,6 @@ class MarkedCell(AnnotationAbstract):
         db_table = 'marked_cells'
         verbose_name = 'Marked cell'
         verbose_name_plural = 'Marked cells'
-
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.label)
 
@@ -291,6 +291,7 @@ class PolygonSequence(AnnotationAbstract):
 
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
+
 
 class StructureCom(AnnotationAbstract):
     class SourceChoices(models.TextChoices):

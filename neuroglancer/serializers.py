@@ -7,14 +7,11 @@ from django.contrib.auth.models import User
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-
 class AnimalInputSerializer(serializers.Serializer):
     animal = serializers.CharField()
 
-
 class IdSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-
 
 class AnnotationSerializer(serializers.Serializer):
     """
@@ -24,7 +21,6 @@ class AnnotationSerializer(serializers.Serializer):
     point = serializers.ListField()
     type = serializers.CharField()
     description = serializers.CharField()
-
 
 class LineSerializer(serializers.Serializer):
     """
@@ -46,14 +42,30 @@ class PolygonSerializer(serializers.Serializer):
     parentAnnotationId = serializers.CharField(required=False)
     props = serializers.ListField()
 
-class AnnotationsSerializer(serializers.Serializer):
+class ComListSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
     prep_id = serializers.CharField()
-    label = serializers.CharField()
+    annotator = serializers.CharField()
     source = serializers.CharField()
 
+class MarkedCellSerializer(serializers.Serializer):
+    """
+    This one feeds the dropdown
+    """
+    prep_id = serializers.CharField()
+    annotator = serializers.CharField()
+    source = serializers.CharField()
+
+class PolygonListSerializer(serializers.Serializer):
+    """
+    This one feeds the dropdown
+    """
+    prep_id = serializers.CharField()
+    annotator = serializers.CharField()
+    source = serializers.CharField()
+    brain_region = serializers.CharField()
 
 class BrainRegionSerializer(serializers.ModelSerializer):
 
@@ -77,12 +89,10 @@ class RotationModelSerializer(serializers.ModelSerializer):
         fields = '__all__'
         # fields = ['animal', 'input_type_id', 'owner_id', 'username']
 
-
 class RotationSerializer(serializers.Serializer):
     prep_id = serializers.CharField()
     label = serializers.CharField()
     source = serializers.CharField()
-
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.

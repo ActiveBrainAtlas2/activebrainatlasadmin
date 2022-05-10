@@ -1,10 +1,10 @@
+'''This package handles the conversion of polygon points to neuroglancer json state and vise versa'''
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
 import string
 import random
 hexcolor = "#FF0000"
-
 
 def next_item(odic, key):
     try:
@@ -32,12 +32,16 @@ def create_polygons(polygon_points) -> list:
 
 
 def create_volume_json(volume_id, polygons, i):
-    '''
-    
-    :param volume_id:
-    :param polygons:
-    :param i:
-    '''
+    """_summary_
+
+    Args:
+        volume_id (_type_): _description_
+        polygons (_type_): _description_
+        i (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
     volume_json = []
     one_point = list(polygons.values())[0][0] 
     parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()))
@@ -48,10 +52,17 @@ def create_volume_json(volume_id, polygons, i):
 
 
 def parse_polygon_points(polygon_points):
-    '''
-    
-    :param polygon_points:
-    '''
+    """This takes a list of query results from the annotations_points table or the polygon sequence 
+    table and group them into dictionaries according to their grouping of polygons and values.  
+    points are grouped into polygons, and polygons are grouped into volumes
+    Args:
+        polygon_points (list): list of query results from the annotations points table or the polygon sequence table
+
+    Returns:
+        polygons[dict]: dictionary polygons indexed by the polygon id, those are annotation points entry without a volume_id column
+        volumes[dict]: dictionary of volumes, indexed by the volume id.  the value corresponding to each id is the same as the polygon id
+    """
+#    TODO  This function seems to rely on the fact that points are ordered by the ordering column in the database.  This need to be improved to resolve potential bugs
     polygons = {}
     volumes = {}
     for pointi in polygon_points:
@@ -72,14 +83,18 @@ def parse_polygon_points(polygon_points):
 
 
 def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=None):
-    '''
-    
-    :param npoints:
-    :param parent_id:
-    :param source:
-    :param _type:
-    :param child_ids:
-    '''
+    """create the json entry for a parent annotation.  The parent annotation need to have a specific id and the list of id for all the children
+
+    Args:
+        npoints (int): number of points in this parent annotation
+        parent_id (int): id of parent annotation
+        source (list of x,y,z): the source coordinate
+        _type (string): annotation type: this could be polygon or volumes
+        child_ids (list, optional): list of id of child annotations that belong to the parent annotation. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     parent_annotation = {}
     if child_ids is None:
         child_ids = [random_string() for _ in range(npoints)]
@@ -92,11 +107,15 @@ def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=N
 
 
 def create_polygon_json(polygon_id, polygon_points):
-    '''
-    
-    :param polygon_id:
-    :param polygon_points:
-    '''
+    """create the neuroglancer json state for polygon points
+
+    Args:
+        polygon_id (str): id of polygon
+        polygon_points (list): list of coordinates of a polygon
+
+    Returns:
+        dict: the neuroglancer json for the polygon in python dictionary form
+    """   
     polygon_json = []
     npoints = len(polygon_points)
     parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon')
@@ -119,53 +138,6 @@ def create_polygon_json(polygon_id, polygon_points):
     line["props"] = [hexcolor]
     polygon_json.append(line)
     return polygon_json
-
-
-def create_polygonsOK(polygons:list) -> list:
-    '''
-    Takes all the polygon x,y,z data and turns them into
-    Neuroglancer polygons
-    :param polygons: dictionary of polygon: x,y,z values
-    Interpolates out to a max of 50 splines. I just picked
-    50 as a nice round number
-    '''
-    layer_data = []
-    for parent_id, polygon in polygons.items(): 
-        n = len(polygon)
-        hexcolor = "#FFF000"
-        source = {}  # create initial parent/source starting point
-        source["source"] = list(polygon[0])
-        child_ids = [random_string() for _ in range(n)]
-        source["childAnnotationIds"] = child_ids
-        source["type"] = "polygon"
-        source["id"] = parent_id
-        source["props"] = [hexcolor]
-        layer_data.append(source)
-        for i in range(n - 1):
-            line = {}
-            pointA = polygon[i]
-            pointB = polygon[i + 1]
-            line["pointA"] = pointA
-            line["pointB"] = pointB
-            line["type"] = "line"
-            line["id"] = child_ids[i]
-            line["parentAnnotationId"] = parent_id
-            line["props"] = [hexcolor]
-            layer_data.append(line)
-        closing = {}
-        pointA = polygon[-1]
-        pointB = polygon[0]
-        closing["pointA"] = pointA
-        closing["pointB"] = pointB
-        closing["type"] = "line"
-        closing["id"] = child_ids[-1]
-        closing["parentAnnotationId"] = parent_id
-        closing["props"] = [hexcolor]
-        layer_data.append(closing)
-        for d in layer_data:
-            print(d)
-    return layer_data
-
 
 def interpolate2d(points:list, new_len:int) -> list:
     '''
