@@ -12,7 +12,13 @@ from background_task import background
 from neuroglancer.AnnotationBase import AnnotationBase
 
 class AnnotationManager(AnnotationBase):
+    '''This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence'''
     def __init__(self,neuroglancerModel):
+        """iniatiate the class starting from a perticular url
+
+        Args:
+            neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
+        """        
         self.debug = True
         self.neuroglancer_state = neuroglancerModel.url
         self.owner_id = neuroglancerModel.owner.id
@@ -24,11 +30,24 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr = BulkCreateManager(chunk_size=100)
 
     def set_current_layer(self,state_layer):
+        """set the current layer attribute from a layer component of neuroglancer json state.
+           The incoming neuroglancer json state is parsed by abakit custom class named AnnotationLayer that 
+           groups points according to it's membership to a polygon seqence or volume
+
+        Args:
+            state_layer (dict): neuroglancer json state component of an annotation layer in dictionary form
+        """        
         assert 'name' in state_layer
         self.label = str(state_layer['name']).strip()
         self.current_layer = AnnotationLayer(state_layer)
     
     def update_data_in_current_layer(self):
+        """Update the databse with the annotations in the current layer
+           This moves the old annotations to the archive, set old sessions 
+           as inactive and inserts the new annotation points.
+           The main function archive_and_insert_annotations runs either directly 
+           or in the background depending if the debug option is selected
+        """        
         if self.animal is not None and self.annotator is not None:
             if self.debug:
                 self.archive_and_insert_annotations()
@@ -37,9 +56,8 @@ class AnnotationManager(AnnotationBase):
 
     def update_annotation_data(self):
         """
-        This is the method from the create and update methods
-        in the neuroglancer state serializer. It will spawn off the 
-        SQL insert intensive bits to the background.
+        This method goes through all the annotation layer in a neuroglancer state and update the database entries.
+        Currently this is not being used
         """    
         if 'layers' in self.neuroglancer_state:
             state_layers = self.neuroglancer_state['layers']
@@ -51,15 +69,10 @@ class AnnotationManager(AnnotationBase):
 
     # @background(schedule=0)
     def archive_and_insert_annotations(self):
-        '''
-        This is a simple method that just calls two other methods.
-        The reason for this method's existence is just to make sure the CPU/time
-        instensive methods are run in the proper order and are run in the background.
-        :param prep_id: char string of the animal name
-        :param layer: json layer data
-        :param owner_id: int of the auth user primary key
-        :param label: char string of the name of the layer
-        '''
+        """The main function that updates the database with annotations in the current_layer attribute
+           This function loops each annotation in the curent layer and inserts/archive points in the 
+           appropriate table
+        """
         marked_cells = []
         for annotationi in self.current_layer.annotations:
             if annotationi.is_point():
@@ -84,7 +97,17 @@ class AnnotationManager(AnnotationBase):
                 self.add_marked_cells(annotationi,new_session)
         self.bulk_mgr.done()
     
-    def is_structure_com(self,annotationi):
+    def is_structure_com(self,annotationi:Annotation):
+        """ determines if a point annotation is a structure COM
+            A point annotation is a COM if the description correspond to a structure existing in the database
+        Args:
+            annotationi (abakit:Annotation): the annotation object 
+
+        Returns:
+            boolean: True or False
+        """        
+        # TODO Nage implemented changes in neuroglancer that explicitly distinguish between marked cells and COMs.  Code change that utilize those 
+        # markings will identify the two categories in a more robust manner
         assert annotationi.is_point()
         description = annotationi.get_description()
         if description is not None:
@@ -94,6 +117,15 @@ class AnnotationManager(AnnotationBase):
             return False
 
     def get_parent_id_for_current_session_and_achrive_points(self,annotation_session):
+        """archives the points related to an annotation session and returns the if of this session as the parent id of the new session
+
+        Args:
+            annotation_session (AnnotationSession): query result from django ORM AnnotationSession.  None type is passed to this function
+            if no annotation session current exists for the specified set of points
+
+        Returns:
+            int: id of current session it is not none
+        """        
         if annotation_session is not None:
             self.archive_annotations(annotation_session)
             parent=annotation_session.id
@@ -102,6 +134,23 @@ class AnnotationManager(AnnotationBase):
         return parent
     
     def get_new_session_and_archive_points(self,brain_region,annotation_type):
+        """ This function does the following according to two scenarios 
+            Scenario1:
+               the session type specified by the group of points in question does not exist in the database
+               then:
+               a new session is created with parent id 0 
+            Scenario2:
+               The session type specified do exist
+               then:
+               the points corresponding to the current session is moved to the
+
+        Args:
+            brain_region (_type_): _description_
+            annotation_type (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """        
         annotation_session = self.get_existing_session(brain_region=brain_region,annotation_type=annotation_type)
         parent = self.get_parent_id_for_current_session_and_achrive_points(annotation_session)
         parent.active = 0

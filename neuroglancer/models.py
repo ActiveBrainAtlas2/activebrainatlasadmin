@@ -19,6 +19,7 @@ LINE_ID = 53
 POLYGON_ID = 54
 
 class UrlModel(models.Model):
+    '''Model corresponding to the neuroglancer json states stored in the neuroglancer_url table'''
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
@@ -144,7 +145,7 @@ class UrlModel(models.Model):
         return results
 
 class Points(UrlModel):
-
+    '''Model corresponding to the annotation points table in the database'''
     class Meta:
         managed = False
         proxy = True
@@ -152,6 +153,7 @@ class Points(UrlModel):
         verbose_name_plural = 'Points'
 
 class CellType(models.Model):
+    '''Model corresponding to the cell type table in the database'''
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
