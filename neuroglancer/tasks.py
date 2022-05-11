@@ -221,7 +221,7 @@ def bulk_annotations(prep_id, layer, owner_id, label):
     for annotation in layer.annotations:
         if annotation._type == 'point':
             x, y, z = annotation.coord * scales
-            z = int(z)
+            z = np.floor(z)
             brain_region = get_brain_region(annotation)
             if brain_region is not None:
                 bulk_mgr.add(AnnotationPoints(animal=animal, brain_region=brain_region,
