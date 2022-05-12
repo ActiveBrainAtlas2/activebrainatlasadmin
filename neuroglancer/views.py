@@ -304,7 +304,7 @@ class ContoursToVolume(views.APIView):
         segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
         folder_name = f'{animal}_{structure}'
         output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
-        maker = NgConverter(volume = (vmaker.volumes[structure]*segment_properties[0][0]).astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
+        maker = NgConverter(volume = (vmaker.volumes[structure]*segment_properties[-1][0]).astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
         maker.create_neuroglancer_files(output_dir,segment_properties)
         return folder_name
 
