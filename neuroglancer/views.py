@@ -293,16 +293,18 @@ class ContoursToVolume(views.APIView):
         segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
         return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
 
-    def make_volumes(self,volume,animal = 'DK55'):
+    def make_volumes(self,volume,animal = 'DK55',down_sample_factor = 100):
         vmaker = VolumeMaker(animal,check_path = False)
         structure,contours = volume.get_volume_name_and_contours()
+        values = [i/down_sample_factor for i in contours.values()]
+        contours = dict(zip(contours.keys(),values))
         vmaker.set_aligned_contours({structure:contours})
         vmaker.compute_COMs_origins_and_volumes()
         res = vmaker.get_resolution()
         segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
         folder_name = f'{animal}_{structure}'
         output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
-        maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
+        maker = NgConverter(volume = (vmaker.volumes[structure]*segment_properties[0][0]).astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
         maker.create_neuroglancer_files(output_dir,segment_properties)
         return folder_name
 
