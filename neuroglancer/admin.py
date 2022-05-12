@@ -62,7 +62,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:33681"
+            host = "http://127.0.0.1:41673"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -71,7 +71,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_multiuser(self, obj):
         host = "https://activebrainatlas.ucsd.edu/ng_multi"
         if settings.DEBUG:
-            host = "http://127.0.0.1:33681"
+            host = "http://127.0.0.1:41673"
 
         comments = "Testing"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
