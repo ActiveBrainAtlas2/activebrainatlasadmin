@@ -10,7 +10,7 @@ from django_mysql.models import EnumField
 from django.utils.safestring import mark_safe
 from django.core.validators import MaxValueValidator, MinValueValidator
 import os
-
+import numpy as np
 
 class AtlasModel(models.Model):
     active = models.BooleanField(default = True)
@@ -218,6 +218,9 @@ class ScanRun(AtlasModel):
     class Meta:
         managed = False
         db_table = 'scan_run'
+    
+    def get_resolution(self):
+        return np.array([self.resolution,self.resolution,self.zresolution])
 
 class Slide(AtlasModel):
     id = models.AutoField(primary_key=True)

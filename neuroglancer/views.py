@@ -26,7 +26,7 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 from neuroglancer.tasks import move_annotations,bulk_annotations
 from brain.models import ScanRun
-
+from abakit.lib.FileLocationManager import FileLocationManager
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -292,23 +292,30 @@ class ContoursToVolume(views.APIView):
         folder_name = self.make_volumes(volume,urlModel.animal)
         segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
         return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
+    
+    def downsample_contours(self,contours,downsample_factor):
+        values = [i/downsample_factor for i in contours.values()]
+        return dict(zip(contours.keys(),values))
+    
+    def get_scale(self,animal,downsample_factor):
+        scan_run = ScanRun.objects.filter(prep_id = animal).first()
+        res = scan_run.resolution
+        return [downsample_factor*res*1000,downsample_factor*res*1000,scan_run.zresolution*1000]
 
-    def make_volumes(self,volume,animal = 'DK55',down_sample_factor = 100):
-        vmaker = VolumeMaker(animal,check_path = False)
+    def make_volumes(self,volume,animal = 'DK55',downsample_factor = 100):
+        vmaker = VolumeMaker()
         structure,contours = volume.get_volume_name_and_contours()
-        values = [i/down_sample_factor for i in contours.values()]
-        contours = dict(zip(contours.keys(),values))
-        vmaker.set_aligned_contours({structure:contours})
-        vmaker.compute_COMs_origins_and_volumes()
-        res = vmaker.get_resolution()
-        segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
+        downsampled_contours = self.downsample_contours(contours,downsample_factor)
+        vmaker.set_aligned_contours({structure:downsampled_contours})
+        vmaker.compute_origins_and_volumes_for_all_segments()
+        volume = (vmaker.volumes[structure]).astype(np.uint8)
+        offset = list(vmaker.origins[structure])
         folder_name = f'{animal}_{structure}'
-        output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
-        volume = (vmaker.volumes[structure]*segment_properties[-1][0]).astype(np.uint8)
-        print(np.unique(volume))
-        print(segment_properties)
-        maker = NgConverter(volume = volume,scales = [down_sample_factor*res*1000,down_sample_factor*res*1000,20000],offset=list(vmaker.origins[structure]))
-        maker.create_neuroglancer_files(output_dir,segment_properties)
+        path = FileLocationManager(animal)
+        output_dir = os.path.join(path.segmentation_layer,folder_name)
+        scale = self.get_scale(animal,downsample_factor)
+        maker = NgConverter(volume = volume,scales = scale,offset=offset)
+        maker.create_neuroglancer_files(output_dir,segment_properties=[(1,structure)])
         return folder_name
 
 class SaveAnnotation(views.APIView):
