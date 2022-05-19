@@ -228,7 +228,6 @@ class AnnotationAbstract(models.Model):
     Abstract model for the 3 new annotation data models
     '''
     id = models.BigAutoField(primary_key=True)
-    # source = models.CharField(max_length=255)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
     z = models.FloatField(verbose_name="Z (um)")
@@ -292,7 +291,6 @@ class PolygonSequence(AnnotationAbstract):
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
 
-
 class StructureCom(AnnotationAbstract):
     class SourceChoices(models.TextChoices):
             MANUAL = 'MANUAL', gettext_lazy('MANUAL')
@@ -312,7 +310,6 @@ class StructureCom(AnnotationAbstract):
 
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
-
 
 class AnnotationPointArchive(AnnotationAbstract):
     class Meta:
