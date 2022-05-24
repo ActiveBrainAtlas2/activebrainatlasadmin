@@ -184,12 +184,12 @@ class AnnotationManager(AnnotationBase):
         rows.delete()
 
     def add_com(self,annotationi:Annotation,annotation_session:AnnotationSession):
-        x, y, z = annotationi.coord * self.scales
+        x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                         source='MANUAL', x=x, y=y, z=z))
     
     def add_marked_cells(self,annotationi:Annotation,annotation_session:AnnotationSession):
-        x, y, z = annotationi.coord * self.scales
+        x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,source='HUMAN-POSITIVE', x=x, y=y, z=z))
     
     def add_polygons(self,annotationi:Annotation,annotation_session:AnnotationSession):
