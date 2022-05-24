@@ -46,14 +46,16 @@ class ComListSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
+    session_id = serializers.CharField()
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
     source = serializers.CharField()
 
-class MarkedCellSerializer(serializers.Serializer):
+class MarkedCellListSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
+    session_id = serializers.CharField()
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
     source = serializers.CharField()
@@ -62,6 +64,7 @@ class PolygonListSerializer(serializers.Serializer):
     """
     This one feeds the dropdown
     """
+    session_id = serializers.CharField()
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
     source = serializers.CharField()

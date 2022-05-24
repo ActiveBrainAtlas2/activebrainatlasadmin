@@ -8,12 +8,12 @@ from django.utils.html import escape
 from django.apps import apps
 import numpy as np
 from neuroglancer.models import  AnnotationSession, MarkedCell, PolygonSequence
-from neuroglancer.serializers import AnnotationSerializer, ComListSerializer,MarkedCellSerializer,PolygonListSerializer, \
+from neuroglancer.serializers import AnnotationSerializer, ComListSerializer,MarkedCellListSerializer,PolygonListSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom,CellType
 from neuroglancer.annotation_controller import create_polygons, random_string    
 from neuroglancer.AnnotationBase import AnnotationBase
-from abakit.lib.annotation_layer import AnnotationLayer
+from abakit.lib.annotation_layer import AnnotationLayer,Point,Volume,Polygon
 from abakit.atlas.VolumeMaker import VolumeMaker
 from abakit.atlas.NgSegmentMaker import NgConverter
 import logging
@@ -78,14 +78,13 @@ def apply_scales_to_annotation_rows(rows,prep_id):
         row.x = row.x / scale_xy
         row.y = row.y / scale_xy
         row.z = row.z / z_scale +0.5
-    data = create_polygons(rows)
 
 class GetVolume(AnnotationBase,views.APIView):
     """
     view that returns the volume annotation for a session in neuroglancer json format
     """
 
-    def get(self, request, obj, session_id, format=None):
+    def get(self, request, session_id, format=None):
         try:
             session = AnnotationSession.objects.get(pk=session_id)
             rows = PolygonSequence.objects.filter(annotation_session__pk=session_id)
@@ -93,21 +92,34 @@ class GetVolume(AnnotationBase,views.APIView):
             print('bad query')
         print('len rows', len(rows))
         apply_scales_to_annotation_rows(rows,session.animal.prep_id)
-        data = create_polygons(rows)
-        serializer = PolygonSerializer(data, many=True)
+        polygon_data = self.create_polygon_and_volume_uuids(rows)
+        polygons = create_polygons(polygon_data)
+        serializer = PolygonSerializer(polygons, many=True)
         return Response(serializer.data)
+    
+    def create_polygon_and_volume_uuids(self,rows):
+        polygon_index_to_id = {}
+        volume_id = random_string()
+        polygon_data = []
+        for i in rows:
+            if not i.polygon_index in polygon_index_to_id:
+                polygon_index_to_id[i.polygon_index] = random_string()
+            i.polygon_id = polygon_index_to_id[i.polygon_index]
+            i.volume_id = volume_id
+            polygon_data.append(i)
+        return polygon_data
+            
 
 class GetCOM(AnnotationBase,views.APIView):
     '''view that returns the COM for a perticular annotator in neuroglancer json format'''
-    def get(self, request, obj, prep_id, annotator_id,source, format=None):
+    def get(self, request, prep_id, annotator_id,source, format=None):
         self.set_animal_from_id(prep_id)
         self.set_annotator_from_id(annotator_id)
         try:
             rows = StructureCom.objects.filter(annotation_session__animal=self.animal)\
-                        .filter(source=source).filter(annotator=self.annotator)
+                        .filter(source=source).filter(annotation_session__annotator=self.annotator)
         except:
             print('bad query')
-        print('len rows', len(rows))
         apply_scales_to_annotation_rows(rows,self.animal.prep_id)
         data = []
         for row in rows:
@@ -120,13 +132,12 @@ class GetCOM(AnnotationBase,views.APIView):
 
 class GetMarkedCell(AnnotationBase,views.APIView):
     '''view that returns the marked cells for a specific annotation session in neuroglancer json format'''
-    def get(self, request, obj, session_id, format=None):
+    def get(self, request, session_id, format=None):
         try:
             session = AnnotationSession.objects.get(pk=session_id)
             rows = MarkedCell.objects.filter(annotation_session__pk=session_id)
         except:
             print('bad query')
-        print('len rows', len(rows))
         apply_scales_to_annotation_rows(rows,session.animal.prep_id)
         data = []
         for row in rows:
@@ -147,11 +158,12 @@ class GetComList(views.APIView):
         """
         data = []
         coms = StructureCom.objects.order_by('annotation_session')\
-            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username', 'source').distinct()
+            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username','annotation_session__annotator__id', 'source').distinct()
         for com in coms:
             data.append({
                 "prep_id":com['annotation_session__animal__prep_id'],
                 "annotator":com['annotation_session__annotator__username'],
+                "annotator_id":com['annotation_session__annotator__id'],
                 "source":com['source'],
                 })
         serializer = ComListSerializer(data, many=True)
@@ -168,15 +180,14 @@ class GetPolygonList(views.APIView):
         This will get the layer_data
         """
         data = []
-        active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='POLYGON_SEQUENCE')\
-            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source','id').all()
+        active_sessions = AnnotationSession.objects.filter(active=True).filter(annotation_type='POLYGON_SEQUENCE').all()
         for sessioni in active_sessions:
             data.append({
-                'id' : sessioni['id'],
-                "prep_id":sessioni['animal__prep_id'],
-                "annotator":sessioni['annotator__username'],
-                "brain_region":sessioni['brain_region__abbreviation'],
-                "source":sessioni['source'],
+                'session_id' : sessioni.id,
+                "prep_id":sessioni.animal.prep_id,
+                "annotator":sessioni.annotator.username,
+                "brain_region":sessioni.brain_region.abbreviation,
+                "source":sessioni.source,
                 })
         serializer = PolygonListSerializer(data, many=True)
         return Response(serializer.data)
@@ -191,16 +202,15 @@ class GetMarkedCellList(views.APIView):
         This will get the layer_data
         """
         data = []
-        active_sessions = AnnotationSession.objects.filter(active=True).objects.filter(annotation_type='MARKED_CELL')\
-            .values('animal__prep_id', 'annotator__username','brain_region__abbreviation', 'source','id').all()
+        active_sessions = AnnotationSession.objects.filter(active=True).filter(annotation_type='MARKED_CELL').all()
         for sessioni in active_sessions:
             data.append({
-                'id' : sessioni['id'],
-                "prep_id":sessioni['annotation_session__animal__prep_id'],
-                "annotator":sessioni['annotator__username'],
-                "source":sessioni['source'],
+                'session_id' : sessioni.id,
+                "prep_id":sessioni.animal.prep_id,
+                "annotator":sessioni.annotator.username,
+                "source":sessioni.source,
                 })
-        serializer = MarkedCellSerializer(data, many=True)
+        serializer = MarkedCellListSerializer(data, many=True)
         return Response(serializer.data)
 
 class Rotation(views.APIView):
@@ -307,8 +317,6 @@ class ContoursToVolume(views.APIView):
         vmaker.set_aligned_contours({structure:contours})
         vmaker.compute_COMs_origins_and_volumes()
         res = vmaker.get_resolution()
-        print('=============================================')
-        print(res)
         segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
         folder_name = f'{animal}_{structure}'
         output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)

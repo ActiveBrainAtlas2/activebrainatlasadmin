@@ -203,6 +203,16 @@ class AnnotationSession(models.Model):
         verbose_name = 'Annotation session'
         verbose_name_plural = 'Annotation sessions'
 
+    @property
+    def source(self):
+        if self.is_polygon_sequence():
+            one_row = PolygonSequence.objects.filter(annotation_session__id=self.id).first()
+        elif self.is_marked_cell():
+            one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
+        elif self.is_structure_com():
+            one_row = StructureCom.objects.filter(annotation_session__id=self.id).first()
+        return one_row.source
+
     def __str__(self):
         return f'{self.animal} {self.brain_region} {self.annotation_type}'
     
@@ -245,6 +255,9 @@ class AnnotationAbstract(models.Model):
     @property
     def created(self):
         return '%s'%self.annotation_session.created
+    @property
+    def session_id(self):
+        return '%s'%self.annotation_session.id
     class Meta:
         abstract = True
 

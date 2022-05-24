@@ -67,20 +67,30 @@ def parse_polygon_points(polygon_points):
     volumes = {}
     for pointi in polygon_points:
         polygon_id = pointi.polygon_id
-        coordinate = [pointi.x, pointi.y, pointi.z]
         if pointi.volume_id is not None:
             volume_id = pointi.volume_id
             if not volume_id in volumes:
                 volumes[volume_id] = {}
             if not polygon_id in volumes[volume_id]:
                 volumes[volume_id][polygon_id] = []
-            volumes[volume_id][polygon_id].append(coordinate)
+            volumes[volume_id][polygon_id].append(pointi)
         else:
             if not polygon_id in polygons:
                 polygons[polygon_id] = []
-            polygons[polygon_id].append(coordinate)
+            polygons[polygon_id].append(pointi)
+    for polygon_id, polygon_points in polygons.items(): 
+        polygons[polygon_id] = sort_polygon_points_and_get_coordinates(polygon_points)
+    for volume_id, polygons_in_vloume in volumes.items():      
+        for polygon_id, polygon_points in polygons_in_vloume.items():   
+            volumes[volume_id][polygon_id] = sort_polygon_points_and_get_coordinates(polygon_points)
     return polygons, volumes
 
+def sort_polygon_points_and_get_coordinates(polygon_points):
+    polygon_points = np.array(polygon_points)
+    orders = [i.point_order for i in polygon_points]
+    sort_id = np.argsort(orders)
+    polygon_points = polygon_points[sort_id]
+    return [[i.x, i.y, i.z] for i in polygon_points]
 
 def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=None):
     """create the json entry for a parent annotation.  The parent annotation need to have a specific id and the list of id for all the children
