@@ -21,6 +21,7 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 from neuroglancer.AnnotationManager import AnnotationManager
 import os 
+from django.db.models import Count
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -158,13 +159,15 @@ class GetComList(views.APIView):
         """
         data = []
         coms = StructureCom.objects.order_by('annotation_session')\
-            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username','annotation_session__annotator__id', 'source').distinct()
+            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username','annotation_session__annotator__id', 'source')\
+                .annotate(Count("id")).order_by()
         for com in coms:
             data.append({
                 "prep_id":com['annotation_session__animal__prep_id'],
                 "annotator":com['annotation_session__annotator__username'],
                 "annotator_id":com['annotation_session__annotator__id'],
                 "source":com['source'],
+                "count" : com['id__count']
                 })
         serializer = ComListSerializer(data, many=True)
         return Response(serializer.data)
@@ -209,7 +212,13 @@ class GetMarkedCellList(views.APIView):
                 "prep_id":sessioni.animal.prep_id,
                 "annotator":sessioni.annotator.username,
                 "source":sessioni.source,
+                "cell_type":sessioni.cell_type.cell_type,
+                "cell_type_id":sessioni.cell_type.id,
+                "structure":sessioni.brain_region.abbreviation,
+                "structure_id":sessioni.brain_region.id,
                 })
+            if data[-1]['structure']=='point':
+                data[-1]['structure'] = 'NA'
         serializer = MarkedCellListSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -219,13 +228,10 @@ class Rotation(views.APIView):
     """
 
     def get(self, request, prep_id, format=None):
-
         data = {}
-        # if request.user.is_authenticated and animal:
         R, t = align_atlas(prep_id)
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
-
         return JsonResponse(data)
 
 class Rotations(views.APIView):

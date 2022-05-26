@@ -2,10 +2,11 @@ from django.shortcuts import render
 from brain.models import Animal, Section
 from brain.forms import AnimalForm
 from rest_framework import status
-from django.http import Http404
+from django.http import Http404,JsonResponse
 from rest_framework import views
 from rest_framework.response import Response
 from brain.serializers import AnimalSerializer
+from brain.models import ScanRun
 
 # from url initial page
 def image_list(request):
@@ -66,3 +67,15 @@ class AnimalDetail(views.APIView):
         animal.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     """
+
+class ScanResolution(views.APIView):
+    """
+    List all animals. No creation at this time.
+    """
+    def get(self, request,prep_id = 'Atlas', format=None):
+        result = ScanRun.objects.filter(prep_id=prep_id).first()
+        if result:
+            response = {'resolution':[result.resolution,result.resolution,result.zresolution]}
+        else:
+            response = {'resolution':None}
+        return JsonResponse(response)
