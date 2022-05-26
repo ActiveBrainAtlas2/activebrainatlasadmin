@@ -7,8 +7,6 @@ from rest_framework import views
 from rest_framework.response import Response
 from brain.serializers import AnimalSerializer
 from brain.models import ScanRun
-
-# from url initial page
 def image_list(request):
     prep_id = request.GET.get('prep_id')
     form = AnimalForm()  # A form bound to the GET data
