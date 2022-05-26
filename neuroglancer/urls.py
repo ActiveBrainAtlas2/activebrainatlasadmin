@@ -35,4 +35,7 @@ marked_cell_related_urls = [
     path('cell_types',views.GetCellTypes.as_view(),name = 'cell_types'),
 ]
 
+general_annotations=['annotations', views.GetMarkedCellList.as_view(),
+                     'annotation', views.GetMarkedCellList.as_view()]
+
 urlpatterns = general_urls+transformation_relate_urls+volume_related_urls+com_related_urls+marked_cell_related_urls
