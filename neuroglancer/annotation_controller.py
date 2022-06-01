@@ -15,7 +15,7 @@ def next_item(odic, key):
     return result 
 
 
-def create_polygons(polygon_points) -> list:
+def create_polygons(polygon_points,description=None) -> list:
     '''
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
@@ -27,11 +27,11 @@ def create_polygons(polygon_points) -> list:
         annotation_layer_json += create_polygon_json(polygon_id, polygon_points)
     i = 0
     for volume_id, polygons in volumes.items():
-        annotation_layer_json += create_volume_json(volume_id, polygons, i)
+        annotation_layer_json += create_volume_json(volume_id, polygons, description = description)
     return annotation_layer_json
 
 
-def create_volume_json(volume_id, polygons, i):
+def create_volume_json(volume_id, polygons, description = None):
     """_summary_
 
     Args:
@@ -44,7 +44,7 @@ def create_volume_json(volume_id, polygons, i):
     """    
     volume_json = []
     one_point = list(polygons.values())[0][0] 
-    parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()))
+    parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()),description=description)
     volume_json.append(parent_annotataions)
     for polygon_id, polygon_points in polygons.items(): 
         volume_json += create_polygon_json(polygon_id, polygon_points,parent_id=volume_id)
@@ -92,7 +92,7 @@ def sort_polygon_points_and_get_coordinates(polygon_points):
     polygon_points = polygon_points[sort_id]
     return [[i.x, i.y, i.z] for i in polygon_points]
 
-def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,parent_id = None):
+def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,parent_id = None,description = None):
     """create the json entry for a parent annotation.  The parent annotation need to have a specific id and the list of id for all the children
 
     Args:
@@ -112,6 +112,8 @@ def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,par
     parent_annotation["childAnnotationIds"] = child_ids
     if parent_id is not None:
         parent_annotation["parentAnnotationId"] = parent_id
+    if description is not None:
+        parent_annotation["description"] = description
     parent_annotation["type"] = _type
     parent_annotation["id"] = id
     parent_annotation["props"] = [hexcolor]
