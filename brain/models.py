@@ -243,23 +243,41 @@ class Slide(AtlasModel):
     insert_between_one_two = models.IntegerField(blank=False, null=False, default=0,
                                                  verbose_name='Replicate S2',
                                                  validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_rotation_1 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S1',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])                                            
     scene_qc_2 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 2 QC')
     insert_between_two_three = models.IntegerField(blank=False, null=False, default=0,
                                                    verbose_name='Replicate S3',
                                                    validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_rotation_2 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S2',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])  
     scene_qc_3 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 3 QC')
     insert_between_three_four = models.IntegerField(blank=False, null=False, default=0,
                                                     verbose_name='Replicate S4',
                                                     validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_rotation_3 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S3',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])  
     scene_qc_4 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 4 QC')
     insert_between_four_five = models.IntegerField(blank=False, null=False, default=0,
                                                    verbose_name='Replicate S5',
                                                    validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_rotation_4 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S4',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])  
     scene_qc_5 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 5 QC')
     insert_between_five_six = models.IntegerField(blank=False, null=False, default=0,
                                                   verbose_name='Replicate S6',
                                                   validators=[MinValueValidator(0),MaxValueValidator(5)])
+    scene_rotation_5 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S5',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])  
     scene_qc_6 = models.IntegerField(choices=QC_CHOICES, default=0, verbose_name='Scene 6 QC')
+    scene_rotation_6 = models.IntegerField(blank=False, null=False, default=0,
+                                                 verbose_name='Rotate S6',
+                                                 validators=[MinValueValidator(0),MaxValueValidator(4)])  
     file_name = models.CharField(max_length=200)
     comments = models.TextField(max_length=2001, blank=True, null=True)
     file_size = models.FloatField(verbose_name='File size (bytes)')

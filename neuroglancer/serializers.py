@@ -37,9 +37,10 @@ class PolygonSerializer(serializers.Serializer):
     pointA = serializers.ListField(required=False)
     pointB = serializers.ListField(required=False)
     childAnnotationIds = serializers.ListField(required=False)
-    id = serializers.CharField()
     type = serializers.CharField()
+    id = serializers.CharField()
     parentAnnotationId = serializers.CharField(required=False)
+    description = serializers.CharField(required=False)
     props = serializers.ListField()
 
 class ComListSerializer(serializers.Serializer):
