@@ -1,3 +1,4 @@
+from tables import Description
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -94,7 +95,7 @@ class GetVolume(AnnotationBase,views.APIView):
         print('len rows', len(rows))
         apply_scales_to_annotation_rows(rows,session.animal.prep_id)
         polygon_data = self.create_polygon_and_volume_uuids(rows)
-        polygons = create_polygons(polygon_data)
+        polygons = create_polygons(polygon_data,description = session.brain_region.abbreviation)
         serializer = PolygonSerializer(polygons, many=True)
         return Response(serializer.data)
     
