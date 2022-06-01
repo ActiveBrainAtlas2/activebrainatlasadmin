@@ -1,0 +1,1064 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Brain admin &#8212; Django Activebrainatlas database portal 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Brain models" href="models.html" />
+    <link rel="prev" title="Welcome to ActiveBrainAtlas’s documentation!" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="brain-admin">
+<h1>Brain admin<a class="headerlink" href="#brain-admin" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-brain.admin"></span><dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">AnimalAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.AnimalAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is used to administer the animal. It includes all the metadata
+entered by the user. The animal class is often used as a key in another table.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin.exclude">
+<span class="sig-name descname"><span class="pre">exclude</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created',)</span></em><a class="headerlink" href="#brain.admin.AnimalAdmin.exclude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'comments',</span> <span class="pre">'histogram',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.AnimalAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.AnimalAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id']</span></em><a class="headerlink" href="#brain.admin.AnimalAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AnimalAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',)</span></em><a class="headerlink" href="#brain.admin.AnimalAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">AtlasAdminModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.AtlasAdminModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is used as a base class for most of the other classes. It contains
+all the common variables that all the tables/objects have. It inherits
+from the Django base admin model: admin.ModelAdmin</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.Media">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Media</span></span><a class="headerlink" href="#brain.admin.AtlasAdminModel.Media" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a simple class that defines some CSS attributes for the 
+thumbnails</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.Media.css">
+<span class="sig-name descname"><span class="pre">css</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'all':</span> <span class="pre">('admin/css/thumbnail.css',)}</span></em><a class="headerlink" href="#brain.admin.AtlasAdminModel.Media.css" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.actions">
+<span class="sig-name descname"><span class="pre">actions</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['export_as_csv']</span></em><a class="headerlink" href="#brain.admin.AtlasAdminModel.actions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#brain.admin.AtlasAdminModel.fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.formfield_for_foreignkey">
+<span class="sig-name descname"><span class="pre">formfield_for_foreignkey</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.AtlasAdminModel.formfield_for_foreignkey" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of formfield_for_foreignkey
+Simple formatting for foeign keys</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin obj class
+db_field (undefined): data row field
+request (undefined): http request
+<a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs (undefined): extra args</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.formfield_overrides">
+<span class="sig-name descname"><span class="pre">formfield_overrides</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{&lt;class</span> <span class="pre">'django.db.models.fields.CharField'&gt;:</span> <span class="pre">{'widget':</span> <span class="pre">&lt;django.forms.widgets.TextInput</span> <span class="pre">object&gt;},</span> <span class="pre">&lt;class</span> <span class="pre">'django.db.models.fields.DateTimeField'&gt;:</span> <span class="pre">{'widget':</span> <span class="pre">&lt;django.forms.widgets.DateInput</span> <span class="pre">object&gt;},</span> <span class="pre">&lt;class</span> <span class="pre">'django.db.models.fields.DateField'&gt;:</span> <span class="pre">{'widget':</span> <span class="pre">&lt;django.contrib.admin.widgets.AdminDateWidget</span> <span class="pre">object&gt;},</span> <span class="pre">&lt;class</span> <span class="pre">'django.db.models.fields.IntegerField'&gt;:</span> <span class="pre">{'widget':</span> <span class="pre">&lt;django.forms.widgets.NumberInput</span> <span class="pre">object&gt;},</span> <span class="pre">&lt;class</span> <span class="pre">'django.db.models.fields.TextField'&gt;:</span> <span class="pre">{'widget':</span> <span class="pre">&lt;django.forms.widgets.Textarea</span> <span class="pre">object&gt;}}</span></em><a class="headerlink" href="#brain.admin.AtlasAdminModel.formfield_overrides" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.is_active">
+<span class="sig-name descname"><span class="pre">is_active</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.AtlasAdminModel.is_active" title="Permalink to this definition">¶</a></dt>
+<dd><p>A method returning a boolean showing if the data row is active</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> – admin obj class</p></li>
+<li><p><strong>instance</strong> – obj class</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A boolean</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created',)</span></em><a class="headerlink" href="#brain.admin.AtlasAdminModel.list_filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.AtlasAdminModel.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.AtlasAdminModel.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.ExportCsvMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">ExportCsvMixin</span></span><a class="headerlink" href="#brain.admin.ExportCsvMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of ExportCsvMixin
+A class used by most of the admin categories. It adds formatting 
+to make fields look consistent and also adds the method to export 
+to CSV from each of the ‘Action’ dropdowns in each category.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.ExportCsvMixin.export_as_csv">
+<span class="sig-name descname"><span class="pre">export_as_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.ExportCsvMixin.export_as_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the callback function to be executed when the device sends a
+notification to the client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<em>a class</em>) – The class instance</p></li>
+<li><p><strong>request</strong> (<em>a http class</em>) – The http request</p></li>
+<li><p><strong>queryset</strong> (<em>a class of type queryset</em>) – The query used to fetch the CSV data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">HistologyAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.HistologyAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of HistologyAdmin
+A class to describe the histology of each animal</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.autocomplete_fields">
+<span class="sig-name descname"><span class="pre">autocomplete_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id']</span></em><a class="headerlink" href="#brain.admin.HistologyAdmin.autocomplete_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.exclude">
+<span class="sig-name descname"><span class="pre">exclude</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('created',)</span></em><a class="headerlink" href="#brain.admin.HistologyAdmin.exclude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'label',</span> <span class="pre">'performance_center')</span></em><a class="headerlink" href="#brain.admin.HistologyAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.HistologyAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id',</span> <span class="pre">'label']</span></em><a class="headerlink" href="#brain.admin.HistologyAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.HistologyAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep__prep_id',)</span></em><a class="headerlink" href="#brain.admin.HistologyAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.InjectionAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">InjectionAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.InjectionAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of InjectionAdmin
+A class to describe the injections (if any) for each animal. 
+Each animal can have multiple injections.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'performance_center',</span> <span class="pre">'anesthesia',</span> <span class="pre">'comments',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.InjectionAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.InjectionAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.InjectionAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['created']</span></em><a class="headerlink" href="#brain.admin.InjectionAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep__prep_id',)</span></em><a class="headerlink" href="#brain.admin.InjectionAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">InjectionVirusAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.InjectionVirusAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of InjectionVirusAdmin
+This class describes a many to many relationship between the 
+virus and the injection classes. An animal can multiple 
+injections, with each injection having one or more viruses.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['injection',</span> <span class="pre">'virus']</span></em><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.injection_comments">
+<span class="sig-name descname"><span class="pre">injection_comments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.injection_comments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of injection_comments - gives the description from 
+the injection foreign key</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): base admin obj
+instance (undefined): the obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'injection_comments',</span> <span class="pre">'virus_name',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['created']</span></em><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.prep_id">
+<span class="sig-name descname"><span class="pre">prep_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.prep_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of prep_id - describes the animal used as a
+foreign key in this class.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): base admin obj
+instance (undefined): the obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('injection__prep__prep_id',)</span></em><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.InjectionVirusAdmin.virus_name">
+<span class="sig-name descname"><span class="pre">virus_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.InjectionVirusAdmin.virus_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of virus_name - gives the description from the 
+virus foreign key</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): base admin obj
+instance (undefined): - the obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">LogEntryAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.LogEntryAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of LogEntryAdmin
+This class describes the log objects used during the 
+preprocessing pipeline</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>admin.ModelAdmin: the base Django admin obj</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.date_hierarchy">
+<span class="sig-name descname"><span class="pre">date_hierarchy</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'action_time'</span></em><a class="headerlink" href="#brain.admin.LogEntryAdmin.date_hierarchy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.has_add_permission">
+<span class="sig-name descname"><span class="pre">has_add_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.LogEntryAdmin.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_add_permission - this data is added by the 
+preprocessing pipeline so can’t be changed here</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): LogEntry admin obj
+request (undefined): http request</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.has_change_permission">
+<span class="sig-name descname"><span class="pre">has_change_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.LogEntryAdmin.has_change_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_change_permission - this data is added by 
+the preprocessing pipeline so can’t be changed here</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): LogEntry admin obj
+request (undefined): http request
+obj=None (undefined): LogEntry obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.has_delete_permission">
+<span class="sig-name descname"><span class="pre">has_delete_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.LogEntryAdmin.has_delete_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_delete_permission - this data is added by 
+the preprocessing pipeline so can’t be deleted here</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): LogEntry admin obj
+request (undefined): http request
+obj=None (undefined): LogEntry obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.has_view_permission">
+<span class="sig-name descname"><span class="pre">has_view_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.LogEntryAdmin.has_view_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_view_permission - this data can only be 
+viewed by a superuser</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): LogEntry admin obj
+request (undefined): http request
+obj=None (undefined): LogEntry obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['action_time',</span> <span class="pre">'user',</span> <span class="pre">'content_type',</span> <span class="pre">'action_flag']</span></em><a class="headerlink" href="#brain.admin.LogEntryAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['action_time',</span> <span class="pre">'action_flag']</span></em><a class="headerlink" href="#brain.admin.LogEntryAdmin.list_filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.LogEntryAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.LogEntryAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['object_repr',</span> <span class="pre">'change_message']</span></em><a class="headerlink" href="#brain.admin.LogEntryAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.OrganicLabelAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">OrganicLabelAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.OrganicLabelAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of OrganicLabelAdmin
+This class describes the organice label for an animal. So far, 
+it has had no data entered in it.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.OrganicLabelAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('label_id',</span> <span class="pre">'label_type',</span> <span class="pre">'type_details',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.OrganicLabelAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.OrganicLabelAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.OrganicLabelAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.OrganicLabelAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['label_id',</span> <span class="pre">'label_type',</span> <span class="pre">'type_details',</span> <span class="pre">'created']</span></em><a class="headerlink" href="#brain.admin.OrganicLabelAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.OrganicLabelAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('label_id',)</span></em><a class="headerlink" href="#brain.admin.OrganicLabelAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.ScanRunAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">ScanRunAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.ScanRunAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of ScanRunAdmin
+This class describes what occurs when the slides are actually 
+scanned. Many of the attributes from this class are used 
+throughout the preprocessing pipeline. An animal can have multiple
+scan runs, but usually, there is just one scanning done 
+for each animal.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.ScanRunAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'performance_center',</span> <span class="pre">'machine',</span> <span class="pre">'comments',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.ScanRunAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.ScanRunAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.ScanRunAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.ScanRunAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id',</span> <span class="pre">'performance_center',</span> <span class="pre">'machine',</span> <span class="pre">'comments',</span> <span class="pre">'created']</span></em><a class="headerlink" href="#brain.admin.ScanRunAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.ScanRunAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep__prep_id',)</span></em><a class="headerlink" href="#brain.admin.ScanRunAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">SectionAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of SectionAdmin
+This class describes the Section methods and attributes. 
+Sections come from a view and 
+not a table so it needs to be handled a bit differently.</p>
+<dl>
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV</p>
+<blockquote>
+<div><p>exporter method.</p>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.Media">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Media</span></span><a class="headerlink" href="#brain.admin.SectionAdmin.Media" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.Media.css">
+<span class="sig-name descname"><span class="pre">css</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'all':</span> <span class="pre">('admin/css/thumbnail.css',)}</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.Media.css" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin.get_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of get_queryset - the query starts out with an 
+empty qeuryset ‘prep_id=XXXX’ so the initial page is empty 
+and the user is forced to select one and only one animal. 
+The order is descided upon whether the brain was section 
+from left to right, or right to left. This comes
+from the histology table: side_sectioned_first</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): section admin obj
+request (undefined): http request
+obj=None (undefined): section obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.has_add_permission">
+<span class="sig-name descname"><span class="pre">has_add_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_add_permission - the add button is not 
+shown as sections are a view and they can’t be added to.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): section admin obj
+request (undefined): http request
+obj=None (undefined): section obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.has_change_permission">
+<span class="sig-name descname"><span class="pre">has_change_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin.has_change_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_change_permission - the edit button is not 
+shown as sections are a view and they can’t be changed.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): section admin obj
+request (undefined): http request
+obj=None (undefined): section obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.has_delete_permission">
+<span class="sig-name descname"><span class="pre">has_delete_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin.has_delete_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_delete_permission - the add button is 
+not shown as sections are a view and they can’t be added to.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): section admin obj
+request (undefined): http request
+obj=None (undefined): section obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.indexCounter">
+<span class="sig-name descname"><span class="pre">indexCounter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-1</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.indexCounter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('tif',</span> <span class="pre">'section_number',</span> <span class="pre">'slide',</span> <span class="pre">'scene',</span> <span class="pre">'scene_index',</span> <span class="pre">'histogram',</span> <span class="pre">'image_tag')</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.list_display_links">
+<span class="sig-name descname"><span class="pre">list_display_links</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.list_display_links" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.list_filter">
+<span class="sig-name descname"><span class="pre">list_filter</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.list_filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.list_per_page">
+<span class="sig-name descname"><span class="pre">list_per_page</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.list_per_page" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.SectionAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id',</span> <span class="pre">'channel']</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['prep_id',</span> <span class="pre">'file_name']</span></em><a class="headerlink" href="#brain.admin.SectionAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SectionAdmin.section_number">
+<span class="sig-name descname"><span class="pre">section_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SectionAdmin.section_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of section_number - this is just an ordered query,
+so to get the section number, we
+just use an incrementor</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): section admin obj
+instance (undefined): section obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">SlideAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of SlideAdmin
+This class describes the admin area for a particular slide. This 
+is used in the QA process and includes
+the inline TIFF files in the QA form.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.get_fields">
+<span class="sig-name descname"><span class="pre">get_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.get_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of get_fields - This method fetches the correct 
+number of inline TIFF files that are used
+in the QA form.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin slide obj
+request (undefined): http request
+obj (undefined): the slide obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.has_add_permission">
+<span class="sig-name descname"><span class="pre">has_add_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_add_permission - cannot show or use 
+the add button at this stage</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the slide admin obj
+request (undefined): the http request
+obj=None (undefined): - the slide obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.has_delete_permission">
+<span class="sig-name descname"><span class="pre">has_delete_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.has_delete_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_delete_permission - cannot show or use 
+the delete button at this stage.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the admin slide obj
+request (undefined): the http request
+obj=None (undefined): the slide obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.inlines">
+<span class="sig-name descname"><span class="pre">inlines</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'brain.admin.TifInline'&gt;]</span></em><a class="headerlink" href="#brain.admin.SlideAdmin.inlines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('prep_id',</span> <span class="pre">'file_name',</span> <span class="pre">'slide_status',</span> <span class="pre">'scene_qc_1',</span> <span class="pre">'scene_qc_2',</span> <span class="pre">'scene_qc_3',</span> <span class="pre">'scene_qc_4',</span> <span class="pre">'scene_count')</span></em><a class="headerlink" href="#brain.admin.SlideAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.SlideAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name',</span> <span class="pre">'created']</span></em><a class="headerlink" href="#brain.admin.SlideAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.prep_id">
+<span class="sig-name descname"><span class="pre">prep_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.prep_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of prep_id - returns the animal name that 
+the slide belongs to</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the admin obj
+instance (undefined): the slide obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name',</span> <span class="pre">'slide_physical_id',</span> <span class="pre">'scan_run',</span> <span class="pre">'processed',</span> <span class="pre">'file_size']</span></em><a class="headerlink" href="#brain.admin.SlideAdmin.readonly_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.save_model">
+<span class="sig-name descname"><span class="pre">save_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">change</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.save_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of save_model - overridden method of the save 
+method. When the user changes the scenes via the QA form, 
+the usual save isn’t sufficient so we override it.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the admin slide obj
+request (undefined): the http request
+obj (undefined): the slide obj
+form (undefined): the form obj
+change (undefined): if the form has changed or not.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.scene_count">
+<span class="sig-name descname"><span class="pre">scene_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideAdmin.scene_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of scene_count - determines how many scenes are 
+there for a slide</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the slide admin obj
+obj (undefined): the slide obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['scan_run__prep__prep_id',</span> <span class="pre">'file_name']</span></em><a class="headerlink" href="#brain.admin.SlideAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">SlideCziToTifAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of SlideCziToTifAdmin
+A class to describe the individual scene, AKA the TIFF file.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.exclude">
+<span class="sig-name descname"><span class="pre">exclude</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['processing_duration']</span></em><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.exclude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.has_add_permission">
+<span class="sig-name descname"><span class="pre">has_add_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_add_permission - cannot show or use the 
+add button at this stage</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined):  the SlideCziToTif admin obj
+request (undefined): the http request
+obj=None (undefined):  the SlideCziToTif obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.has_delete_permission">
+<span class="sig-name descname"><span class="pre">has_delete_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.has_delete_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_delete_permission - cannot show or use 
+the delete button at this stage</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the SlideCziToTif admin obj
+request (undefined): the http request
+obj=None (undefined): the SlideCziToTif obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('file_name',</span> <span class="pre">'scene_number',</span> <span class="pre">'channel',</span> <span class="pre">'file_size')</span></em><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name',</span> <span class="pre">'scene_number',</span> <span class="pre">'channel',</span> <span class="pre">'file_size']</span></em><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name',</span> <span class="pre">'scene_number',</span> <span class="pre">'slide',</span> <span class="pre">'scene_index',</span> <span class="pre">'channel',</span> <span class="pre">'file_size',</span> <span class="pre">'width',</span> <span class="pre">'height']</span></em><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.readonly_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.SlideCziToTifAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name']</span></em><a class="headerlink" href="#brain.admin.SlideCziToTifAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.TifInline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">TifInline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of TifInline
+This class is solely used for the database QA. It will display the 
+associated TIFF files for each 
+slide on the slide page.</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>admin.TabularInline: The class that describes how the data is 
+laid out on the page.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.can_delete">
+<span class="sig-name descname"><span class="pre">can_delete</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#brain.admin.TifInline.can_delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.extra">
+<span class="sig-name descname"><span class="pre">extra</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#brain.admin.TifInline.extra" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.fields">
+<span class="sig-name descname"><span class="pre">fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('file_name',</span> <span class="pre">'scene_number',</span> <span class="pre">'scene_index',</span> <span class="pre">'channel',</span> <span class="pre">'scene_image',</span> <span class="pre">'section_image')</span></em><a class="headerlink" href="#brain.admin.TifInline.fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.formset">
+<span class="sig-name descname"><span class="pre">formset</span></span><a class="headerlink" href="#brain.admin.TifInline.formset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">brain.forms.TifInlineFormset</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.get_formset">
+<span class="sig-name descname"><span class="pre">get_formset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.get_formset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of get_formset - sets up the form for the set of 
+TIFF files for each slide</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin TIFF obj
+request (undefined): http request
+obj=None (undefined): the TIFF obj
+<a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs (undefined): extra args</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.get_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of get_queryset - returns just the first channel 
+for each slide. We only need to look
+at the first channel for QA purposes.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): the admin TIFF obj
+request (undefined): the TIFF obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.has_add_permission">
+<span class="sig-name descname"><span class="pre">has_add_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.has_add_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_add_permission - TIFF files cannot be added 
+at this stage.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin TIFF obj
+request (undefined): http request
+obj=None (undefined): the TIFF obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.has_change_permission">
+<span class="sig-name descname"><span class="pre">has_change_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.has_change_permission" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of has_change_permission - TIFF files cannot be 
+edited at this stage.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin TIFF obj
+request (undefined): http request
+obj=None (undefined): the TIFF obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.TifInline.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.TifInline.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#brain.admin.TifInline.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="models.html#brain.models.SlideCziToTif" title="brain.models.SlideCziToTif"><code class="xref py py-class docutils literal notranslate"><span class="pre">brain.models.SlideCziToTif</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['-active',</span> <span class="pre">'scene_number',</span> <span class="pre">'scene_index']</span></em><a class="headerlink" href="#brain.admin.TifInline.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.readonly_fields">
+<span class="sig-name descname"><span class="pre">readonly_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['file_name',</span> <span class="pre">'scene_number',</span> <span class="pre">'channel',</span> <span class="pre">'scene_index',</span> <span class="pre">'scene_image',</span> <span class="pre">'section_image']</span></em><a class="headerlink" href="#brain.admin.TifInline.readonly_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.scene_image">
+<span class="sig-name descname"><span class="pre">scene_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.scene_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of scene_image - this method tests if there is a 
+PNG file for each scene, and if so, shows it on the QA page 
+for each slide. This is very helpful when the user must decide
+if the TIFF file is usable.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin TIFF obj
+obj (undefined): the TIFF obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="brain.admin.TifInline.section_image">
+<span class="sig-name descname"><span class="pre">section_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.TifInline.section_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of section_image - this method shows the TIFF image as 
+a PNG later on in the QA process after it has been cleaned and aligned.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>self (undefined): admin TIFF obj
+obj (undefined): the TIFF obj</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.TifInline.template">
+<span class="sig-name descname"><span class="pre">template</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'tabular_tifs.html'</span></em><a class="headerlink" href="#brain.admin.TifInline.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="brain.admin.VirusAdmin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">brain.admin.</span></span><span class="sig-name descname"><span class="pre">VirusAdmin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">admin_site</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#brain.admin.VirusAdmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description of VirusAdmin
+A class used to describe a virus. This class can then be a 
+foreign key into the Injection class</p>
+<dl class="simple">
+<dt>Inheritance:</dt><dd><p>AtlasAdminModel: The base admin model
+ExportCsvMixin: The class with standard features and CSV 
+exporter method.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.VirusAdmin.list_display">
+<span class="sig-name descname"><span class="pre">list_display</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('virus_name',</span> <span class="pre">'virus_type',</span> <span class="pre">'type_details',</span> <span class="pre">'created')</span></em><a class="headerlink" href="#brain.admin.VirusAdmin.list_display" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="brain.admin.VirusAdmin.media">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">media</span></span><a class="headerlink" href="#brain.admin.VirusAdmin.media" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.VirusAdmin.ordering">
+<span class="sig-name descname"><span class="pre">ordering</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['virus_name']</span></em><a class="headerlink" href="#brain.admin.VirusAdmin.ordering" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="brain.admin.VirusAdmin.search_fields">
+<span class="sig-name descname"><span class="pre">search_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('virus_name',)</span></em><a class="headerlink" href="#brain.admin.VirusAdmin.search_fields" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Django Activebrainatlas database portal</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Brain admin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Brain models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="views.html">Brain views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serializers.html">Brain serializers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../neuroglancer/admin.html">Neuroglancer admin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../neuroglancer/models.html">Neuroglancer models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../neuroglancer/views.html">Neuroglancer views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../neuroglancer/serializers.html">Neuroglancer serializers</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../../index.html" title="previous chapter">Welcome to ActiveBrainAtlas’s documentation!</a></li>
+      <li>Next: <a href="models.html" title="next chapter">Brain models</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Edward O'Donnell.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/brain/admin.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
