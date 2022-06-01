@@ -47,7 +47,7 @@ def create_volume_json(volume_id, polygons, i):
     parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()))
     volume_json.append(parent_annotataions)
     for polygon_id, polygon_points in polygons.items(): 
-        volume_json += create_polygon_json(polygon_id, polygon_points)
+        volume_json += create_polygon_json(polygon_id, polygon_points,parent_id=volume_id)
     return volume_json
 
 
@@ -92,7 +92,7 @@ def sort_polygon_points_and_get_coordinates(polygon_points):
     polygon_points = polygon_points[sort_id]
     return [[i.x, i.y, i.z] for i in polygon_points]
 
-def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=None):
+def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,parent_id = None):
     """create the json entry for a parent annotation.  The parent annotation need to have a specific id and the list of id for all the children
 
     Args:
@@ -110,13 +110,15 @@ def create_parent_annotation_json(npoints, parent_id, source, _type, child_ids=N
         child_ids = [random_string() for _ in range(npoints)]
     parent_annotation["source"] = source
     parent_annotation["childAnnotationIds"] = child_ids
+    if parent_id is not None:
+        parent_annotation["parentAnnotationId"] = parent_id
     parent_annotation["type"] = _type
-    parent_annotation["id"] = parent_id
+    parent_annotation["id"] = id
     parent_annotation["props"] = [hexcolor]
     return parent_annotation, child_ids
 
 
-def create_polygon_json(polygon_id, polygon_points):
+def create_polygon_json(polygon_id, polygon_points,parent_id = None):
     """create the neuroglancer json state for polygon points
 
     Args:
@@ -128,7 +130,7 @@ def create_polygon_json(polygon_id, polygon_points):
     """   
     polygon_json = []
     npoints = len(polygon_points)
-    parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon')
+    parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon',parent_id=parent_id)
     polygon_json.append(parent_annotation)
     for pointi in range(npoints - 1):
         line = {}
