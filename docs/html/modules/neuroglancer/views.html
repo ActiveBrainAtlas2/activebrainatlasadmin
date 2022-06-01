@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Neuroglancer views &#8212; Django Activebrainatlas database portal 1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Neuroglancer serializers" href="serializers.html" />
+    <link rel="prev" title="Neuroglancer models" href="models.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="neuroglancer-views">
+<h1>Neuroglancer views<a class="headerlink" href="#neuroglancer-views" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuroglancer.views"></span><dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.AnnotationStatus">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">AnnotationStatus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.AnnotationStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>View that returns the current status of COM annotations.  This is to be updated or depricated</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.AnnotationStatus.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.AnnotationStatus.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.ContoursToVolume">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">ContoursToVolume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.ContoursToVolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>View that convert a volume in a specific neuroglancer url to a 3d mask.  The view finds the volume according to
+the volume id, and creates the 3d volume according the contours contained within</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.ContoursToVolume.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">volume_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.ContoursToVolume.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.ContoursToVolume.make_volumes">
+<span class="sig-name descname"><span class="pre">make_volumes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">volume</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">animal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DK55'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.ContoursToVolume.make_volumes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetCOM">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetCOM</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetCOM" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns the COM for a perticular annotator in neuroglancer json format</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetCOM.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prep_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotator_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetCOM.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetCellTypes">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetCellTypes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetCellTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>View that returns a list of cell types</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetCellTypes.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetCellTypes.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetComList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetComList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetComList" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns a list of available COMs</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetComList.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetComList.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will get the layer_data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetMarkedCell">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetMarkedCell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetMarkedCell" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns the marked cells for a specific annotation session in neuroglancer json format</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetMarkedCell.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetMarkedCell.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetMarkedCellList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetMarkedCellList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetMarkedCellList" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns a list of available marked cell annotations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetMarkedCellList.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetMarkedCellList.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will get the layer_data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetPolygonList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetPolygonList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetPolygonList" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns a list of available brain region volumes</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetPolygonList.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetPolygonList.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will get the layer_data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.GetVolume">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">GetVolume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetVolume" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns the volume annotation for a session in neuroglancer json format</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetVolume.create_polygon_and_volume_uuids">
+<span class="sig-name descname"><span class="pre">create_polygon_and_volume_uuids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetVolume.create_polygon_and_volume_uuids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.GetVolume.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.GetVolume.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.LandmarkList">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">LandmarkList</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.LandmarkList" title="Permalink to this definition">¶</a></dt>
+<dd><p>View that returns a list of active brain regions in the structures table</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.LandmarkList.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.LandmarkList.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.Rotation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">Rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.Rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns the transformation from the atlas to the image of one perticular brain.
+prep_id: the animal id, not the primary key in the animal table</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.Rotation.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prep_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.Rotation.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.Rotations">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">Rotations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.Rotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>view that returns the available set of rotations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.Rotations.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.Rotations.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.SaveAnnotation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">SaveAnnotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.SaveAnnotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.SaveAnnotation.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation_layer_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.SaveAnnotation.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlDataView">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">UrlDataView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.UrlDataView" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the API component that allows neuroglancer to fetch the json state for a perticular entry in the neuroglancer_url table</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>The row id in neuroglancer_url is passed to the function in the request variable.  This is part of django formats</p>
+</dd>
+<dt>Returns:</dt><dd><p>HttpResponse: a http page with the json state as the content</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlDataView.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.UrlDataView.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">UrlViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.UrlViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>API endpoint that allows the neuroglancer urls to be viewed or edited.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlViewSet.permission_classes">
+<span class="sig-name descname"><span class="pre">permission_classes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;class</span> <span class="pre">'rest_framework.permissions.AllowAny'&gt;]</span></em><a class="headerlink" href="#neuroglancer.views.UrlViewSet.permission_classes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlViewSet.queryset">
+<span class="sig-name descname"><span class="pre">queryset</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;QuerySet</span> <span class="pre">[&lt;UrlModel:</span> <span class="pre">1um</span> <span class="pre">isotropic</span> <span class="pre">mesh&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Altas,</span> <span class="pre">DK39premotor,</span> <span class="pre">DK52</span> <span class="pre">PM</span> <span class="pre">Nucleus&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Atlas</span> <span class="pre">COM&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">atlas</span> <span class="pre">contour</span> <span class="pre">demo&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Atlas</span> <span class="pre">V7&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Atlas</span> <span class="pre">V7</span> <span class="pre">mesh</span> <span class="pre">test&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Atlas</span> <span class="pre">with</span> <span class="pre">COM</span> <span class="pre">Comparison&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">BF</span> <span class="pre">DK54</span> <span class="pre">correct</span> <span class="pre">landmark&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">CHATM2</span> <span class="pre">3</span> <span class="pre">channels</span> <span class="pre">low</span> <span class="pre">resolution&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">conflicting</span> <span class="pre">labeling&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">conflicting</span> <span class="pre">labeling</span> <span class="pre">qc&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">Converging</span> <span class="pre">Information</span> <span class="pre">From</span> <span class="pre">Two</span> <span class="pre">Experiments&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">descriptor</span> <span class="pre">save&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK</span> <span class="pre">39</span> <span class="pre">annotate</span> <span class="pre">premotor</span> <span class="pre">and</span> <span class="pre">starter&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK37&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK39</span> <span class="pre">3</span> <span class="pre">channels</span> <span class="pre">low</span> <span class="pre">resolution&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK39</span> <span class="pre">aligned</span> <span class="pre">for</span> <span class="pre">projections&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK39</span> <span class="pre">aligned</span> <span class="pre">for</span> <span class="pre">projections</span> <span class="pre">3&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK39</span> <span class="pre">aligned</span> <span class="pre">for</span> <span class="pre">projections</span> <span class="pre">4&gt;,</span> <span class="pre">&lt;UrlModel:</span> <span class="pre">DK39</span> <span class="pre">aligned</span> <span class="pre">for</span> <span class="pre">projections</span> <span class="pre">5&gt;,</span> <span class="pre">'...(remaining</span> <span class="pre">elements</span> <span class="pre">truncated)...']&gt;</span></em><a class="headerlink" href="#neuroglancer.views.UrlViewSet.queryset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neuroglancer.views.UrlViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#neuroglancer.views.UrlViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#neuroglancer.serializers.UrlSerializer" title="neuroglancer.serializers.UrlSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">neuroglancer.serializers.UrlSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuroglancer.views.apply_scales_to_annotation_rows">
+<span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">apply_scales_to_annotation_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rows</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prep_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.apply_scales_to_annotation_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>To fetch the scan resolution of an animal from the database and apply it to a list of annotation rows</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>rows (list): list of query result from either the StructureCom, MarkedCell or PolygonSequence table
+prep_id (string): animal id</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuroglancer.views.create_point_annotation">
+<span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">create_point_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coordinates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.create_point_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>create annotation points in the neuroglancer json format</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>coordinates (list): list of coordinates: x,y,z for this annotation point
+description (str): the description field of this annotation point.  This would be displayed in neuroglancer</p>
+</dd>
+<dt>Returns:</dt><dd><p>_type_: _description_</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuroglancer.views.load_layers">
+<span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">load_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.load_layers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuroglancer.views.public_list">
+<span class="sig-prename descclassname"><span class="pre">neuroglancer.views.</span></span><span class="sig-name descname"><span class="pre">public_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#neuroglancer.views.public_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shows a listing of urls made available to the public
+:param request:
+:return:</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Django Activebrainatlas database portal</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../brain/admin.html">Brain admin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../brain/models.html">Brain models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../brain/views.html">Brain views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../brain/serializers.html">Brain serializers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Neuroglancer admin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Neuroglancer models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Neuroglancer views</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serializers.html">Neuroglancer serializers</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="models.html" title="previous chapter">Neuroglancer models</a></li>
+      <li>Next: <a href="serializers.html" title="next chapter">Neuroglancer serializers</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Edward O'Donnell.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/modules/neuroglancer/views.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
