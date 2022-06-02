@@ -14,8 +14,7 @@ from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
 
 
 class ExportCsvMixin:
-    """Description of ExportCsvMixin
-    A class used by most of the admin categories. It adds formatting 
+    """A class used by most of the admin categories. It adds formatting 
     to make fields look consistent and also adds the method to export 
     to CSV from each of the 'Action' dropdowns in each category. 
     """
@@ -24,12 +23,9 @@ class ExportCsvMixin:
         """Set the callback function to be executed when the device sends a
         notification to the client.
 
-        :param self: The class instance
-        :type self: a class
         :param request: The http request
-        :type request: a http class
         :param queryset: The query used to fetch the CSV data
-        :type queryset: a class of type queryset
+        :return: a http response
         """
 
         meta = self.model._meta
@@ -67,27 +63,20 @@ class AtlasAdminModel(admin.ModelAdmin):
     def is_active(self, instance):
         """A method returning a boolean showing if the data row is active
 
-        :param self: admin obj class
         :param instance: obj class
         :return: A boolean
         """
         return instance.active == 1
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        """
-        Description of formfield_for_foreignkey
-        Simple formatting for foeign keys
+        """Simple formatting for foreign keys
 
-        Args:
-            self (undefined): admin obj class
-            db_field (undefined): data row field
-            request (undefined): http request
-            **kwargs (undefined): extra args
-
+        :param db_field: data row field
+        :param request: http request
+        :param kwargs: extra args
+        :return: the HTML of the form field
         """
-        kwargs["widget"] = Select(attrs={
-            'style': 'width: 250px;'
-        })
+        kwargs['widget'] = Select(attrs={'style': 'width: 250px;'})
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -119,14 +108,12 @@ class AnimalAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(Histology)
 class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of HistologyAdmin
-    A class to describe the histology of each animal
+    """A class to administer the histology of each animal
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
 
     """
     list_display = ('prep_id', 'label', 'performance_center')
@@ -137,15 +124,13 @@ class HistologyAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(Injection)
 class InjectionAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of InjectionAdmin
-    A class to describe the injections (if any) for each animal. 
+    """A class to describe the injections (if any) for each animal. 
     Each animal can have multiple injections.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
 
     """
     list_display = ('prep_id', 'performance_center', 'anesthesia', 'comments', 'created')
@@ -154,15 +139,13 @@ class InjectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(Virus)
 class VirusAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of VirusAdmin
-    A class used to describe a virus. This class can then be a 
+    """A class used to describe a virus. This class can then be a 
     foreign key into the Injection class
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
 
     """
     list_display = ('virus_name', 'virus_type', 'type_details', 'created')
@@ -171,14 +154,12 @@ class VirusAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(InjectionVirus)
 class InjectionVirusAdmin(AtlasAdminModel):
-    """
-    Description of InjectionVirusAdmin
-    This class describes a many to many relationship between the 
+    """This class describes a many to many relationship between the 
     virus and the injection classes. An animal can multiple 
     injections, with each injection having one or more viruses.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
 
     """
     list_display = ('prep_id', 'injection_comments', 'virus_name', 'created')
@@ -187,53 +168,40 @@ class InjectionVirusAdmin(AtlasAdminModel):
     ordering = ['created']
 
     def prep_id(self, instance):
-        """
-        Description of prep_id - describes the animal used as a
+        """This returns the animal name (string) used as a
         foreign key in this class.
 
-        Args:
-            self (undefined): base admin obj
-            instance (undefined): the obj
-
+        :param instance: the obj
+        :return: the prep_id (AKA the animal name) as a string
         """
         return instance.injection.prep.prep_id
 
     def injection_comments(self, instance):
-        """
-        Description of injection_comments - gives the description from 
+        """This gives the description from 
         the injection foreign key
 
-        Args:
-            self (undefined): base admin obj
-            instance (undefined): the obj
-
+        :param instance: the obj
+        :return: a string that contains the comments
         """
         return instance.injection.comments
 
     def virus_name(self, instance):
-        """
-        Description of virus_name - gives the description from the 
+        """Description of virus_name - gives the description from the 
         virus foreign key
-
-        Args:
-            self (undefined): base admin obj
-            instance (undefined): - the obj
-
+        :param instance: the obj
         """
         return instance.virus.virus_name
 
 @admin.register(OrganicLabel)
 class OrganicLabelAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of OrganicLabelAdmin
+    """Description of OrganicLabelAdmin
     This class describes the organice label for an animal. So far, 
     it has had no data entered in it.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
-
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
     """
     list_display = ('label_id', 'label_type', 'type_details', 'created')
     search_fields = ('label_id',)
@@ -241,35 +209,29 @@ class OrganicLabelAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(ScanRun)
 class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of ScanRunAdmin
-    This class describes what occurs when the slides are actually 
+    """This class describes what occurs when the slides are actually 
     scanned. Many of the attributes from this class are used 
     throughout the preprocessing pipeline. An animal can have multiple
     scan runs, but usually, there is just one scanning done 
     for each animal.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
-
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
     """
     list_display = ('prep_id', 'performance_center', 'machine','comments', 'created')
     search_fields = ('prep__prep_id',)
     ordering = ['prep_id', 'performance_center', 'machine','comments', 'created']
 
 class TifInline(admin.TabularInline):
-    """
-    Description of TifInline
-    This class is solely used for the database QA. It will display the 
+    """This class is solely used for the database QA. It will display the 
     associated TIFF files for each 
     slide on the slide page.
 
-    Inheritance:
-        admin.TabularInline: The class that describes how the data is 
-        laid out on the page.
-
+    :Inheritance:
+        :admin.TabularInline: The class that describes how the data is 
+            laid out on the page.
     """
     model = SlideCziToTif
     fields = ('file_name','scene_number', 'scene_index', 'channel', 'scene_image', 'section_image')
@@ -281,16 +243,13 @@ class TifInline(admin.TabularInline):
     template = 'tabular_tifs.html'
 
     def scene_image(self, obj):
-        """
-        Description of scene_image - this method tests if there is a 
+        """This method tests if there is a 
         PNG file for each scene, and if so, shows it on the QA page 
         for each slide. This is very helpful when the user must decide
         if the TIFF file is usable.
 
-        Args:
-            self (undefined): admin TIFF obj
-            obj (undefined): the TIFF obj
-
+        :param obj: the TIFF obj
+        :return: HTML that displays a link to the scene PNG file
         """
         animal = obj.slide.scan_run.prep_id
         tif_file = obj.file_name
@@ -307,14 +266,11 @@ class TifInline(admin.TabularInline):
     scene_image.short_description = 'Pre Image'
 
     def section_image(self, obj):
-        """
-        Description of section_image - this method shows the TIFF image as 
+        """This method shows the TIFF image as 
         a PNG later on in the QA process after it has been cleaned and aligned.
 
-        Args:
-            self (undefined): admin TIFF obj
-            obj (undefined): the TIFF obj
-
+        :param obj: the TIFF obj
+        :return: HTML that displays a link to the scene PNG file
         """
         animal = obj.slide.scan_run.prep_id
         tif_file = obj.file_name
@@ -332,74 +288,57 @@ class TifInline(admin.TabularInline):
 
 
     def get_formset(self, request, obj=None, **kwargs):
-        """
-        Description of get_formset - sets up the form for the set of 
+        """Description of get_formset - sets up the form for the set of 
         TIFF files for each slide
 
-        Args:
-            self (undefined): admin TIFF obj
-            request (undefined): http request
-            obj=None (undefined): the TIFF obj
-            **kwargs (undefined): extra args
-
+        :param request: http request
+        :param obj: the TIFF obj
+        :param kwargs: extra args
+        :return: the HTML of the formset
         """
         formset = super(TifInline, self).get_formset(request, obj, **kwargs)
         formset.request = request
         return formset
 
     def get_queryset(self, request):
-        """
-        Description of get_queryset - returns just the first channel 
+        """Description of get_queryset - returns just the first channel 
         for each slide. We only need to look
         at the first channel for QA purposes.
 
-        Args:
-            self (undefined): the admin TIFF obj
-            request (undefined): the TIFF obj
-
+        :param obj: the TIFF obj
+        :return: a query set
         """
         qs = super(TifInline, self).get_queryset(request)
         return qs.filter(active=1).filter(channel=1)
 
     def has_add_permission(self, request, obj=None):
-        """
-        Description of has_add_permission - TIFF files cannot be added 
+        """TIFF files cannot be added 
         at this stage.
 
-        Args:
-            self (undefined): admin TIFF obj
-            request (undefined): http request
-            obj=None (undefined): the TIFF obj
-
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: False
         """
         return False
 
     def has_change_permission(self, request, obj=None):
-        """
-        Description of has_change_permission - TIFF files cannot be 
-        edited at this stage.
-
-        Args:
-            self (undefined): admin TIFF obj
-            request (undefined): http request
-            obj=None (undefined): the TIFF obj
-
+        """TIFF files can be edited at this stage.
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: True
         """
         return True
 
 @admin.register(Slide)
 class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of SlideAdmin
-    This class describes the admin area for a particular slide. This 
+    """This class describes the admin area for a particular slide. This 
     is used in the QA process and includes
     the inline TIFF files in the QA form.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
-
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
     """
     list_display = ('prep_id', 'file_name', 'slide_status', 'scene_qc_1', 'scene_qc_2', 'scene_qc_3', 'scene_qc_4', 'scene_count')
     search_fields = ['scan_run__prep__prep_id', 'file_name']
@@ -408,16 +347,12 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
 
 
     def get_fields(self, request, obj):
-        """
-        Description of get_fields - This method fetches the correct 
+        """This method fetches the correct 
         number of inline TIFF files that are used
         in the QA form.
-
-        Args:
-            self (undefined): admin slide obj
-            request (undefined): http request
-            obj (undefined): the slide obj
-
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: HTML of the fields
         """
         count = self.scene_count(obj)
         fields = ['file_name', 'scan_run', 'slide_physical_id', 'slide_status', 'rescan_number',
@@ -444,14 +379,10 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
     inlines = [TifInline, ]
 
     def scene_count(self, obj):
-        """
-        Description of scene_count - determines how many scenes are 
+        """Determines how many scenes are 
         there for a slide
-
-        Args:
-            self (undefined): the slide admin obj
-            obj (undefined): the slide obj
-
+        :param obj: the slide obj
+        :return: an integer of the number of scenes
         """
         count = SlideCziToTif.objects.filter(slide_id=obj.id).filter(channel=1).filter(active=True).count()
         return count
@@ -459,18 +390,15 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
     scene_count.short_description = "Active Scenes"
 
     def save_model(self, request, obj, form, change):
-        """
-        Description of save_model - overridden method of the save 
+        """Description of save_model - overridden method of the save 
         method. When the user changes the scenes via the QA form, 
         the usual save isn't sufficient so we override it.
 
-        Args:
-            self (undefined): the admin slide obj
-            request (undefined): the http request
-            obj (undefined): the slide obj
-            form (undefined): the form obj
-            change (undefined): if the form has changed or not.
-
+        :param self: the admin slide obj
+        :param request: the http request
+        :param obj: the slide obj
+        :param form: the form obj
+        :param change: if the form has changed or not.
         """
         obj.user = request.user
         save_slide_model(self, request, obj, form, change)
@@ -478,55 +406,37 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
 
 
     def has_delete_permission(self, request, obj=None):
-        """
-        Description of has_delete_permission - cannot show or use 
-        the delete button at this stage.
-
-        Args:
-            self (undefined): the admin slide obj
-            request (undefined): the http request
-            obj=None (undefined): the slide obj
-
+        """Cannot show or use the delete button at this stage.
+        :param request: http request
+        :param obj: the slide obj
+        :return: False
         """
         return False
 
     def has_add_permission(self, request, obj=None):
-        """
-        Description of has_add_permission - cannot show or use 
-        the add button at this stage
-
-        Args:
-            self (undefined): the slide admin obj
-            request (undefined): the http request
-            obj=None (undefined): - the slide obj
-
+        """Cannot show or use the add button at this stage
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: False
         """
         return False
 
 
     def prep_id(self, instance):
-        """
-        Description of prep_id - returns the animal name that 
-        the slide belongs to
-
-        Args:
-            self (undefined): the admin obj
-            instance (undefined): the slide obj
-
+        """Returns the animal name that the slide belongs to
+        :param instance: the TIFF obj
+        :return: False
         """
         return instance.scan_run.prep.prep_id
 
 @admin.register(SlideCziToTif)
 class SlideCziToTifAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of SlideCziToTifAdmin
-    A class to describe the individual scene, AKA the TIFF file.
+    """A class to administer the individual scene, AKA the TIFF file.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV 
-        exporter method.
-
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV 
+            exporter method.
     """
     list_display = ('file_name', 'scene_number', 'channel','file_size')
     ordering = ['file_name', 'scene_number', 'channel', 'file_size']
@@ -536,45 +446,32 @@ class SlideCziToTifAdmin(AtlasAdminModel, ExportCsvMixin):
 
 
     def has_delete_permission(self, request, obj=None):
-        """
-        Description of has_delete_permission - cannot show or use 
-        the delete button at this stage
-
-        Args:
-            self (undefined): the SlideCziToTif admin obj
-            request (undefined): the http request
-            obj=None (undefined): the SlideCziToTif obj
-
+        """Cannot show or use the delete button at this stage
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: False
         """
         return False
 
     def has_add_permission(self, request, obj=None):
-        """
-        Description of has_add_permission - cannot show or use the 
-        add button at this stage
-
-        Args:
-            self (undefined):  the SlideCziToTif admin obj
-            request (undefined): the http request
-            obj=None (undefined):  the SlideCziToTif obj
-
+        """Cannot show or use the add button at this stage
+        :param request: http request
+        :param obj: the TIFF obj
+        :return: False
         """
         return False
 
 
 @admin.register(Section)
 class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
-    """
-    Description of SectionAdmin
-    This class describes the Section methods and attributes. 
+    """This class describes the Section methods and attributes. 
     Sections come from a view and 
     not a table so it needs to be handled a bit differently.
 
-    Inheritance:
-        AtlasAdminModel: The base admin model
-        ExportCsvMixin: The class with standard features and CSV
-         exporter method.
-
+    :Inheritance:
+        :AtlasAdminModel: The base admin model
+        :ExportCsvMixin: The class with standard features and CSV
+            exporter method.
     """
     indexCounter = -1
     list_display = ('tif','section_number', 'slide','scene', 'scene_index', 'histogram', 'image_tag')
@@ -584,20 +481,13 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
     search_fields = ['prep_id', 'file_name']
     list_per_page = 1000
     class Media:
-        css = {
-            'all': ('admin/css/thumbnail.css',)
-        }
+        css = {'all': ('admin/css/thumbnail.css',)}
 
     def section_number(self, instance):
-        """
-        Description of section_number - this is just an ordered query,
+        """ Description of section_number - this is just an ordered query,
         so to get the section number, we
         just use an incrementor
-
-        Args:
-            self (undefined): section admin obj
-            instance (undefined): section obj
-
+        :param instance: section obj
         """
         self.indexCounter += 1
         return self.indexCounter
@@ -606,19 +496,15 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
 
     def get_queryset(self, request, obj=None):
-        """
-        Description of get_queryset - the query starts out with an 
+        """Description of get_queryset - the query starts out with an 
         empty qeuryset 'prep_id=XXXX' so the initial page is empty 
         and the user is forced to select one and only one animal. 
         The order is descided upon whether the brain was section 
         from left to right, or right to left. This comes
         from the histology table: side_sectioned_first
-
-        Args:
-            self (undefined): section admin obj
-            request (undefined): http request
-            obj=None (undefined): section obj
-
+        :param request: http request
+        :param obj: section obj
+        :return: the queryset ordered correctly
         """
         self.indexCounter = -1
         sections = Section.objects.filter(prep_id='XXXX')
@@ -637,55 +523,37 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
         return sections
 
     def has_change_permission(self, request, obj=None):
-        """
-        Description of has_change_permission - the edit button is not 
-        shown as sections are a view and they can't be changed.
-
-        Args:
-            self (undefined): section admin obj
-            request (undefined): http request
-            obj=None (undefined): section obj
-
+        """The edit button is not shown as sections are a view and they can't be changed.
+        :param request: http request
+        :param obj: the section obj
+        :return: False
         """
         return False
 
     def has_add_permission(self, request, obj=None):
-        """
-        Description of has_add_permission - the add button is not 
-        shown as sections are a view and they can't be added to.
-
-        Args:
-            self (undefined): section admin obj
-            request (undefined): http request
-            obj=None (undefined): section obj
-
+        """The add button is not shown as sections are a view and they can't be added to.
+        :param request: http request
+        :param obj: the section obj
+        :return: False
         """
         return False
 
     def has_delete_permission(self, request, obj=None):
-        """
-        Description of has_delete_permission - the add button is 
-        not shown as sections are a view and they can't be added to.
-
-        Args:
-            self (undefined): section admin obj
-            request (undefined): http request
-            obj=None (undefined): section obj
-
+        """The add button is not shown as sections are a view and they can't be added to.
+        :param request: http request
+        :param obj: the section obj
+        :return: False
         """
         return False
 
 
 @admin.register(admin.models.LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
-    """
-    Description of LogEntryAdmin
-    This class describes the log objects used during the 
+    """This class describes the log objects used during the 
     preprocessing pipeline
 
-    Inheritance:
-        admin.ModelAdmin: the base Django admin obj
-
+    :Inheritance:
+        :admin.ModelAdmin: the base Django admin obj
     """
     # to have a date-based drilldown navigation in the admin page
     date_hierarchy = 'action_time'
@@ -696,52 +564,35 @@ class LogEntryAdmin(admin.ModelAdmin):
     list_display = ['action_time', 'user', 'content_type', 'action_flag']
 
     def has_add_permission(self, request):
-        """
-        Description of has_add_permission - this data is added by the 
+        """This data is added by the 
         preprocessing pipeline so can't be changed here
-
-        Args:
-            self (undefined): LogEntry admin obj
-            request (undefined): http request
-
+        :param request: http request
+        :return: False
         """
         return False
 
     def has_change_permission(self, request, obj=None):
-        """
-        Description of has_change_permission - this data is added by 
-        the preprocessing pipeline so can't be changed here
-
-        Args:
-            self (undefined): LogEntry admin obj
-            request (undefined): http request
-            obj=None (undefined): LogEntry obj
-
+        """This data is added by the preprocessing pipeline so can't be changed here
+        :param request: http request
+        :param obj: the LogEntry obj
+        :return: False
         """
         return False
 
     def has_delete_permission(self, request, obj=None):
-        """
-        Description of has_delete_permission - this data is added by 
+        """This data is added by 
         the preprocessing pipeline so can't be deleted here
-
-        Args:
-            self (undefined): LogEntry admin obj
-            request (undefined): http request
-            obj=None (undefined): LogEntry obj
-
+        :param request: http request
+        :param obj: the LogEntry obj
+        :return: False
         """
         return False
 
     def has_view_permission(self, request, obj=None):
-        """
-        Description of has_view_permission - this data can only be 
-        viewed by a superuser
-
-        Args:
-            self (undefined): LogEntry admin obj
-            request (undefined): http request
-            obj=None (undefined): LogEntry obj
+        """This data can only be viewed by a superuser
+        :param request: http request
+        :param obj: the LogEntry obj
+        :return: boolean depending on if the user is a super user or not
 
         """
         return request.user.is_superuser

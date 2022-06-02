@@ -1,5 +1,5 @@
 Neuroglancer serializers
-======
+========================
 
 .. automodule:: neuroglancer.serializers
    :members:

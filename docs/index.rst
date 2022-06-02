@@ -5,15 +5,30 @@
 
 Welcome to ActiveBrainAtlas's documentation!
 ============================================
+These pages contain documentation regarding the MVC (model, view, and controller) programming
+classes for the Django database interface. Django breaks up this interface into 'apps'.
+
+These apps contain classes for each of the MVC components. The models.py file contains classes
+that describe a database schema table.
+
+To see the most current version of the entire database schema, look here:
+<https://gist.github.com/1855764>; 
+
+****
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Brain:
 
    modules/brain/admin.rst
    modules/brain/models.rst
    modules/brain/views.rst
    modules/brain/serializers.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Neuroglancer:
+
    modules/neuroglancer/admin.rst
    modules/neuroglancer/models.rst
    modules/neuroglancer/views.rst

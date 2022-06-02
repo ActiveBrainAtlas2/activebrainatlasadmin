@@ -1,5 +1,5 @@
 Neuroglancer models
-======
+===================
 
 .. automodule:: neuroglancer.models
    :members:
