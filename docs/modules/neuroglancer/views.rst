@@ -1,5 +1,5 @@
 Neuroglancer views
-======
+==================
 
 .. automodule:: neuroglancer.views
    :members:
