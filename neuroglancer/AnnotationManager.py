@@ -6,7 +6,7 @@ from django.apps import apps
 from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, BrainRegion, PolygonSequence,StructureCom,PolygonSequence,MarkedCell,get_region_from_abbreviation
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
-from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID
+from neuroglancer.models import MANUAL, POINT_ID, POLYGON_ID,CellType
 from abakit.lib.annotation_layer import AnnotationLayer,Annotation
 from background_task import background
 from neuroglancer.AnnotationBase import AnnotationBase
@@ -23,8 +23,8 @@ class AnnotationManager(AnnotationBase):
         self.neuroglancer_state = neuroglancerModel.url
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell','PolygonSequence','StructureCom']
-        self.set_annotator_from_id(neuroglancerModel.user.id)
-        self.set_animal_from_id(neuroglancerModel.animal.id)
+        self.set_annotator_from_id(neuroglancerModel.owner.id)
+        self.set_animal_from_id(neuroglancerModel.animal)
         self.scale_xy, self.z_scale = get_scales(self.animal.prep_id)
         self.scales = np.array([self.scale_xy, self.scale_xy, self.z_scale])
         self.bulk_mgr = BulkCreateManager(chunk_size=100)
@@ -75,13 +75,12 @@ class AnnotationManager(AnnotationBase):
         """
         marked_cells = []
         for annotationi in self.current_layer.annotations:
-            if annotationi.is_point():
-                if self.is_structure_com(annotationi):
-                    brain_region = get_region_from_abbreviation(annotationi.get_description())
-                    new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='STRUCTURE_COM')
-                    self.add_com(annotationi,new_session)
-                else:
-                    marked_cells.append(annotationi)
+            if annotationi.is_com():
+                brain_region = get_region_from_abbreviation(annotationi.get_description())
+                new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='STRUCTURE_COM')
+                self.add_com(annotationi,new_session)
+            if annotationi.is_cell():
+                marked_cells.append(annotationi)
             if annotationi.is_polygon():
                 brain_region = get_region_from_abbreviation('polygon')
                 new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
@@ -91,10 +90,17 @@ class AnnotationManager(AnnotationBase):
                 new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
                 self.add_volumes(annotationi,new_session)
         if len(marked_cells)>0:
-            new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='MARKED_CELL')
-            for annotationi in marked_cells:
-                brain_region = get_region_from_abbreviation('point')
-                self.add_marked_cells(annotationi,new_session)
+            categories = np.array([i.category for i in marked_cells])
+            unique_category = np.unique(categories)
+            for category in unique_category:
+                in_category = categories == category
+                cells = marked_cells[in_category]
+                new_session = self.get_new_session_and_archive_points(brain_region=brain_region,annotation_type='MARKED_CELL')
+                for annotationi in cells:
+                    cell_type = CellType.objects.filter(cell_type = category).first()
+                    if cell_type is not None:
+                        brain_region = get_region_from_abbreviation('point')
+                        self.add_marked_cells(annotationi,new_session,cell_type)
         self.bulk_mgr.done()
     
     def is_structure_com(self,annotationi:Annotation):
@@ -152,10 +158,13 @@ class AnnotationManager(AnnotationBase):
             _type_: _description_
         """        
         annotation_session = self.get_existing_session(brain_region=brain_region,annotation_type=annotation_type)
-        parent = self.get_parent_id_for_current_session_and_achrive_points(annotation_session)
-        parent.active = 0
-        parent.save()
-        new_session = self.create_new_session(brain_region=brain_region,annotation_type=annotation_type,parent=parent)
+        if annotation_session is not None:
+            parent_id = self.get_parent_id_for_current_session_and_achrive_points(annotation_session)
+            annotation_session.active = 0
+            annotation_session.save()
+        else:
+            parent_id=0
+        new_session = self.create_new_session(brain_region=brain_region,annotation_type=annotation_type,parent=parent_id)
         return new_session
         
     def archive_annotations(self,annotation_session:AnnotationSession):
@@ -188,9 +197,9 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                         source='MANUAL', x=x, y=y, z=z))
     
-    def add_marked_cells(self,annotationi:Annotation,annotation_session:AnnotationSession):
+    def add_marked_cells(self,annotationi:Annotation,annotation_session:AnnotationSession,cell_type):
         x, y, z = np.floor(annotationi.coord) * self.scales
-        self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,source='HUMAN-POSITIVE', x=x, y=y, z=z))
+        self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,source='HUMAN-POSITIVE', x=x, y=y, z=z,cell_type=cell_type))
     
     def add_polygons(self,annotationi:Annotation,annotation_session:AnnotationSession):
         z = mode([ int(np.floor(pointi.coord_start[2]) * self.z_scale) for pointi in annotationi.childs])
