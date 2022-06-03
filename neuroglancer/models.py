@@ -157,7 +157,7 @@ class CellType(models.Model):
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
-    active = models.IntegerField(default=0)
+    active = models.IntegerField(default=1)
     created = models.DateTimeField(auto_now_add=True)
     class Meta:
         managed = False
