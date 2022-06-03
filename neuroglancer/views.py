@@ -1,4 +1,3 @@
-from tables import Description
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views

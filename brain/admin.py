@@ -186,8 +186,8 @@ class InjectionVirusAdmin(AtlasAdminModel):
         return instance.injection.comments
 
     def virus_name(self, instance):
-        """Description of virus_name - gives the description from the 
-        virus foreign key
+        """Gives the description from the virus foreign key
+
         :param instance: the obj
         """
         return instance.virus.virus_name
@@ -323,6 +323,7 @@ class TifInline(admin.TabularInline):
 
     def has_change_permission(self, request, obj=None):
         """TIFF files can be edited at this stage.
+
         :param request: http request
         :param obj: the TIFF obj
         :return: True
@@ -350,6 +351,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         """This method fetches the correct 
         number of inline TIFF files that are used
         in the QA form.
+
         :param request: http request
         :param obj: the TIFF obj
         :return: HTML of the fields
@@ -381,6 +383,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
     def scene_count(self, obj):
         """Determines how many scenes are 
         there for a slide
+
         :param obj: the slide obj
         :return: an integer of the number of scenes
         """
@@ -407,6 +410,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         """Cannot show or use the delete button at this stage.
+
         :param request: http request
         :param obj: the slide obj
         :return: False
@@ -415,6 +419,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_add_permission(self, request, obj=None):
         """Cannot show or use the add button at this stage
+
         :param request: http request
         :param obj: the TIFF obj
         :return: False
@@ -424,6 +429,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def prep_id(self, instance):
         """Returns the animal name that the slide belongs to
+
         :param instance: the TIFF obj
         :return: False
         """
@@ -447,6 +453,7 @@ class SlideCziToTifAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         """Cannot show or use the delete button at this stage
+
         :param request: http request
         :param obj: the TIFF obj
         :return: False
@@ -455,6 +462,7 @@ class SlideCziToTifAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_add_permission(self, request, obj=None):
         """Cannot show or use the add button at this stage
+
         :param request: http request
         :param obj: the TIFF obj
         :return: False
@@ -487,6 +495,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
         """ Description of section_number - this is just an ordered query,
         so to get the section number, we
         just use an incrementor
+
         :param instance: section obj
         """
         self.indexCounter += 1
@@ -502,6 +511,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
         The order is descided upon whether the brain was section 
         from left to right, or right to left. This comes
         from the histology table: side_sectioned_first
+        
         :param request: http request
         :param obj: section obj
         :return: the queryset ordered correctly
@@ -524,6 +534,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         """The edit button is not shown as sections are a view and they can't be changed.
+
         :param request: http request
         :param obj: the section obj
         :return: False
@@ -532,6 +543,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_add_permission(self, request, obj=None):
         """The add button is not shown as sections are a view and they can't be added to.
+
         :param request: http request
         :param obj: the section obj
         :return: False
@@ -540,6 +552,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         """The add button is not shown as sections are a view and they can't be added to.
+        
         :param request: http request
         :param obj: the section obj
         :return: False
@@ -566,6 +579,7 @@ class LogEntryAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         """This data is added by the 
         preprocessing pipeline so can't be changed here
+
         :param request: http request
         :return: False
         """
@@ -573,6 +587,7 @@ class LogEntryAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         """This data is added by the preprocessing pipeline so can't be changed here
+        
         :param request: http request
         :param obj: the LogEntry obj
         :return: False
@@ -582,6 +597,7 @@ class LogEntryAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """This data is added by 
         the preprocessing pipeline so can't be deleted here
+        
         :param request: http request
         :param obj: the LogEntry obj
         :return: False
@@ -590,6 +606,7 @@ class LogEntryAdmin(admin.ModelAdmin):
 
     def has_view_permission(self, request, obj=None):
         """This data can only be viewed by a superuser
+        
         :param request: http request
         :param obj: the LogEntry obj
         :return: boolean depending on if the user is a super user or not
