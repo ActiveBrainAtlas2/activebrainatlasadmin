@@ -13,6 +13,9 @@ import os
 
 
 class AtlasModel(models.Model):
+    """This is the base model that is inherited by most of the other classes (models).
+    It includes common fields that all the models need.
+    """
     active = models.BooleanField(default = True)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -20,6 +23,8 @@ class AtlasModel(models.Model):
         abstract = True
 
 class Animal(AtlasModel):
+    """This is the main model used by almost all the other models in the entire project.
+    It includes the fields originally set by David and Yoav."""
     prep_id = models.CharField(primary_key=True, max_length=20)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
@@ -34,7 +39,6 @@ class Animal(AtlasModel):
     ship_date = models.DateField(blank=True, null=True)
     shipper = EnumField(choices=['FedEx','UPS'], blank=True, null=True)
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
-    # cshl_send_date = models.DateField(blank=True, null=True, verbose_name='CSHL ship date')
     aliases_1 = models.CharField(max_length=100, blank=True, null=True)
     aliases_2 = models.CharField(max_length=100, blank=True, null=True)
     aliases_3 = models.CharField(max_length=100, blank=True, null=True)
@@ -52,6 +56,9 @@ class Animal(AtlasModel):
         return u'{}'.format(self.prep_id)
 
     def histogram(self):
+        """This method will display the histogram as a link if the user hovers over it.
+        
+        :return: HTML of the link to the histogram"""
         links = []
         png = f'{self.prep_id}.png'
         for channel in [1,2,3]:
@@ -66,6 +73,7 @@ class Animal(AtlasModel):
     histogram.short_description = 'Histogram'
 
 class FileOperation(AtlasModel):
+    """This class stores the logs of operations done during the pre-processing pipeline"""
     id = models.AutoField(primary_key=True)
     tif = models.ForeignKey('SlideCziToTif', models.CASCADE)
     operation = models.CharField(max_length=200)
@@ -80,6 +88,7 @@ class FileOperation(AtlasModel):
         verbose_name_plural = 'File Operations'
 
 class Histology(AtlasModel):
+    """This class provides the metadata associated with the histology of the animal"""
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True)
@@ -119,6 +128,8 @@ class Histology(AtlasModel):
         return histology_label
 
 class Injection(AtlasModel):
+    """This class provides information regarding an injection. An animal can have one or more injections
+    and and injection can contain one or more viruses."""
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
@@ -147,6 +158,8 @@ class Injection(AtlasModel):
         return "{} {}".format(self.prep.prep_id, self.comments)
 
 class InjectionVirus(AtlasModel):
+    """This class describes a many to many relationship for the injections and viruses.
+    An animal can have one or more injections and a injection can have one or more viruses."""
     id = models.AutoField(primary_key=True)
     injection = models.ForeignKey(Injection, models.CASCADE)
     virus = models.ForeignKey('Virus', models.CASCADE)
@@ -158,6 +171,7 @@ class InjectionVirus(AtlasModel):
         verbose_name_plural = 'Injection Viruses'
 
 class OrganicLabel(AtlasModel):
+    """This class holds the organic label metadata."""
     id = models.AutoField(primary_key=True)
     label_id = models.CharField(max_length=20)
     label_type = EnumField(choices=['Cascade Blue','Chicago Blue','Alexa405','Alexa488','Alexa647','Cy2','Cy3','Cy5','Cy5.5','Cy7','Fluorescein','Rhodamine B','Rhodamine 6G','Texas Red','TMR'], blank=True, null=True)
@@ -186,6 +200,9 @@ class OrganicLabel(AtlasModel):
         return "{} {}".format(self.label_id, self.label_type)
 
 class ScanRun(AtlasModel):
+    """This class describes the blueprint of a scan. Each animal will usually have just one 
+    scan run, but they can have more than one. Information in this table is used
+    extensively throughout the pre-processing pipeline."""
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
@@ -220,6 +237,8 @@ class ScanRun(AtlasModel):
         db_table = 'scan_run'
 
 class Slide(AtlasModel):
+    """This class describes an individual slide. Each slide usually has 4 scenes (pieces of tissue).
+    This is the parent class to the TIFF (SlideCziToTif) class."""
     id = models.AutoField(primary_key=True)
     scan_run = models.ForeignKey(ScanRun, models.CASCADE)
     slide_physical_id = models.IntegerField()
@@ -292,6 +311,8 @@ class Slide(AtlasModel):
         db_table = 'slide'
 
 class SlideCziToTif(AtlasModel):
+    """This is the child class of the Slide class. This model describes the metadata associated
+    with a TIFF file, or another way to think of it, it describes one piece of brain tissue on a slide."""
     id = models.AutoField(primary_key=True)
     slide = models.ForeignKey(Slide, models.CASCADE, related_name='slideczis')
     file_name = models.CharField(max_length=200, null=False)
@@ -309,6 +330,9 @@ class SlideCziToTif(AtlasModel):
 
 
     def max_scene(self):
+        """This method gives you the number of scenes on a slide
+        
+        :return: an integer with the number of scenes"""
         return self.slide.scenes
 
     class Meta():
@@ -322,6 +346,9 @@ class SlideCziToTif(AtlasModel):
         return "{}".format(self.file_name)
 
 class Section(AtlasModel):
+    """This class describes a view and not an actual database table.
+    This table provides the names, locations and ordering of the 
+    TIFF files."""
     id = models.AutoField(primary_key=True)
     prep_id = models.CharField(max_length=20)
     czi_file = models.CharField(max_length=200)
@@ -333,12 +360,15 @@ class Section(AtlasModel):
     channel = models.IntegerField(null=False)
 
     def tif(self):
+        """Returns the name of the TIFF file"""
         return self.file_name
 
     def slide(self):
+        """Returns the slide #"""
         return self.slide_physical_id
 
     def scene(self):
+        """Returns the scene #"""
         return self.scene_number
 
     class Meta:
@@ -351,6 +381,10 @@ class Section(AtlasModel):
         return self.file_name
 
     def histogram(self):
+        """Creates a link to the histogram of the section
+        
+        :return: HTML that provides a link to the histogram
+        """
         png = self.file_name.replace('tif','png')
         testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/histogram/CH1/{}".format(self.prep_id, png)
         if os.path.isfile(testfile):
@@ -362,6 +396,10 @@ class Section(AtlasModel):
     histogram.short_description = 'Histogram'
 
     def image_tag(self):
+        """Creates a link to the web friendly version of the TIFF
+        
+        :return: HTML that provides a link to the thumbnail 
+        """
         png = self.file_name.replace('tif', 'png')
         # http://localhost:8000/data/DK39/thumbnail/DK39_ID_0002_slide058_S1_C2.png
         testfile = "/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{}/www/{}".format(self.prep_id, png)
@@ -375,6 +413,7 @@ class Section(AtlasModel):
     image_tag.short_description = 'Image'
 
 class Virus(AtlasModel):
+    """A class that describes the Virus metadata. There will be one or more of these in each Injection"""
     id = models.AutoField(primary_key=True)
     virus_name = models.CharField(max_length=50)
     virus_type = EnumField(choices=['Adenovirus','AAV','CAV','DG rabies','G-pseudo-Lenti','Herpes','Lenti','N2C rabies','Sinbis'], blank=True, null=True)
