@@ -19,7 +19,8 @@ LINE_ID = 53
 POLYGON_ID = 54
 
 class UrlModel(models.Model):
-    '''Model corresponding to the neuroglancer json states stored in the neuroglancer_url table'''
+    """Model corresponding to the neuroglancer json states stored in the neuroglancer_url table.
+    This name was used as the original verion of Neuroglancer stored all the data in the URL."""
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
@@ -42,10 +43,10 @@ class UrlModel(models.Model):
 
     @property
     def animal(self):
-        """
-        find the animal within the url between data/ and /neuroglancer_data:
+        """Find the animal within the url between data/ and /neuroglancer_data:
         data/MD589/neuroglancer_data/C1
-        return: the first match if found, otherwise NA
+        
+        :return: the first match if found, otherwise NA
         """
         animal = "NA"
         match = re.search('data/(.+?)/neuroglancer_data', str(self.url))
@@ -145,7 +146,7 @@ class UrlModel(models.Model):
         return results
 
 class Points(UrlModel):
-    '''Model corresponding to the annotation points table in the database'''
+    """Model corresponding to the annotation points table in the database"""
     class Meta:
         managed = False
         proxy = True
@@ -153,7 +154,7 @@ class Points(UrlModel):
         verbose_name_plural = 'Points'
 
 class CellType(models.Model):
-    '''Model corresponding to the cell type table in the database'''
+    """Model corresponding to the cell type table in the database"""
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
@@ -168,6 +169,7 @@ class CellType(models.Model):
         return f'{self.cell_type}'
 
 class BrainRegion(AtlasModel):
+    """This class model is for the brain regions or structures in the brain."""
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
@@ -187,6 +189,7 @@ def get_region_from_abbreviation(abbreviation):
     return BrainRegion.objects.filter(abbreviation=abbreviation).first()
     
 class AnnotationSession(models.Model):
+    """This model describes a user session in Neuroglancer."""
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
     brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_structure_id",
@@ -246,9 +249,8 @@ class AnnotationSession(models.Model):
             return StructureCom
 
 class AnnotationAbstract(models.Model):
-    '''
-    Abstract model for the 3 new annotation data models
-    '''
+    """Abstract model for the 3 new annotation data models
+    """
     id = models.BigAutoField(primary_key=True)
     x = models.FloatField(verbose_name="X (um)")
     y = models.FloatField(verbose_name="Y (um)")
@@ -274,6 +276,10 @@ class AnnotationAbstract(models.Model):
         abstract = True
 
 class MarkedCell(AnnotationAbstract):
+    """This model is for the marked cell points entered in Neuroglancer.
+    
+    :Inheritance:
+        AnnotationAbstract"""
     class SourceChoices(models.TextChoices):
             MACHINE_SURE = 'MACHINE_SURE', gettext_lazy('Machine Sure')
             MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
@@ -296,6 +302,11 @@ class MarkedCell(AnnotationAbstract):
         return u'{} {}'.format(self.annotation_session, self.label)
 
 class PolygonSequence(AnnotationAbstract):
+    """This model is for the polygons drawn by an anatomist in Neuroglancer.
+    
+    :Inheritance:
+        AnnotationAbstract"""
+
     polygon_index = models.CharField(max_length=40, blank=True, null=True)
     point_order = models.IntegerField(blank=False, null=False, default=0)
     class SourceChoices(models.TextChoices):
@@ -317,6 +328,11 @@ class PolygonSequence(AnnotationAbstract):
         return u'{} {}'.format(self.annotation_session, self.source)
 
 class StructureCom(AnnotationAbstract):
+    """This model is for the COMs for a structure (brain region).
+    They are usually entered by an anatomist in Neuroglancer.
+    
+    :Inheritance:
+        AnnotationAbstract"""
     class SourceChoices(models.TextChoices):
             MANUAL = 'MANUAL', gettext_lazy('MANUAL')
             COMPUTER = 'COMPUTER', gettext_lazy('COMPUTER')
@@ -337,6 +353,7 @@ class StructureCom(AnnotationAbstract):
         return u'{} {}'.format(self.annotation_session, self.source)
 
 class AnnotationPointArchive(AnnotationAbstract):
+    """This class is for an archive of annotation points"""
     class Meta:
         managed = False
         db_table = 'annotations_point_archive'
@@ -352,6 +369,7 @@ class AnnotationPointArchive(AnnotationAbstract):
     source = models.CharField(max_length=255)
 
 class BrainShape(AtlasModel):
+    """This class will hold the numpy data for a brain region."""
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="prep_id", verbose_name="Animal")
     brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_structure_id",
@@ -371,6 +389,10 @@ class BrainShape(AtlasModel):
         return u'{} {}'.format(self.animal, self.brain_region)
     
     def midsection(self):
+        """This is a helper method to show what the mid part of a brain region will look like.
+        
+        :return: the HTML pointing to the thumbnail of the mid part of the brain region.
+        """
         png = f'{self.brain_region.abbreviation}.png'
         pngfile = f'https://activebrainatlas.ucsd.edu/data/{self.animal}/www/structures/{png}'
         return mark_safe(
@@ -379,6 +401,7 @@ class BrainShape(AtlasModel):
     midsection.short_description = 'Midsection'
 
 class AlignmentScore(models.Model):
+    """A model that holds the alignment score data."""
     class Meta:
         managed = False
         db_table = 'annotations_points'
@@ -389,6 +412,8 @@ class AlignmentScore(models.Model):
         return u'{}'.format(self.prep_id)
 
 class AtlasToBeth(models.Model):
+    """A model that holds the alignment score data. This is another version of the alignment
+    score and needs to be renamed."""
     class Meta:
         managed = False
         db_table = 'annotations_points'

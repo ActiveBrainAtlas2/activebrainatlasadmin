@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ActiveBrainAtlas's documentation!
+The ActiveBrainAtlas's documentation
 ============================================
 These pages contain documentation regarding the MVC (model, view, and controller) programming
 classes for the Django database interface. Django breaks up this interface into 'apps'.
@@ -11,10 +11,14 @@ classes for the Django database interface. Django breaks up this interface into 
 These apps contain classes for each of the MVC components. The models.py file contains classes
 that describe a database schema table.
 
-To see the most current version of the entire database schema, look here:
-<https://gist.github.com/1855764>; 
 
 ****
+
+.. toctree::
+   :maxdepth: 2
+   :caption: ERD:
+   
+   modules/erd.rst
 
 .. toctree::
    :maxdepth: 2
@@ -33,3 +37,4 @@ To see the most current version of the entire database schema, look here:
    modules/neuroglancer/models.rst
    modules/neuroglancer/views.rst
    modules/neuroglancer/serializers.rst
+   modules/neuroglancer/tests.rst
