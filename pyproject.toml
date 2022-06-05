@@ -1,0 +1,8 @@
+[build-system]
+requires = []
+
+[project]
+name = "ActiveBrainAtlas Admin"
+authors = [{name = "eddyod", email = "eodonnell@ucsd.edu"}]
+dynamic = ["version", "description"]
+
