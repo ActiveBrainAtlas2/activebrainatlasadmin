@@ -16,8 +16,8 @@ class AtlasModel(models.Model):
     """This is the base model that is inherited by most of the other classes (models).
     It includes common fields that all the models need.
     """
-    active = models.BooleanField(default = True)
-    created = models.DateTimeField(auto_now_add=True)
+    active = models.BooleanField(default = True, db_column='active')
+    created = models.DateTimeField(auto_now_add=True, db_column='created')
 
     class Meta:
         abstract = True
@@ -25,26 +25,26 @@ class AtlasModel(models.Model):
 class Animal(AtlasModel):
     """This is the main model used by almost all the other models in the entire project.
     It includes the fields originally set by David and Yoav."""
-    prep_id = models.CharField(primary_key=True, max_length=20)
-    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    species = EnumField(choices=['mouse','rat'], blank=True, null=True)
-    strain = models.CharField(max_length=15, blank=True, null=True)
-    sex = EnumField(choices=['M','F'], blank=True, null=True)
-    genotype = models.CharField(max_length=100, blank=True, null=True)
-    breeder_line = models.CharField(max_length=100, blank=True, null=True)
-    vender = EnumField(choices=['Jackson','Charles River','Harlan','NIH','Taconic'], blank=True, null=True)
-    stock_number = models.CharField(max_length=100, blank=True, null=True)
-    tissue_source = EnumField(choices=['animal','brain','slides'], blank=True, null=True)
-    ship_date = models.DateField(blank=True, null=True)
-    shipper = EnumField(choices=['FedEx','UPS'], blank=True, null=True)
-    tracking_number = models.CharField(max_length=100, blank=True, null=True)
-    aliases_1 = models.CharField(max_length=100, blank=True, null=True)
-    aliases_2 = models.CharField(max_length=100, blank=True, null=True)
-    aliases_3 = models.CharField(max_length=100, blank=True, null=True)
-    aliases_4 = models.CharField(max_length=100, blank=True, null=True)
-    aliases_5 = models.CharField(max_length=100, blank=True, null=True)
-    comments = models.TextField(max_length=2001, blank=True, null=True)
+    prep_id = models.CharField(primary_key=True, max_length=20, db_column='prep_id')
+    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True, db_column='performance_center')
+    date_of_birth = models.DateField(blank=True, null=True, db_column='date_of_birth')
+    species = EnumField(choices=['mouse','rat'], blank=True, null=True, db_column='species')
+    strain = models.CharField(max_length=15, blank=True, null=True, db_column='strain')
+    sex = EnumField(choices=['M','F'], blank=True, null=True, db_column='sex')
+    genotype = models.CharField(max_length=100, blank=True, null=True, db_column='genotype')
+    breeder_line = models.CharField(max_length=100, blank=True, null=True, db_column='breeder_line')
+    vender = EnumField(choices=['Jackson','Charles River','Harlan','NIH','Taconic'], blank=True, null=True, db_column='vender')
+    stock_number = models.CharField(max_length=100, blank=True, null=True, db_column='stock_number')
+    tissue_source = EnumField(choices=['animal','brain','slides'], blank=True, null=True, db_column='tissue_source')
+    ship_date = models.DateField(blank=True, null=True, db_column='ship_date')
+    shipper = EnumField(choices=['FedEx','UPS'], blank=True, null=True, db_column='shipper')
+    tracking_number = models.CharField(max_length=100, blank=True, null=True, db_column='tracking_number')
+    aliases_1 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_1')
+    aliases_2 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_2')
+    aliases_3 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_3')
+    aliases_4 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_4')
+    aliases_5 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_5')
+    comments = models.TextField(max_length=2001, blank=True, null=True, db_column='comments')
 
     class Meta:
         managed = False
