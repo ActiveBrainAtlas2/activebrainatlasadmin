@@ -20,10 +20,9 @@ import os
 import sys
 import django
 import inspect
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.settings'
 django.setup()
-from django.utils.html import strip_tags
 
 # -- Project information -----------------------------------------------------
 
@@ -49,6 +48,10 @@ release = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
+    'sphinx.ext.duration',
+    'sphinx.ext.doctest',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',   
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -105,57 +108,6 @@ html_css_files = ['custom.css',]
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Activebrainatlasdatabaseportaldoc'
-
-
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'Activebrainatlasdatabaseportal.tex', 'Activebrainatlas database portal Documentation',
-     'Edward O\'Donnell', 'manual'),
-]
-
-
-# -- Options for manual page output ------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'activebrainatlasdatabaseportal', 'Activebrainatlas database portal Documentation',
-     [author], 1)
-]
-
-
-# -- Options for Texinfo output ----------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'Activebrainatlasdatabaseportal', 'Activebrainatlas database portal Documentation',
-     author, 'Activebrainatlasdatabaseportal', 'One line description of project.',
-     'Miscellaneous'),
-]
 
 
 # -- Options for Epub output -------------------------------------------------
