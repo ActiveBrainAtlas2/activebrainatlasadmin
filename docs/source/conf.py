@@ -21,7 +21,7 @@ import sys
 import django
 import inspect
 sys.path.insert(0, os.path.abspath('../..'))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.documentation_settings'
 django.setup()
 
 # -- Project information -----------------------------------------------------
