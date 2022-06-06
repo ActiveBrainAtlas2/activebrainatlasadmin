@@ -21,8 +21,6 @@ INSTALLED_APPS = [
     'brain',
     'neuroglancer',
     'rest_framework',
-    'corsheaders',
-    'django_extensions',
 ]
 
 
@@ -36,7 +34,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_plotly_dash.middleware.BaseMiddleware',
     'django_plotly_dash.middleware.ExternalRedirectionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'activebrainatlas.urls'
