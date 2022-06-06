@@ -18,11 +18,23 @@ class TestUrlModel(TransactionTestCase):
     def setUp(self):
         self.coms = [ 1,2,4,5,8,9,10,11,12,13,19,20,22,23,28,29,44,45,18,17,27,26]
         self.username = 'edward'
+        self.annotator_username = 'zhongkai'
         self.prep_id = 'DK39'
         self.atlas_name = 'Atlas'
-        self.annotation_type = 'STRUCTURE_COM'
+        self.annotation_type = 'POLYGON_SEQUENCE'
         self.label = random_string()
-        # User            
+        # annotator
+        try:
+            query_set = User.objects.filter(username=self.annotator_username)
+        except User.DoesNotExist:
+            self.annotator = None
+        if query_set is not None and len(query_set) > 0:
+            self.annotator = query_set[0]
+        else:
+            self.annotator = User.objects.create(username=self.annotator_username,
+                                                   email='super@email.org',
+                                                   password='pass')
+        # User
         try:
             query_set = User.objects.filter(username=self.username)
         except User.DoesNotExist:
@@ -77,7 +89,24 @@ class TestUrlModel(TransactionTestCase):
         query_set = AnnotationSession.objects \
             .filter(animal=self.animal)\
             .filter(brain_region=self.brain_region)\
-            .filter(annotator=self.lauren)\
+            .filter(annotator=self.annotator)\
+            .filter(annotation_type=self.annotation_type)
+
+        if query_set is not None and len(query_set) > 0:
+            self.annotation_session = query_set[0]
+        else:
+            self.annotation_session = AnnotationSession.objects.create(\
+                animal=self.animal,
+                brain_region=self.brain_region,
+                annotator=self.lauren,
+                annotation_type=self.annotation_type
+                )
+        
+        # annotation session brain
+        query_set = AnnotationSession.objects \
+            .filter(animal=self.animal)\
+            .filter(brain_region=self.brain_region)\
+            .filter(annotator=self.annotator)\
             .filter(annotation_type=self.annotation_type)
 
         if query_set is not None and len(query_set) > 0:
@@ -90,36 +119,124 @@ class TestUrlModel(TransactionTestCase):
                 annotation_type=self.annotation_type
                 )
 
-        # annotation session atlas
+        # annotation session polygon sequence
         query_set = AnnotationSession.objects \
             .filter(animal=self.atlas)\
             .filter(brain_region=self.brain_region)\
-            .filter(annotator=self.lauren)\
+            .filter(annotator=self.annotator)\
             .filter(annotation_type=self.annotation_type)
 
         if query_set is not None and len(query_set) > 0:
-            self.annotation_session_atlas = query_set[0]
+            self.annotation_session_polygon_sequence = query_set[0]
         else:
-            self.annotation_session_atlas = AnnotationSession.objects.create(\
+            self.annotation_session_polygon_sequence = AnnotationSession.objects.create(\
                 animal=self.atlas,
                 brain_region=self.brain_region,
-                annotator=self.lauren,
+                annotator=self.annotator,
                 annotation_type=self.annotation_type
                 )
 
 
     def test_01_neuroglancer_url(self):
-        '''tests the API that returns the list of available neuroglancer states'''
+        """tests the API that returns the list of available neuroglancer states
+        """
         response = self.client.get("/neuroglancer")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_02_rotations_url(self):
-        '''Test the API that returns the list of available transformations'''
+    """URLs take from neuroglancer/urls.py We should have one test per url
+        transformation_relate_urls 
+            path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/'
+            path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>'
+            path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<str:reference_scales>'
+            path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>/<str:reference_scales>'
+            path('rotations'
+        volume_related_urls 
+            path('get_volume/<str:session_id>'
+            path('get_volume_list'
+            path('contour_to_segmentation/<int:url_id>/<str:volume_id>'
+        general_urls = 
+            path(r'public'
+            path('landmark_list'
+            path('annotation_status'
+            path('save_annotations/<int:url_id>/<str:annotation_layer_name>'
+        com_related_urls = 
+            path('get_com/<str:prep_id>/<str:annotator_id>/<str:source>'
+            path('get_com_list'
+        marked_cell_related_urls = [
+            path('get_marked_cell/<str:session_id>'
+            path('get_marked_cell_list'
+            path('cell_types'
+    """
+
+    def test_02_rotations(self):
+        """Test the API that returns the list of available transformations
+        TODO fix
+        """
+        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_03_rotations(self):
+        """Test the API that returns the list of available transformations
+        TODO fix
+        """
+        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_04_rotations(self):
+        """Test the API that returns the list of available transformations
+        TODO fix
+        """
+        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reference_scales}")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_05_rotations(self):
+        """Test the API that returns the list of available transformations
+        TODO fix
+        """
+        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}/{self.reference_scales}")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_06_rotations(self):
+        """Test the API that returns the list of available transformations
+        """
         response = self.client.get("/rotations")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_07_get_volume(self):
+        """Test the API that returns a volume
+        TODO fix
+        """
+        pass
+        #response = self.client.get(f"/get_volume/{self.annotation_session_polygon_sequence.id}")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+    def test_08_get_volume_list(self):
+        """Test the API that returns the list of volumes
+        TODO fix
+        """
+        pass
+        #response = self.client.get(f"/get_volume_list")
+        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+'''     def test_09_contour_to_segmentation(self):
+        """Test the API that returns contour to segmentation
+        TODO fix
+        """
+        response = self.client.get(f"/contour_to_segmentation")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+'''
+
+'''
+    def test_02_rotation_prep_id_input_type_owner_id_url(self):
+        """Test the API that returns the list of available transformations
+        Test:  path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/', views.Rotation.as_view()),
+        """
+        response = self.client.get("/rotation/DK39/manual/1/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_03_annotations_url(self):
-        '''Test the API that retrieves a specific transformation'''
+        """Test fetching annotations. 
+        """
         source = StructureCom.SourceChoices.MANUAL
         for com in self.coms:
             x1 = uniform(0, 65000)
@@ -133,14 +250,14 @@ class TestUrlModel(TransactionTestCase):
                 print('could not create', e)
         
         
-        response = self.client.get("/annotations")
+        response = self.client.get("/save_annotations")
         print(response)
         #self.assertGreater(len(response.data), 0, msg="The number of annotations should be greater than 0.")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-"""
     def test_04_rotation_url_with_bad_animal(self):
-        '''Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned'''
+        """Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned
+        """
         response = self.client.get("/rotation/DK52XXX")
         data = str(response.content, encoding='utf8')
         data = json.loads(data)
@@ -150,7 +267,8 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     def test_05_create_structure_com(self):
-        '''Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned'''
+        """Test the API that retrieves a specific transformation for a nonexistant animal and checks that the identity transform is returned
+        """
         n = 10
         for _ in range(n):
             x = uniform(0, 65000)
@@ -233,4 +351,4 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0, msg="Atlas coms are of wrong size")
 
-"""
+'''
