@@ -167,72 +167,64 @@ class TestUrlModel(TransactionTestCase):
             path('get_marked_cell_list'
             path('cell_types'
     """
-
+    '''
     def test_02_rotations(self):
         """Test the API that returns the list of available transformations
-        TODO fix
+        TODO fix this, it does not work
         """
-        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_03_rotations(self):
         """Test the API that returns the list of available transformations
-        TODO fix
+        TODO fix this, it does not work
         """
-        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_04_rotations(self):
         """Test the API that returns the list of available transformations
-        TODO fix
+        TODO fix this, it does not work
         """
-        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reference_scales}")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reference_scales}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_05_rotations(self):
         """Test the API that returns the list of available transformations
         TODO fix
         """
-        #response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}/{self.reference_scales}")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+        response = self.client.get(f"/rotation/{self.prep_id}/{self.input_type}/{self.owner.id}/{self.reverse}/{self.reference_scales}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    '''
     def test_06_rotations(self):
         """Test the API that returns the list of available transformations
+         This one works
         """
         response = self.client.get("/rotations")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+    '''
     def test_07_get_volume(self):
         """Test the API that returns a volume
-        TODO fix
+        TODO fix, it does not work
         """
-        pass
-        #response = self.client.get(f"/get_volume/{self.annotation_session_polygon_sequence.id}")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
         
+        response = self.client.get(f"/get_volume/{self.annotation_session_polygon_sequence.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+          
     def test_08_get_volume_list(self):
         """Test the API that returns the list of volumes
         TODO fix
         """
-        pass
-        #response = self.client.get(f"/get_volume_list")
-        #self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get(f"/get_volume_list")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-'''     def test_09_contour_to_segmentation(self):
+     def test_09_contour_to_segmentation(self):
         """Test the API that returns contour to segmentation
         TODO fix
         """
         response = self.client.get(f"/contour_to_segmentation")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-'''
 
-'''
-    def test_02_rotation_prep_id_input_type_owner_id_url(self):
-        """Test the API that returns the list of available transformations
-        Test:  path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/', views.Rotation.as_view()),
-        """
-        response = self.client.get("/rotation/DK39/manual/1/")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_03_annotations_url(self):
         """Test fetching annotations. 
@@ -351,4 +343,4 @@ class TestUrlModel(TransactionTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertGreater(len(response.data), 0, msg="Atlas coms are of wrong size")
 
-'''
+    '''
