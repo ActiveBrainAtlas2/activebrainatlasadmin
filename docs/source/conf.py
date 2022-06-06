@@ -20,10 +20,9 @@ import os
 import sys
 import django
 import inspect
-sys.path.insert(0, os.path.abspath('..'))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.settings'
+sys.path.insert(0, os.path.abspath('../..'))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.documentation_settings'
 django.setup()
-from django.utils.html import strip_tags
 
 # -- Project information -----------------------------------------------------
 
@@ -32,7 +31,7 @@ copyright = '2022, Edward O\'Donnell'
 author = 'Edward O\'Donnell'
 
 # The short X.Y version
-version = ''
+version = '1.0'
 # The full version, including alpha/beta/rc tags
 release = '1.0'
 
@@ -107,57 +106,6 @@ html_css_files = ['custom.css',]
 htmlhelp_basename = 'Activebrainatlasdatabaseportaldoc'
 
 
-# -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
-
-# Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
-#  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'Activebrainatlasdatabaseportal.tex', 'Activebrainatlas database portal Documentation',
-     'Edward O\'Donnell', 'manual'),
-]
-
-
-# -- Options for manual page output ------------------------------------------
-
-# One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'activebrainatlasdatabaseportal', 'Activebrainatlas database portal Documentation',
-     [author], 1)
-]
-
-
-# -- Options for Texinfo output ----------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'Activebrainatlasdatabaseportal', 'Activebrainatlas database portal Documentation',
-     author, 'Activebrainatlasdatabaseportal', 'One line description of project.',
-     'Miscellaneous'),
-]
-
-
 # -- Options for Epub output -------------------------------------------------
 
 # Bibliographic Dublin Core info.
@@ -189,24 +137,52 @@ def process_docstring(app, what, name, obj, options, lines):
 
         for field in fields:
             # Decode and strip any html out of the field's help text
-            help_text = strip_tags(field.help_text)
+            #help_text = strip_tags(field.help_text)
+            db_column = field.db_column
+            line = ""
 
             # Decode and capitalize the verbose name, for use if there isn't
             # any help text
             verbose_name = field.verbose_name
+            max_length = field.max_length
 
+            """
             if help_text:
                 # Add the model field to the end of the docstring as a param
                 # using the help text as the description
-                lines.append(u':param %s: %s' % (field.attname, help_text))
+                line = u':param %s: %s' % (field.attname, help_text)
+                lines.append(line)
             else:
                 # Add the model field to the end of the docstring as a param
                 # using the verbose name as the description
-                lines.append(u':param %s: %s' % (field.attname, verbose_name))
+                line = u':param %s: %s' % (field.attname, verbose_name)
+                lines.append(line)
+
+            """
+            #line = u':param %s: %s' % (field.attname, verbose_name)
+            #line += u':type %s: %s' % (field.attname, type(field).__name__)
+            #line = f':param {field.attname}:'
+            #lines.append(line)
+            field_type = (type(field).__name__).replace('Field','')
+            if max_length and (field_type == 'Char' or field_type == 'Text'):
+                field_type += f' length={max_length}'
+            line = f':type {field.attname}: {field_type}'
+            
+            # Add the model field to the end of the docstring as a param
+            # using the verbose name as the description
+            if db_column:
+                verbose_name = 'DB column = ' + db_column
+            
+            lines.append(u':param %s: %s' % (field.attname, verbose_name))
+            # Add the field's type to the docstring
+            lines.append(u':type %s: %s' % (field.attname, field_type))
+
+
+
+            
+
 
             # Add the field's type to the docstring
-            lines.append(u':type %s: %s' % (field.attname, type(field).__name__))
-
     # Return the extended docstring
     return lines
 

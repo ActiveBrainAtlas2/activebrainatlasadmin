@@ -13,22 +13,43 @@ from django.utils.safestring import mark_safe
 from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from brain.models import Animal
 from neuroglancer.models import AlignmentScore, \
         AnnotationSession, AnnotationPointArchive, \
         UrlModel,  BrainRegion, Points, \
         PolygonSequence, MarkedCell, StructureCom,CellType
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
-from neuroglancer.AnnotationManager import restore_annotations
+from neuroglancer.tasks import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
+
+@admin.register(AlignmentScore)
+class AlignmentScoreAdmin(admin.ModelAdmin):
+    """This class provides information for constructing the alignment score graph page."""
+    change_list_template = "alignment_score.html"
+
+    def has_add_permission(self, request):
+        """Returns false as it is readonly"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Returns false as it is readonly"""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Returns false as it is readonly"""
+        return False
+
+
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
+    """This class provides the admin backend to the JSON data produced by Neuroglancer.
+    In the original version of Neuroglancer, all the data was stored in the URL, hence
+    the name of this class. The name: 'UrlModel' will be changed in future versions."""
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
@@ -41,7 +62,11 @@ class UrlModelAdmin(admin.ModelAdmin):
     search_fields = ['comments']
 
     def pretty_url(self, instance):
-        """Function to display pretty version of our data"""
+        """Function to display pretty version of the JSON data.
+        It uses the pygments library to make the JSON readable.
+        
+        :param instance: admin obj
+        :returns: nicely formatted JSON data that is viewed in the page."""
         # Convert the data to sorted, indented JSON
         response = json.dumps(instance.url, sort_keys=True, indent=2)
         # Truncate the data. Alter as needed
@@ -83,6 +108,8 @@ class UrlModelAdmin(admin.ModelAdmin):
 
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
+    """This class may become deprecated, but for now it gets point data
+    from the actual JSON and not the 3 new tables we have that contain x,y,z data."""
     list_display = ('animal', 'comments', 'owner','show_points', 'updated')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
@@ -90,14 +117,17 @@ class PointsAdmin(admin.ModelAdmin):
     list_filter = ['created', 'updated','vetted']
 
     def created_display(self, obj):
+        """Returns a nicely formatted creation date."""
         return datetime_format(obj.created)
     created_display.short_description = 'Created'  
 
     def get_queryset(self, request):
+        """Returns the query set of points where the layer contains annotations"""
         points = Points.objects.filter(url__layers__contains={'type':'annotation'})
         return points
 
     def show_points(self, obj):
+        """Shows the HTML for the link to the graph of data."""
         return format_html(
             '<a href="{}">3D Graph</a>&nbsp; <a href="{}">Data</a>',
             reverse('admin:points-3D-graph', args=[obj.pk]),
@@ -105,6 +135,7 @@ class PointsAdmin(admin.ModelAdmin):
         )
 
     def get_urls(self):
+        """Shows the HTML of the links to go to the graph, and table data."""
         urls = super().get_urls()
         custom_urls = [
             path(r'scatter/<pk>', dash_scatter_view, name="points-2D-graph"),
@@ -114,8 +145,8 @@ class PointsAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def view_points_3Dgraph(self, request, id, *args, **kwargs):
-        """
-        3d graph
+        """Provides a link to the 3D point graph
+
         :param request: http request
         :param id:  id of url
         :param args:
@@ -147,6 +178,7 @@ class PointsAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "points_graph.html", context)
 
     def view_points_data(self, request, id, *args, **kwargs):
+        """Provides the HTML link to the table data"""
         urlModel = UrlModel.objects.get(pk=id)
         df = urlModel.points
         result = 'No data'
@@ -165,26 +197,37 @@ class PointsAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "points_table.html", context)
 
     def has_delete_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
         return False
 
     def has_add_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
         return False
 
     def has_change_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
         return False
+
 
 @admin.register(BrainRegion)
 class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
-    list_display = ('abbreviation', 'description','color','show_hexadecimal','active','created_display')
+    """Class that provides admin capability for managing a region of the brain. This
+    was also called a structure."""
+    list_display = ('abbreviation', 'description', 'color',
+                    'show_hexadecimal', 'active', 'created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
     search_fields = ['abbreviation', 'description']
+
     def created_display(self, obj):
+        """Formats the date nicely."""
         return datetime_format(obj.created)
-    created_display.short_description = 'Created'    
+    created_display.short_description = 'Created'
+
     def show_hexadecimal(self, obj):
-        return format_html('<div style="background:{}">{}</div>',obj.hexadecimal,obj.hexadecimal)
+        """Formats the hexadecimal nicely."""
+        return format_html('<div style="background:{}">{}</div>', obj.hexadecimal, obj.hexadecimal)
     show_hexadecimal.short_description = 'Hexadecimal'
 
 @admin.register(CellType)
@@ -208,6 +251,8 @@ make_active.short_description = "Mark selected COMs as active"
 
 @admin.register(MarkedCell)
 class MarkedCellAdmin(admin.ModelAdmin):
+    """This class provides the ability to manage the data entered through Neuroglancer. 
+    These are the starter, premotor cells marked by an anatomist or generated through cell detection."""
     list_display = ('animal','annotator','cell_type','brain_region', 'x', 'y', 'z', 'source','created')
     search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
     ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
@@ -215,6 +260,8 @@ class MarkedCellAdmin(admin.ModelAdmin):
 
 @admin.register(PolygonSequence)
 class PolygonSequenceAdmin(admin.ModelAdmin):
+    """This class provides the ability to manage the data entered through Neuroglancer. 
+    These are polygons drawn by an anatomist."""
     list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
     ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
     search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
@@ -222,6 +269,8 @@ class PolygonSequenceAdmin(admin.ModelAdmin):
 
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
+    """This class provides the ability to manage the data entered through Neuroglancer. 
+    These are points are entered by an anatomist and are solely for the center of mass (COM) for a brain region (structure)"""
     list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
     ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
     search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
@@ -237,16 +286,16 @@ class AnnotationPointArchiveAdmin(admin.ModelAdmin):
 
 @admin.action(description='Restore the selected archive')
 def restore_archive(modeladmin, request, queryset):
-    '''
-    Restore data from the annotation_points_archive table to the 
+    """This method will restore data from the annotation_points_archive table to the 
     annotations_points table.
+    
     1. Set existing data to inactive (quick)
     2. Move inactive data to archive (select, insert, slow, use background)
     3. Move archived data to existing (select, insert, slow use background)
-    :param modeladmin:
-    :param request:
-    :param queryset:
-    '''
+
+    :param request: the HTTP request
+    :param queryset: the query set used to fetch data
+    """
     n = len(queryset)
     if n != 1:
         messages.error(request, 'Check just one archive. You cannot restore more than one archive.')
@@ -258,6 +307,7 @@ def restore_archive(modeladmin, request, queryset):
 
 @admin.register(AnnotationSession)
 class AnnotationSessionAdmin(AtlasAdminModel):
+    """Administer the annotation session data."""
     list_display = ['animal', 'annotation_type', 'created','annotator','archive_count']
     ordering = ['animal', 'annotation_type', 'parent', 'created','annotator']
     list_filter = ['animal', 'annotation_type', 'created','annotator']
@@ -265,43 +315,39 @@ class AnnotationSessionAdmin(AtlasAdminModel):
     actions = [restore_archive]
     
     def archive_count(self, obj):
+        """Returns a count of the annotation points per session"""
         count = AnnotationPointArchive.objects.filter(annotation_session=obj).count()
         return count
+
     archive_count.short_description = "# Points"
-
-@admin.register(AlignmentScore)
-class AlignmentScoreAdmin(admin.ModelAdmin):
-    change_list_template = "alignment_score.html"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 admin.site.unregister(Task)
 admin.site.unregister(CompletedTask)
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
+    """This admin class is for taking care of the tasks associated with the pre-processing pipeline."""
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
 
     def has_add_permission(self, request, obj=None):
+        """Returns false as this data comes in from the pre-processing pipeline."""
         return False
 
 @admin.register(CompletedTask)
 class CompletedTaskAdmin(admin.ModelAdmin):
+    """This class is used to admin the completed tasks. These are tasks that are long running
+    and take to long for an HTTP request. They get sent to the supervisord daemon to be run
+    outside the scope of the HTTP request."""
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts', 'has_error', 'locked_by', 'locked_by_pid_running', ]
 
     def has_add_permission(self, request):
+        """Returns false as it is added by another process."""
         return False
 
     def has_change_permission(self, request, obj=None):
+        """Returns false as it is added by another process."""
         return False
