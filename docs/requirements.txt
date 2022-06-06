@@ -2,3 +2,4 @@ Django==3.2.12
 django-background-tasks
 djangorestframework
 django-mysql
+pandas
