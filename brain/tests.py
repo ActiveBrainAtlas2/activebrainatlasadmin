@@ -98,9 +98,9 @@ class TestSlideForms(TransactionTestCase):
                 'insert_between_four_five': 0,
                 'insert_between_five_six': 0}
             total_inserts = i * 3
-            precount = SlideCziToTif.objects.filter(slide_id=self.slide.id).filter(active=1).count()
+            precount = SlideCziToTif.objects.filter(FK_slide_id=self.slide.id).filter(active=1).count()
             ma.save_model(obj=self.slide, request=request, form=form, change=None)
-            postcount = SlideCziToTif.objects.filter(slide_id=self.slide.id).filter(active=1).count()
+            postcount = SlideCziToTif.objects.filter(FK_slide_id=self.slide.id).filter(active=1).count()
             # some test assertions here
             self.assertEquals(precount + total_inserts, postcount)
         """
