@@ -109,7 +109,7 @@ if settings.DEBUG:
                     height = metadata_dict[series_index]['height']
                     for channel in channels:
                         tif = SlideCziToTif()
-                        tif.slide_id = slide.id
+                        tif.FK_slide_id = slide.id
                         tif.scene_number = scene_number
                         tif.file_size = 0
                         tif.active = 1
