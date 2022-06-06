@@ -3,3 +3,5 @@ django-background-tasks
 djangorestframework
 django-mysql
 pandas
+django-plotly-dash
+plotly
