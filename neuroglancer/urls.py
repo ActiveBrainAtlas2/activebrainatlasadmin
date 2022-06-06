@@ -6,11 +6,11 @@ app_name = 'neuroglancer'
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'neuroglancer', views.UrlViewSet, basename='neuroglancer')
 
-transformation_relate_urls = [
-    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/', views.Rotation.as_view()),
-    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>', views.Rotation.as_view()),
-    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<str:reference_scales>', views.Rotation.as_view()),
-    path('rotation/<str:prep_id>/<str:input_type>/<int:owner_id>/<int:reverse>/<str:reference_scales>', views.Rotation.as_view()),
+transformation_relate_urls = [ 
+    path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/', views.Rotation.as_view()),
+    path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/<int:reverse>', views.Rotation.as_view()),
+    path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/<str:reference_scales>', views.Rotation.as_view()),
+    path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/<int:reverse>/<str:reference_scales>', views.Rotation.as_view()),
     path('rotations', views.GetComList.as_view()),
 ]
 volume_related_urls = [
