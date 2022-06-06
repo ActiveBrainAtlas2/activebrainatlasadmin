@@ -3,53 +3,9 @@ Background tasks must be in a file named: tasks.py
 Don't move it to another file!
 """
 from django.http import Http404
-import numpy as np
 from background_task import background
 from neuroglancer.bulk_insert import BulkCreateManager
-
-from neuroglancer.models import AnnotationPointArchive, AnnotationSession, get_region_from_abbreviation
-
-
-# @background(schedule=0)
-def archive_and_insert_annotations():
-    """#TODO fix this method so it is a standalone method and not part of a class
-    The main function that updates the database with annotations in the current_layer attribute
-    This function loops each annotation in the curent layer and inserts/archive points in the 
-    appropriate table
-    marked_cells = []
-    bulk_mgr = BulkCreateManager(chunk_size=100)
-
-    for annotationi in current_layer.annotations:
-        if annotationi.is_com():
-            brain_region = get_region_from_abbreviation(annotationi.get_description())
-            new_session = get_new_session_and_archive_points(brain_region=brain_region,annotation_type='STRUCTURE_COM')
-            add_com(annotationi,new_session)
-        if annotationi.is_cell():
-            marked_cells.append(annotationi)
-        if annotationi.is_polygon():
-            brain_region = get_region_from_abbreviation('polygon')
-            new_session = get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
-            add_polygons(annotationi,new_session)
-        if annotationi.is_volume():
-            brain_region = get_region_from_abbreviation(annotationi.get_description())
-            new_session = get_new_session_and_archive_points(brain_region=brain_region,annotation_type='POLYGON_SEQUENCE')
-            add_volumes(annotationi,new_session)
-    if len(marked_cells)>0:
-        categories = np.array([i.category for i in marked_cells])
-        unique_category = np.unique(categories)
-        for category in unique_category:
-            in_category = categories == category
-            cells = marked_cells[in_category]
-            new_session = get_new_session_and_archive_points(brain_region=brain_region,annotation_type='MARKED_CELL')
-            for annotationi in cells:
-                cell_type = CellType.objects.filter(cell_type = category).first()
-                if cell_type is not None:
-                    brain_region = get_region_from_abbreviation('point')
-                    add_marked_cells(annotationi,new_session,cell_type)
-    bulk_mgr.done()
-    """
-    pass
-
+from neuroglancer.models import AnnotationPointArchive, AnnotationSession
 
 @background(schedule=0)
 def restore_annotations(session_id):
