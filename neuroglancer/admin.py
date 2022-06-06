@@ -10,7 +10,6 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import JsonLexer
 from django.utils.safestring import mark_safe
-from django.contrib.auth import get_user_model
 from plotly.offline import plot
 import plotly.express as px
 from brain.admin import AtlasAdminModel, ExportCsvMixin

@@ -10,8 +10,7 @@ import plotly.graph_objects as go
 
 from neuroglancer.models import UrlModel
 from brain.models import Animal
-from workflow.models import Task, ProgressLookup, TaskView, Log, Journal, \
-    Problem, FileLog, TableMetadata
+from workflow.models import Task, ProgressLookup, TaskView, Log, FileLog, TableMetadata
 
 from workflow.forms import PipelineForm
 # from celery import chain
@@ -190,30 +189,6 @@ class LogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-@admin.register(Journal)
-class JournalAdmin(WorkflowAdminModel):
-    list_display = ('prep_id', 'issue_tag', 'person', 'problem', 'completed', 'link_tag', 'created')
-    ordering = ['prep_id', 'created']
-    list_filter = ['created', 'completed']
-    search_fields = ['prep__prep_id','entry']
-    fields = ['prep', 'url', 'section','channel', 'entry', 'fix', 'person', 'problem', 'completed', 'active', 'image','issue_link', 'image_tag']
-    readonly_fields = ['image_tag', 'link_tag', 'issue_tag']
-
-    def prep_id(self, instance):
-        return instance.prep.prep_id
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        kwargs["widget"] = Select(attrs={'style': 'width: 250px;'})
-        if db_field.name == "url":
-            kwargs["queryset"] = UrlModel.objects.order_by('comments')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-
-@admin.register(Problem)
-class ProblemAdmin(admin.ModelAdmin):
-    list_display = ('problem_category', 'active', 'created')
 
 
 @admin.register(TableMetadata)
