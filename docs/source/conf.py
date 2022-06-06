@@ -31,7 +31,7 @@ copyright = '2022, Edward O\'Donnell'
 author = 'Edward O\'Donnell'
 
 # The short X.Y version
-version = ''
+version = '1.0'
 # The full version, including alpha/beta/rc tags
 release = '1.0'
 
@@ -48,10 +48,6 @@ release = '1.0'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
-    'sphinx.ext.duration',
-    'sphinx.ext.doctest',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',   
 ]
 
 # Add any paths that contain templates here, relative to this directory.
