@@ -19,7 +19,7 @@ from neuroglancer.models import AlignmentScore, \
         PolygonSequence, MarkedCell, StructureCom,CellType
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
-from neuroglancer.AnnotationManager import restore_annotations
+from neuroglancer.tasks import restore_annotations
 from background_task.models import Task
 from background_task.models import CompletedTask
 
