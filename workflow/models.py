@@ -71,64 +71,7 @@ class Log(WorkflowModel):
 
     def __str__(self):
         return u'{} {}'.format(self.prep.prep_id, self.msg)
-
-class Problem(WorkflowModel):
-    # Fields
-    problem_category = models.CharField(max_length=255, blank=False,
-                                        verbose_name='Problem Category')
-
-    class Meta:
-        managed = False
-        db_table = 'problem_category'
-        verbose_name = 'Problem Category'
-        verbose_name_plural = 'Problem Categories'
-    def __str__(self):
-        return u'{}'.format(self.problem_category)
-
-
-class Journal(WorkflowModel):
-    prep = models.ForeignKey(Animal, models.DO_NOTHING, null=True)
-    person = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="person_id",
-                               verbose_name="User", blank=False, null=False)
-    problem = models.ForeignKey(Problem, models.CASCADE, db_column="problem_id",
-                               verbose_name="Problem", blank=False, null=False)
-    url = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="url_id",
-                               verbose_name="URL", blank=True)
-    section = models.IntegerField(blank=True, null=True)
-    channel = models.IntegerField(blank=True, null=True)
-    entry = models.TextField(blank=False, verbose_name='Journal Entry')
-    fix = models.TextField(blank=True, null=True, verbose_name='Fix')
-    image = models.ImageField(upload_to="images/journal", max_length=255, null=True, blank=True)
-    issue_link = models.CharField(max_length=255, blank=True)
-    completed = models.BooleanField(default = False)
-
-    class Meta:
-        managed = False
-        db_table = 'journals'
-        verbose_name = 'Journal'
-        verbose_name_plural = 'Journals'
-
-    def __str__(self):
-        return u'{} {}'.format(self.prep.prep_id, self.entry[0:50])
-
-    def image_tag(self):
-        return mark_safe('<img src="%s" width="600" />' % (self.image.url))
-    image_tag.short_description = 'Screenshot'
-
-    def link_tag(self):
-        link = 'NA'
-        if self.issue_link is not None and len(self.issue_link) > 0:
-            link = mark_safe(f'<a href="{self.issue_link}">Link</>')
-        return link
-    link_tag.short_description = 'Github'
-
-    def issue_tag(self):
-        issue = self.entry
-        if len(issue) > 50:
-            issue = issue[0:50] + " ..."
-        return issue
-    issue_tag.short_description = 'Issue'
-
+        
 class TaskView(models.Model):
     prep_id = models.CharField(primary_key=True, max_length=20)
     percent_complete = models.DecimalField(max_digits=6, decimal_places=2)

@@ -333,6 +333,7 @@ class ContoursToVolume(views.APIView):
 class SaveAnnotation(views.APIView):
     '''View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table'''
     def get(self, request, url_id,annotation_layer_name):
+        print(annotation_layer_name)
         urlModel = UrlModel.objects.get(pk=url_id)
         state_json = urlModel.url
         layers = state_json['layers']
