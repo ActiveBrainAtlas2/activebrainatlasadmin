@@ -227,9 +227,9 @@ class Rotation(views.APIView):
     prep_id: the animal id, not the primary key in the animal table
     """
 
-    def get(self, request, prep_id, format=None):
+    def get(self, request, prep_id,annotator_id,source,reverse = 0, reference_scales = 'None', format=None):
         data = {}
-        R, t = align_atlas(prep_id)
+        R, t = align_atlas(prep_id,annotator_id,source,reverse=reverse,reference_scales = eval(reference_scales))
         data['rotation'] = R.tolist()
         data['translation'] = t.tolist()
         return JsonResponse(data)
@@ -333,7 +333,6 @@ class ContoursToVolume(views.APIView):
 class SaveAnnotation(views.APIView):
     '''View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table'''
     def get(self, request, url_id,annotation_layer_name):
-        print(annotation_layer_name)
         urlModel = UrlModel.objects.get(pk=url_id)
         state_json = urlModel.url
         layers = state_json['layers']
