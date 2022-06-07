@@ -105,6 +105,7 @@ class Histology(AtlasModel):
     block = models.CharField(max_length=200, blank=True, null=True)
     date_sectioned = models.DateField(blank=True, null=True)
     side_sectioned_first = EnumField(choices=[('ASC', 'Left'), ('DESC','Right')], blank=False, null=False, default = 'ASC')
+    scene_order = EnumField(choices=[('ASC', 'Assending'), ('DESC','Desending')], blank=False, null=False, default = 'ASC')
     sectioning_method = EnumField(choices=['cryoJane','cryostat','vibratome','optical','sliding microtiome'], blank=True, null=True)
     section_thickness = models.PositiveIntegerField()
     orientation = EnumField(choices=['coronal','horizontal','sagittal','oblique'], blank=True, null=True)
