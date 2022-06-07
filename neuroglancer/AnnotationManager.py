@@ -106,8 +106,7 @@ class AnnotationManager(AnnotationBase):
                         cell_type=category).first()
                     if cell_type is not None:
                         brain_region = get_region_from_abbreviation('point')
-                        self.add_marked_cells(
-                            annotationi, new_session, cell_type)
+                        self.add_marked_cells(annotationi, new_session, cell_type)
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
@@ -213,9 +212,10 @@ class AnnotationManager(AnnotationBase):
                                        source='MANUAL', x=x, y=y, z=z))
 
     def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, cell_type):
+        ## TODO add possibility for negative cell labels
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
-                          source='HUMAN-POSITIVE', x=x, y=y, z=z, cell_type=cell_type))
+                          source='HUMAN_POSITIVE', x=x, y=y, z=z, cell_type=cell_type))
 
     def add_polygons(self, annotationi: Annotation, annotation_session: AnnotationSession):
         z = mode([int(np.floor(pointi.coord_start[2]) * self.z_scale)
