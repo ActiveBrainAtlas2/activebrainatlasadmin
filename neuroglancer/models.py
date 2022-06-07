@@ -212,8 +212,6 @@ class AnnotationSession(models.Model):
             one_row = PolygonSequence.objects.filter(annotation_session__id=self.id).first()
         elif self.is_marked_cell():
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
-            print('=======================================================')
-            print(self.id,one_row is None)
         elif self.is_structure_com():
             one_row = StructureCom.objects.filter(annotation_session__id=self.id).first()
         return one_row.source
