@@ -94,11 +94,15 @@ class AnnotationManager(AnnotationBase):
                     brain_region=brain_region, annotation_type='POLYGON_SEQUENCE')
                 self.add_volumes(annotationi, new_session)
         if len(marked_cells) > 0:
+            marked_cells = np.array(marked_cells)
             categories = np.array([i.category for i in marked_cells])
-            unique_category = np.unique(categories)
-            for category in unique_category:
-                in_category = categories == category
-                cells = marked_cells[in_category]
+            descriptions = np.array([i.description for i in marked_cells])
+            pairing = np.array([ categories[i]+'@'+descriptions[i] for i in range(len(marked_cells))])
+            unique_pairing = np.unique(pairing)
+            for pair in unique_pairing:
+                category,description = pair.split('@')
+                in_group = np.logical_and(categories == category,descriptions==description)
+                cells = marked_cells[in_group]
                 new_session = self.get_new_session_and_archive_points(
                     brain_region=brain_region, annotation_type='MARKED_CELL')
                 for annotationi in cells:
@@ -106,7 +110,11 @@ class AnnotationManager(AnnotationBase):
                         cell_type=category).first()
                     if cell_type is not None:
                         brain_region = get_region_from_abbreviation('point')
-                        self.add_marked_cells(annotationi, new_session, cell_type)
+                        if description =='positive':
+                            source = 'HUMAN_POSITIVE'
+                        if description =='negative':
+                            source = 'HUMAN_NEGATIVE'
+                        self.add_marked_cells(annotationi, new_session, cell_type,source)
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
@@ -211,11 +219,11 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                                        source='MANUAL', x=x, y=y, z=z))
 
-    def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, cell_type):
+    def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, cell_type,source):
         ## TODO add possibility for negative cell labels
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
-                          source='HUMAN_POSITIVE', x=x, y=y, z=z, cell_type=cell_type))
+                          source=source, x=x, y=y, z=z, cell_type=cell_type))
 
     def add_polygons(self, annotationi: Annotation, annotation_session: AnnotationSession):
         z = mode([int(np.floor(pointi.coord_start[2]) * self.z_scale)
@@ -244,12 +252,13 @@ class AnnotationManager(AnnotationBase):
         return AnnotationSession.objects.filter(animal=self.animal)\
                                         .filter(brain_region=brain_region)\
                                         .filter(annotator=self.annotator)\
-                                        .filter(annotation_type=annotation_type).first()
+                                        .filter(annotation_type=annotation_type)\
+                                        .filter(active=1).first()
 
     def create_new_session(self, brain_region: BrainRegion, annotation_type, parent=0):
         annotation_session = AnnotationSession.objects.create(
             animal=self.animal,
             brain_region=brain_region,
             annotator=self.annotator,
-            annotation_type=annotation_type, parent=parent)
+            annotation_type=annotation_type, parent=parent,active = 1)
         return annotation_session
