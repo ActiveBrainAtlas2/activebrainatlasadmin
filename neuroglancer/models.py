@@ -365,6 +365,8 @@ class AnnotationPointArchive(AnnotationAbstract):
     polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
     point_order = models.IntegerField(blank=False, null=False, default=0)
     source = models.CharField(max_length=255)
+    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
+                               verbose_name="Cell Type", default=None)
 
 class BrainShape(AtlasModel):
     """This class will hold the numpy data for a brain region."""
