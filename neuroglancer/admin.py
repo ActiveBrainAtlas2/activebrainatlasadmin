@@ -263,7 +263,9 @@ class PolygonSequenceAdmin(admin.ModelAdmin):
     """This class provides the ability to manage the data entered through Neuroglancer. 
     These are polygons drawn by an anatomist."""
     list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
-    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    #ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    # taking out all the orering really speeds up the query.
+    ordering = ('id',)
     search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
 
 
