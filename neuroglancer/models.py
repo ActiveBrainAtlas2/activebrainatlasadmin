@@ -297,7 +297,7 @@ class MarkedCell(AnnotationAbstract):
         verbose_name = 'Marked cell'
         verbose_name_plural = 'Marked cells'
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{}'.format(self.annotation_session)
 
 class PolygonSequence(AnnotationAbstract):
     """This model is for the polygons drawn by an anatomist in Neuroglancer.
