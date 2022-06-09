@@ -220,7 +220,6 @@ class AnnotationManager(AnnotationBase):
                                        source='MANUAL', x=x, y=y, z=z))
 
     def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, cell_type,source):
-        ## TODO add possibility for negative cell labels
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
                           source=source, x=x, y=y, z=z, cell_type=cell_type))
