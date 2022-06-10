@@ -315,7 +315,7 @@ class SlideCziToTif(AtlasModel):
     """This is the child class of the Slide class. This model describes the metadata associated
     with a TIFF file, or another way to think of it, it describes one piece of brain tissue on a slide."""
     id = models.AutoField(primary_key=True)
-    slide = models.ForeignKey(Slide, models.CASCADE, related_name='slideczis')
+    slide = models.ForeignKey(Slide, models.CASCADE, db_column='FK_slide_id')
     file_name = models.CharField(max_length=200, null=False)
     scene_number = models.IntegerField(blank=False, null=False, default=1,
                                                     verbose_name='Scene',
@@ -327,8 +327,6 @@ class SlideCziToTif(AtlasModel):
     comments = models.TextField(max_length=2000, blank=True, null=True)
     file_size = models.FloatField(verbose_name='File size (bytes)')
     processing_duration = models.FloatField(verbose_name="Processing time (seconds)")
-
-
 
     def max_scene(self):
         """This method gives you the number of scenes on a slide
