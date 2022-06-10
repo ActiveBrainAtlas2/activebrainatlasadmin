@@ -108,7 +108,7 @@ class TaskAdmin(admin.ModelAdmin):
     """
        
 
-@admin.register(TaskView)
+# @admin.register(TaskView)
 class TaskViewAdmin(admin.ModelAdmin):
     list_display = ('prep_id', 'percent_complete')
     change_list_template = "admin/task_view.html"
