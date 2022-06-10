@@ -387,7 +387,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         :param obj: the slide obj
         :return: an integer of the number of scenes
         """
-        count = SlideCziToTif.objects.filter(FK_slide_id=obj.id).filter(channel=1).filter(active=True).count()
+        count = SlideCziToTif.objects.filter(slide__id=obj.id).filter(channel=1).filter(active=True).count()
         return count
 
     scene_count.short_description = "Active Scenes"
