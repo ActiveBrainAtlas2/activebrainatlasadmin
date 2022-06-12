@@ -171,7 +171,7 @@ def save_slide_model(self, request, obj, form, change):
             difference = current - new
             remove_scene(obj.id, difference, scene_number)
 
-    scene_reorder(obj.id)
+    # scene_reorder(obj.id)
 
 
     obj.scenes = SlideCziToTif.objects.filter(slide__id=obj.id).filter(channel=1).filter(active=True).count()
@@ -187,7 +187,7 @@ class TifInlineFormset(forms.models.BaseInlineFormSet):
         for ch23 in ch23s:
             ch23.active = False
             ch23.save()
-        scene_reorder(obj.FK_slide_id)
+        # scene_reorder(obj.FK_slide_id)
         if commit:
             obj.save()
         return obj
