@@ -357,6 +357,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         :return: HTML of the fields
         """
         count = self.scene_count(obj)
+        print(count)
         fields = ['file_name', 'scan_run', 'slide_physical_id', 'slide_status', 'rescan_number',
                   'insert_before_one', 'scene_qc_1','scene_rotation_1',
                   'insert_between_one_two', 'scene_qc_2','scene_rotation_2']
@@ -387,7 +388,9 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         :param obj: the slide obj
         :return: an integer of the number of scenes
         """
-        count = SlideCziToTif.objects.filter(slide__id=obj.id).filter(channel=1).filter(active=True).count()
+        scenes = SlideCziToTif.objects.filter(slide__id=obj.id).filter(channel=1).values_list('scene_index').distinct()
+        print(scenes)
+        count = len(scenes)
         return count
 
     scene_count.short_description = "Active Scenes"
