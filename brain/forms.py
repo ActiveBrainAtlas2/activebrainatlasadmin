@@ -34,14 +34,11 @@ def repeat_scene(FK_slide_id, inserts, scene_number):
 
 def remove_scene(FK_slide_id, deletes, scene_number):
     channels = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(active=True).values('channel').distinct().count()
-    tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(active=True) \
-        .filter(scene_number=scene_number)
-    scene_index = tifs[0].scene_index
-    tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(active=True) \
-        .filter(scene_index=scene_index).order_by('scene_number')[:deletes*channels]
-
-    for tif in tifs:
-        tif.delete()
+    for channeli in range(channels):
+        tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(active=True) \
+            .filter(scene_number=scene_number).filter(channel=channeli+1)[:deletes]
+        for tif in tifs:
+            tif.delete()
 
 
 def create_scene(tifs, scene_number):
@@ -73,15 +70,8 @@ def find_closest_neighbor(FK_slide_id, scene_number):
 
 
 def set_scene_active(FK_slide_id, scene_number):
-    channels = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(active=True).values('channel').distinct().count()
-    active_tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id)\
-        .filter(active=True).filter(scene_number=scene_number).order_by('scene_number')[:channels]
-    inactive_tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id)\
-        .filter(active=False).filter(scene_number=scene_number).order_by('scene_number')[:channels]
-    for tif in active_tifs:
-        tif.active = False
-        tif.save()
-    for tif in inactive_tifs:
+    tifs = SlideCziToTif.objects.filter(slide__id=FK_slide_id).filter(scene_number=scene_number).order_by('scene_number')
+    for tif in tifs:
         tif.active = True
         tif.save()
 
