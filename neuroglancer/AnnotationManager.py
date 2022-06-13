@@ -7,7 +7,7 @@ from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType
 from abakit.lib.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.AnnotationBase import AnnotationBase
-
+from background_task import background
 
 class AnnotationManager(AnnotationBase):
     '''This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence'''
@@ -51,8 +51,7 @@ class AnnotationManager(AnnotationBase):
             if self.debug:
                 self.archive_and_insert_annotations()
             else:
-                self.archive_and_insert_annotations(
-                    verbose_name="Bulk annotation move and insert",  creator=self.annotator)
+                self.archive_and_insert_annotations()
 
     def update_annotation_data(self):
         """
@@ -66,7 +65,7 @@ class AnnotationManager(AnnotationBase):
                     self.set_current_layer(state_layer)
                     self.update_data_in_current_layer()
 
-
+    # @background(schedule=60)
     def archive_and_insert_annotations(self):
         """The main function that updates the database with annotations in the current_layer attribute
            This function loops each annotation in the curent layer and inserts/archive points in the 
