@@ -52,7 +52,7 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-def create_point_annotation(coordinates,description):
+def create_point_annotation(coordinates,description,type = 'point'):
     """create annotation points in the neuroglancer json format
 
     Args:
@@ -65,7 +65,7 @@ def create_point_annotation(coordinates,description):
     point_annotation = {}
     point_annotation['id'] = random_string()
     point_annotation['point'] = coordinates
-    point_annotation['type'] = 'point'
+    point_annotation['type'] = type
     point_annotation['description'] = description
     return point_annotation
 
@@ -127,7 +127,7 @@ class GetCOM(AnnotationBase,views.APIView):
         for row in rows:
             coordinates = [int(round(row.x)), int(round(row.y)), row.z]
             description = row.annotation_session.brain_region.abbreviation
-            point_annotation = create_point_annotation(coordinates,description)
+            point_annotation = create_point_annotation(coordinates,description,type='com')
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
@@ -144,7 +144,13 @@ class GetMarkedCell(AnnotationBase,views.APIView):
         data = []
         for row in rows:
             coordinates = [int(round(row.x)), int(round(row.y)), row.z]
-            point_annotation = create_point_annotation(coordinates,'')
+            description = row.source
+            if description =='HUMAN_POSITIVE':
+                source = 'positive'
+            if description =='HUMAN_NEGATIVE':
+                source = 'negative'
+            point_annotation = create_point_annotation(coordinates,source,type='cell')
+            point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
