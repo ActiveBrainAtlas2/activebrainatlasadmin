@@ -96,6 +96,7 @@ class AnnotationManager(AnnotationBase):
         if len(marked_cells) > 0:
             categories = np.array([i.category for i in marked_cells])
             unique_category = np.unique(categories)
+            brain_region = get_region_from_abbreviation('point')
             for category in unique_category:
                 in_category = categories == category
                 cells = marked_cells[in_category]
@@ -105,7 +106,6 @@ class AnnotationManager(AnnotationBase):
                     cell_type = CellType.objects.filter(
                         cell_type=category).first()
                     if cell_type is not None:
-                        brain_region = get_region_from_abbreviation('point')
                         self.add_marked_cells(
                             annotationi, new_session, cell_type)
         self.bulk_mgr.done()
