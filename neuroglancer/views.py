@@ -7,15 +7,17 @@ from rest_framework.response import Response
 from django.utils.html import escape
 from django.apps import apps
 import numpy as np
+from brain.models import ScanRun
 from neuroglancer.models import  AnnotationSession, MarkedCell, PolygonSequence
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer,MarkedCellListSerializer,PolygonListSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom,CellType
 from neuroglancer.annotation_controller import create_polygons, random_string    
 from neuroglancer.AnnotationBase import AnnotationBase
-from abakit.lib.annotation_layer import AnnotationLayer,Point,Volume,Polygon
+from abakit.lib.annotation_layer import AnnotationLayer
 from abakit.atlas.VolumeMaker import VolumeMaker
 from abakit.atlas.NgSegmentMaker import NgConverter
+from abakit.lib.FileLocationManager import FileLocationManager
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -50,7 +52,7 @@ class UrlDataView(views.APIView):
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
 
-def create_point_annotation(coordinates,description):
+def create_point_annotation(coordinates,description,type = 'point'):
     """create annotation points in the neuroglancer json format
 
     Args:
@@ -63,7 +65,7 @@ def create_point_annotation(coordinates,description):
     point_annotation = {}
     point_annotation['id'] = random_string()
     point_annotation['point'] = coordinates
-    point_annotation['type'] = 'point'
+    point_annotation['type'] = type
     point_annotation['description'] = description
     return point_annotation
 
@@ -91,7 +93,6 @@ class GetVolume(AnnotationBase,views.APIView):
             rows = PolygonSequence.objects.filter(annotation_session__pk=session_id)
         except:
             print('bad query')
-        print('len rows', len(rows))
         apply_scales_to_annotation_rows(rows,session.animal.prep_id)
         polygon_data = self.create_polygon_and_volume_uuids(rows)
         polygons = create_polygons(polygon_data,description = session.brain_region.abbreviation)
@@ -126,7 +127,7 @@ class GetCOM(AnnotationBase,views.APIView):
         for row in rows:
             coordinates = [int(round(row.x)), int(round(row.y)), row.z]
             description = row.annotation_session.brain_region.abbreviation
-            point_annotation = create_point_annotation(coordinates,description)
+            point_annotation = create_point_annotation(coordinates,description,type='com')
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
@@ -143,7 +144,13 @@ class GetMarkedCell(AnnotationBase,views.APIView):
         data = []
         for row in rows:
             coordinates = [int(round(row.x)), int(round(row.y)), row.z]
-            point_annotation = create_point_annotation(coordinates,'')
+            description = row.source
+            if description =='HUMAN_POSITIVE':
+                source = 'positive'
+            if description =='HUMAN_NEGATIVE':
+                source = 'negative'
+            point_annotation = create_point_annotation(coordinates,source,type='cell')
+            point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
@@ -301,8 +308,6 @@ class AnnotationStatus(views.APIView):
             'brain_regions': list_of_landmarks_name, 'counts': counts})
         
 class ContoursToVolume(views.APIView):
-    '''View that convert a volume in a specific neuroglancer url to a 3d mask.  The view finds the volume according to
-    the volume id, and creates the 3d volume according the contours contained within'''
     def get(self, request, url_id,volume_id):
         urlModel = UrlModel.objects.get(pk=url_id)
         state_json = urlModel.url
@@ -316,18 +321,30 @@ class ContoursToVolume(views.APIView):
         folder_name = self.make_volumes(volume,urlModel.animal)
         segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}" 
         return JsonResponse({'url':segmentation_save_folder,'name':folder_name})
+    
+    def downsample_contours(self,contours,downsample_factor):
+        values = [i/downsample_factor for i in contours.values()]
+        return dict(zip(contours.keys(),values))
+    
+    def get_scale(self,animal,downsample_factor):
+        scan_run = ScanRun.objects.filter(prep_id = animal).first()
+        res = scan_run.resolution
+        return [downsample_factor*res*1000,downsample_factor*res*1000,scan_run.zresolution*1000]
 
-    def make_volumes(self,volume,animal = 'DK55'):
-        vmaker = VolumeMaker(animal,check_path = False)
+    def make_volumes(self,volume,animal = 'DK55',downsample_factor = 100):
+        vmaker = VolumeMaker()
         structure,contours = volume.get_volume_name_and_contours()
-        vmaker.set_aligned_contours({structure:contours})
-        vmaker.compute_COMs_origins_and_volumes()
-        res = vmaker.get_resolution()
-        segment_properties = vmaker.get_segment_properties(structures_to_include=[structure])
+        downsampled_contours = self.downsample_contours(contours,downsample_factor)
+        vmaker.set_aligned_contours({structure:downsampled_contours})
+        vmaker.compute_origins_and_volumes_for_all_segments()
+        volume = (vmaker.volumes[structure]).astype(np.uint8)
+        offset = list(vmaker.origins[structure])
         folder_name = f'{animal}_{structure}'
-        output_dir = os.path.join(vmaker.path.segmentation_layer,folder_name)
-        maker = NgConverter(volume = vmaker.volumes[structure].astype(np.uint8),scales = [res*1000,res*1000,20000],offset=list(vmaker.origins[structure]))
-        maker.create_neuroglancer_files(output_dir,segment_properties)
+        path = FileLocationManager(animal)
+        output_dir = os.path.join(path.segmentation_layer,folder_name)
+        scale = self.get_scale(animal,downsample_factor)
+        maker = NgConverter(volume = volume,scales = scale,offset=offset)
+        maker.create_neuroglancer_files(output_dir,segment_properties=[(1,structure)])
         return folder_name
 
 class SaveAnnotation(views.APIView):

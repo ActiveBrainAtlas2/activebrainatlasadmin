@@ -212,8 +212,6 @@ class AnnotationSession(models.Model):
             one_row = PolygonSequence.objects.filter(annotation_session__id=self.id).first()
         elif self.is_marked_cell():
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
-            print('=======================================================')
-            print(self.id,one_row is None)
         elif self.is_structure_com():
             one_row = StructureCom.objects.filter(annotation_session__id=self.id).first()
         return one_row.source
@@ -299,7 +297,7 @@ class MarkedCell(AnnotationAbstract):
         verbose_name = 'Marked cell'
         verbose_name_plural = 'Marked cells'
     def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.label)
+        return u'{}'.format(self.annotation_session)
 
 class PolygonSequence(AnnotationAbstract):
     """This model is for the polygons drawn by an anatomist in Neuroglancer.
@@ -367,6 +365,8 @@ class AnnotationPointArchive(AnnotationAbstract):
     polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
     point_order = models.IntegerField(blank=False, null=False, default=0)
     source = models.CharField(max_length=255)
+    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
+                               verbose_name="Cell Type", default=None)
 
 class BrainShape(AtlasModel):
     """This class will hold the numpy data for a brain region."""
