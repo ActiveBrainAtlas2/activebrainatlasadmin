@@ -58,10 +58,20 @@ class UrlModelAdmin(admin.ModelAdmin):
     list_display = ('animal', 'open_neuroglancer', 'open_multiuser',
                     'owner', 'created')
     ordering = ['-vetted', '-updated']
-    readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
+    readonly_fields = [ 'animal','created', 'user_date', 'updated']
     exclude = ['url']
     list_filter = ['updated', 'created', 'vetted',UrlFilter,]
     search_fields = ['comments']
+    fieldsets = [
+        (None, {'fields': ()}),
+    ]
+
+    def __init__(self, model, admin_site):
+        super().__init__(model, admin_site)
+
+    def get_list_display_links(self, request, list_display):
+        super().get_list_display_links(request, list_display)
+        return None
 
     def pretty_url(self, instance):
         """Function to display pretty version of the JSON data.
@@ -362,10 +372,17 @@ def delete_session(modeladmin, request, queryset):
 @admin.register(AnnotationSession)
 class AnnotationSessionAdmin(AtlasAdminModel):
     """Administer the annotation session data."""
-    list_display = ['animal',  'annotator','brain_region','show_points','annotation_type','created',]
+    list_display = ['animal',  'annotator','label','source','show_points','annotation_type','created']
     ordering = ['animal', 'annotation_type', 'parent', 'created','annotator']
     list_filter = [ 'annotation_type']
     search_fields = ['animal__prep_id', 'annotation_type','annotator__first_name']
+
+    def label(self,obj):
+        if obj.annotation_type == 'MARKED_CELL':
+            return obj.cell_type.cell_type
+        else:
+            return obj.brain_region.abbreviation
+
 
     def show_points(self, obj):
         """Shows the HTML for the link to the graph of data."""
