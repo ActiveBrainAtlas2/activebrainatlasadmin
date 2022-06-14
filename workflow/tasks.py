@@ -21,9 +21,9 @@ from django.conf import settings
 
 if settings.DEBUG:
     
-    from abakit.utilities.file_location import FileLocationManager
-    from abakit.utilities.shell_tools import workernoshell
-    from abakit.utilities.czi_tools import get_czi_metadata, get_fullres_series_indices
+    from abakit.lib.FileLocationManager import FileLocationManager
+    from abakit.lib.utilities_process import workernoshell
+    from abakit.lib.utilities_bioformats import get_czi_metadata, get_fullres_series_indices
 
     SCALING_FACTOR = 0.03125
     PROGRESS_STATE = 'PROGRESS'

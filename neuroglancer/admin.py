@@ -1,3 +1,4 @@
+import pandas as pd
 from django.db import models
 import json
 from django.conf import settings
@@ -12,9 +13,10 @@ from pygments.lexers import JsonLexer
 from django.utils.safestring import mark_safe
 from plotly.offline import plot
 import plotly.express as px
+from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from neuroglancer.models import AlignmentScore, \
-        AnnotationSession, AnnotationPointArchive, \
+        AnnotationSession, \
         UrlModel,  BrainRegion, Points, \
         PolygonSequence, MarkedCell, StructureCom,CellType
 from neuroglancer.dash_view import dash_scatter_view
@@ -54,7 +56,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
     list_display = ('animal', 'open_neuroglancer', 'open_multiuser',
-                    'owner', 'updated')
+                    'owner', 'created')
     ordering = ['-vetted', '-updated']
     readonly_fields = ['pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
@@ -249,31 +251,69 @@ def make_active(modeladmin, request, queryset):
     queryset.update(active=True)
 make_active.short_description = "Mark selected COMs as active"
 
-@admin.register(MarkedCell)
-class MarkedCellAdmin(admin.ModelAdmin):
-    """This class provides the ability to manage the data entered through Neuroglancer. 
-    These are the starter, premotor cells marked by an anatomist or generated through cell detection."""
-    list_display = ('animal','annotator','cell_type','brain_region', 'x', 'y', 'z', 'source','created')
-    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
-    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','cell_type__cell_type','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
-    list_filter = ['cell_type__cell_type','source']
-
-@admin.register(PolygonSequence)
-class PolygonSequenceAdmin(admin.ModelAdmin):
-    """This class provides the ability to manage the data entered through Neuroglancer. 
-    These are polygons drawn by an anatomist."""
-    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
-    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
-    search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
-
-
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
     """This class provides the ability to manage the data entered through Neuroglancer. 
     These are points are entered by an anatomist and are solely for the center of mass (COM) for a brain region (structure)"""
-    list_display = ('animal','annotator','created','brain_region', 'source', 'x', 'y', 'z')
-    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'x', 'y', 'z', 'source')
+    list_display = ('animal','annotator','created','show_com', 'source')
+    ordering = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
     search_fields = ('annotation_session__animal__prep_id','annotation_session__annotator__username','annotation_session__brain_region__abbreviation', 'source')
+    def get_queryset(self, request):
+        qs = super(StructureComAdmin, self).get_queryset(request).all()
+        prep_id_annotator_combo = []
+        ids = []
+        for i in qs:
+            prep_id = i.annotation_session.animal.prep_id
+            annotator = i.annotation_session.annotator.first_name
+            combo = '_'.join([prep_id,annotator])
+            if not combo in prep_id_annotator_combo:
+                prep_id_annotator_combo.append(combo)
+                ids.append(i.id)
+        qs = super(StructureComAdmin, self).get_queryset(request).filter(pk__in=ids )
+        return qs
+
+    def show_com(self, obj):
+        """Shows the HTML for the link to the graph of data."""
+        return format_html(
+            '<a href="{}">Data</a>',
+            reverse('admin:structurecom-data', args=[obj.pk])
+        )
+
+    def get_urls(self):
+        """Shows the HTML of the links to go to the graph, and table data."""
+        urls = super().get_urls()
+        custom_urls = [
+            path('structurecom-data/<id>', self.view_coms, name='structurecom-data'),
+        ]
+        return custom_urls + urls
+    
+    def view_coms(self, request, id, *args, **kwargs):
+        """Provides the HTML link to the table data"""
+        com = StructureCom.objects.get(pk=id)
+        coms = StructureCom.objects.filter(annotation_session__animal__prep_id = com.animal,annotation_session__annotator__username =com.annotator)
+        title = f"Structure Com Animal ID: {com.animal} \
+            Annotator: {com.annotator}"
+        scanrun = ScanRun.objects.filter(prep_id = com.animal).first()
+        df = {}
+        df['x'] = [int(i.x/scanrun.resolution) for i in coms]
+        df['y'] = [int(i.y/scanrun.resolution) for i in coms]
+        df['z'] = [int(i.z/scanrun.zresolution) for i in coms]
+        df['source'] = [i.source for i in coms]
+        df = pd.DataFrame(df)
+        result = 'No data'
+        display = False
+        if df is not None and len(df) > 0:
+            display = True
+            df = df.sort_values(by=['source','z', 'x', 'y'])
+            result = df.to_html(index=False, classes='table table-striped table-bordered', table_id='tab')
+        context = dict(
+            self.admin_site.each_context(request),
+            title=title,
+            chart=result,
+            display=display,
+            opts=UrlModel._meta,
+        )
+        return TemplateResponse(request, "points_table.html", context)
 
 """
 @admin.register(AnnotationPointArchive)
@@ -300,26 +340,100 @@ def restore_archive(modeladmin, request, queryset):
     if n != 1:
         messages.error(request, 'Check just one archive. You cannot restore more than one archive.')
     else:
-        archive = queryset[0]
-        restore_annotations(archive.id, archive.animal.prep_id, archive.label)
-        messages.info(request, f'The {archive.label} layer for {archive.animal.prep_id} has been restored. ID={archive.id}')
-            
+        session = queryset[0]
+        restore_annotations(session.id, session.animal.prep_id, session.source)
+        messages.info(request, f'The {session.source} layer for {session.animal.prep_id} has been restored. ID={session.id}')
+
+@admin.action(description='Delete Data related to the Selected Session')
+def delete_session(modeladmin, request, queryset):
+    for sessioni in queryset:
+        if sessioni.annotation_type=='POLYGON_SEQUENCE':
+            points = PolygonSequence.objects.filter(annotation_session__id = sessioni.id).all()
+            [i.delete() for i in points]
+        elif sessioni.annotation_type=='MARKED_CELL':
+            points = MarkedCell.objects.filter(annotation_session__id = sessioni.id).all()
+            [i.delete() for i in points]
+        elif sessioni.annotation_type=='STRUCTURE_COM':
+            points = StructureCom.objects.filter(annotation_session__id = sessioni.id).all()
+            [i.delete() for i in points]
+        sessioni.delete()
+    messages.info(request, f'sessions has been deleted')
 
 @admin.register(AnnotationSession)
 class AnnotationSessionAdmin(AtlasAdminModel):
     """Administer the annotation session data."""
-    list_display = ['animal', 'annotation_type', 'created','annotator','archive_count']
+    list_display = ['animal',  'annotator','brain_region','show_points','annotation_type','created',]
     ordering = ['animal', 'annotation_type', 'parent', 'created','annotator']
-    list_filter = ['animal', 'annotation_type', 'created','annotator']
-    search_fields = ['animal', 'annotation_type','annotator']
-    actions = [restore_archive]
-    
-    def archive_count(self, obj):
-        """Returns a count of the annotation points per session"""
-        count = AnnotationPointArchive.objects.filter(annotation_session=obj).count()
-        return count
+    list_filter = [ 'annotation_type']
+    search_fields = ['animal__prep_id', 'annotation_type','annotator__first_name']
 
-    archive_count.short_description = "# Points"
+    def show_points(self, obj):
+        """Shows the HTML for the link to the graph of data."""
+        return format_html(
+            '<a href="{}">Data</a>',
+            reverse('admin:annotationsession-data', args=[obj.pk])
+        )
+
+    def get_urls(self):
+        """Shows the HTML of the links to go to the graph, and table data."""
+        urls = super().get_urls()
+        custom_urls = [
+            path('annotationsession-data/<id>', self.view_points_in_session, name='annotationsession-data'),
+        ]
+        return custom_urls + urls
+    
+    def get_queryset(self, request):
+        qs = super(AnnotationSessionAdmin, self).get_queryset(request).filter(active = 1)
+        return qs
+    
+    def view_points_in_session(self, request, id, *args, **kwargs):
+        """Provides the HTML link to the table data"""
+        session = AnnotationSession.objects.get(pk=id)
+        annotation_type = session.annotation_type
+        if annotation_type=='POLYGON_SEQUENCE':
+            points = PolygonSequence.objects.filter(annotation_session__id = session.id)
+            title = f"Polygon Sequence {session.id} Animal ID: {session.animal.prep_id} \
+                Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}"
+        elif annotation_type=='MARKED_CELL':
+            points = MarkedCell.objects.filter(annotation_session__id = session.id)
+            title = f"Marked Cell {session.id} Animal ID: {session.animal.prep_id} \
+                Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}\
+                     Cell Type:{points[0].cell_type.cell_type}"
+        elif annotation_type=='STRUCTURE_COM':
+            points = StructureCom.objects.filter(annotation_session__id = session.id)
+            title = f"Structure Com {session.id} Animal ID: {session.animal.prep_id} \
+                Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}"
+        scanrun = ScanRun.objects.filter(prep_id = session.animal.prep_id).first()
+        df = {}
+        df['x'] = [int(i.x/scanrun.resolution) for i in points]
+        df['y'] = [int(i.y/scanrun.resolution) for i in points]
+        df['z'] = [int(i.z/scanrun.zresolution) for i in points]
+        df['source'] = [i.source for i in points]
+        df = pd.DataFrame(df)
+        result = 'No data'
+        display = False
+        if df is not None and len(df) > 0:
+            display = True
+            df = df.sort_values(by=['source','z', 'x', 'y'])
+            result = df.to_html(index=False, classes='table table-striped table-bordered', table_id='tab')
+        context = dict(
+            self.admin_site.each_context(request),
+            title=title,
+            chart=result,
+            display=display,
+            opts=UrlModel._meta,
+        )
+        return TemplateResponse(request, "points_table.html", context)
+
+class AnnotationArchive(AnnotationSession):
+    class Meta:
+        proxy = True
+@admin.register(AnnotationArchive)
+class AnnotationArchiveAdmin(AnnotationSessionAdmin):
+    actions = [restore_archive]
+    def get_queryset(self, request):
+        qs = super(AnnotationSessionAdmin, self).get_queryset(request).filter(active = 0)
+        return qs
 
 admin.site.unregister(Task)
 admin.site.unregister(CompletedTask)
