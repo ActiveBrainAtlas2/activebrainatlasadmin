@@ -12,9 +12,9 @@ from neuroglancer.models import  AnnotationSession, MarkedCell, PolygonSequence
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer,MarkedCellListSerializer,PolygonListSerializer, \
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom,CellType
-from neuroglancer.annotation_controller import create_polygons, random_string    
+from neuroglancer.annotation_controller import create_polygons    
 from neuroglancer.AnnotationBase import AnnotationBase
-from abakit.lib.annotation_layer import AnnotationLayer
+from abakit.lib.annotation_layer import AnnotationLayer,random_string,create_point_annotation
 from abakit.atlas.VolumeMaker import VolumeMaker
 from abakit.atlas.NgSegmentMaker import NgConverter
 from abakit.lib.FileLocationManager import FileLocationManager
@@ -51,23 +51,6 @@ class UrlDataView(views.APIView):
         id = serializer.validated_data['id']
         urlModel = UrlModel.objects.get(pk=id)
         return HttpResponse(f"#!{escape(urlModel.url)}")
-
-def create_point_annotation(coordinates,description,type = 'point'):
-    """create annotation points in the neuroglancer json format
-
-    Args:
-        coordinates (list): list of coordinates: x,y,z for this annotation point
-        description (str): the description field of this annotation point.  This would be displayed in neuroglancer 
-
-    Returns:
-        _type_: _description_
-    """    
-    point_annotation = {}
-    point_annotation['id'] = random_string()
-    point_annotation['point'] = coordinates
-    point_annotation['type'] = type
-    point_annotation['description'] = description
-    return point_annotation
 
 def apply_scales_to_annotation_rows(rows,prep_id):
     """To fetch the scan resolution of an animal from the database and apply it to a list of annotation rows
