@@ -94,23 +94,25 @@ class AnnotationManager(AnnotationBase):
                 self.add_volumes(annotationi, new_session)
         if len(marked_cells) > 0:
             marked_cells = np.array(marked_cells)
-            categories = np.array([i.category for i in marked_cells])
-            unique_category = np.unique(categories)
+            description_and_cell_types = np.array([f'{i.description}@{i.category}' for i in marked_cells])
+            unique_description_and_cell_types = np.unique(description_and_cell_types)
             brain_region = get_region_from_abbreviation('point')
-            for category in unique_category:
-                in_category = categories == category
+            for description_cell_type in unique_description_and_cell_types:
+                in_category = description_and_cell_types == description_cell_type
+                print(f'incat {in_category}')
                 cells = marked_cells[in_category]
+                category,cell_type = description_cell_type.split('@')
+                if cells[0].description =='positive':
+                    source = 'HUMAN_POSITIVE'
+                if cells[0].description =='negative':
+                    source = 'HUMAN_NEGATIVE'
                 new_session = self.get_new_session_and_archive_points(
-                    brain_region=brain_region, annotation_type='MARKED_CELL')
+                    brain_region=brain_region, annotation_type='MARKED_CELL',cell_type=cell_type,source=source)
                 for annotationi in cells:
                     cell_type = CellType.objects.filter(
-                        cell_type=category).first()
+                        cell_type=cell_type).first()
                     if cell_type is not None:
                         brain_region = get_region_from_abbreviation('point')
-                        if description =='positive':
-                            source = 'HUMAN_POSITIVE'
-                        if description =='negative':
-                            source = 'HUMAN_NEGATIVE'
                         self.add_marked_cells(annotationi, new_session, cell_type,source)
         self.bulk_mgr.done()
 
@@ -153,7 +155,7 @@ class AnnotationManager(AnnotationBase):
             parent = 0
         return parent
 
-    def get_new_session_and_archive_points(self, brain_region, annotation_type):
+    def get_new_session_and_archive_points(self, brain_region, annotation_type,cell_type = None,source = None):
         """ This function does the following according to two scenarios 
             Scenario1:
                the session type specified by the group of points in question does not exist in the database
@@ -172,7 +174,7 @@ class AnnotationManager(AnnotationBase):
             _type_: _description_
         """
         annotation_session = self.get_existing_session(
-            brain_region=brain_region, annotation_type=annotation_type)
+            brain_region=brain_region, annotation_type=annotation_type,cell_type=cell_type,source=source)
         if annotation_session is not None:
             parent_id = self.get_parent_id_for_current_session_and_achrive_points(
                 annotation_session)
@@ -183,6 +185,7 @@ class AnnotationManager(AnnotationBase):
         new_session = self.create_new_session(
             brain_region=brain_region, annotation_type=annotation_type, parent=parent_id)
         return new_session
+
 
     def archive_annotations(self, annotation_session: AnnotationSession):
         '''
@@ -244,12 +247,41 @@ class AnnotationManager(AnnotationBase):
                 ordering += 1
             polygon_index += 1
 
-    def get_existing_session(self, brain_region: BrainRegion, annotation_type):
-        return AnnotationSession.objects.filter(animal=self.animal)\
-                                        .filter(brain_region=brain_region)\
-                                        .filter(annotator=self.annotator)\
-                                        .filter(annotation_type=annotation_type)\
-                                        .filter(active=1).first()
+    def get_existing_session(self, brain_region: BrainRegion, annotation_type,cell_type = None,source = None):
+        if annotation_type !='MARKED_CELL':
+            return AnnotationSession.objects.filter(animal=self.animal)\
+                                            .filter(brain_region=brain_region)\
+                                            .filter(annotator=self.annotator)\
+                                            .filter(annotation_type=annotation_type)\
+                                            .filter(source=source)\
+                                            .filter(active=1).first()
+        else:
+            sessions = AnnotationSession.objects.filter(animal=self.animal)\
+                                .filter(brain_region=brain_region)\
+                                .filter(annotator=self.annotator)\
+                                .filter(annotation_type=annotation_type)\
+                                .filter(active=1).all()
+            if not sessions:
+                return None
+            cell_types = []
+            ids = []
+            for id,i in enumerate(sessions):
+                if not i.cell_type is None:
+                    cell_types.append(i.cell_type.cell_type)
+                    ids.append(id)
+                    print(i.id)
+            print(sessions)
+            print(cell_types,cell_type)
+            if cell_types ==[]:
+                return None
+            cell_types = np.array(cell_types)==cell_type
+            print(cell_types)
+            found = sum(cell_types)
+            assert found<=1
+            if found==0:
+                return None
+            else:
+                return sessions[ids[int(np.where(cell_types)[0][0])]]
 
     def create_new_session(self, brain_region: BrainRegion, annotation_type, parent=0):
         annotation_session = AnnotationSession.objects.create(

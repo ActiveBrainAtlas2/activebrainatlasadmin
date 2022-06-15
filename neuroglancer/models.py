@@ -214,6 +214,8 @@ class AnnotationSession(models.Model):
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
         elif self.is_structure_com():
             one_row = StructureCom.objects.filter(annotation_session__id=self.id).first()
+        if one_row is None:
+            return None
         return one_row.source
     
     @property
@@ -222,7 +224,10 @@ class AnnotationSession(models.Model):
             return None
         elif self.is_marked_cell():
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
-            return one_row.cell_type
+            if one_row is None:
+                return None
+            else:
+                return one_row.cell_type
         elif self.is_structure_com():
             return None
 

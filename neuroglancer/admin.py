@@ -18,7 +18,7 @@ from brain.admin import AtlasAdminModel, ExportCsvMixin
 from neuroglancer.models import AlignmentScore, \
         AnnotationSession, \
         UrlModel,  BrainRegion, Points, \
-        PolygonSequence, MarkedCell, StructureCom,CellType
+        PolygonSequence, MarkedCell, StructureCom,CellType,AnnotationPointArchive
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
@@ -98,7 +98,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:8080"
+            host = "http://127.0.0.1:38015"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -379,9 +379,13 @@ class AnnotationSessionAdmin(AtlasAdminModel):
 
     def label(self,obj):
         if obj.annotation_type == 'MARKED_CELL':
-            return obj.cell_type.cell_type
+            if obj.cell_type is None:
+                return 'N/A'
+            else:
+                return obj.cell_type.cell_type
         else:
             return obj.brain_region.abbreviation
+
 
 
     def show_points(self, obj):
@@ -445,6 +449,27 @@ class AnnotationSessionAdmin(AtlasAdminModel):
 class AnnotationArchive(AnnotationSession):
     class Meta:
         proxy = True
+    @property
+    def cell_type(self):
+        if self.is_polygon_sequence():
+            return None
+        elif self.is_marked_cell():
+            one_row = AnnotationPointArchive.objects.filter(annotation_session__id=self.id).first()
+            if one_row is None:
+                return None
+            else:
+                return one_row.cell_type
+        elif self.is_structure_com():
+            return None
+        
+    @property
+    def source(self):
+        one_row = AnnotationPointArchive.objects.filter(annotation_session__id=self.id).first()
+        if one_row is None:
+            return None
+        else:
+            return one_row.source
+
 @admin.register(AnnotationArchive)
 class AnnotationArchiveAdmin(AnnotationSessionAdmin):
     actions = [restore_archive]

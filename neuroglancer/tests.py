@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.contrib.auth.models import User
 from brain.models import Animal, ScanRun
 from neuroglancer.models import AnnotationSession, MarkedCell, BrainRegion, LAUREN_ID ,CellType
-from neuroglancer.views import random_string
+from abakit.lib.annotation_layer import random_string
 
 class TestSetUp(TestCase):
     client = Client()

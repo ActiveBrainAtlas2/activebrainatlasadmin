@@ -2,8 +2,7 @@
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
-import string
-import random
+from abakit.lib.annotation_layer import random_string
 hexcolor = "#FF0000"
 
 def next_item(odic, key):
@@ -320,14 +319,6 @@ def is_inside_polygon(points:list) -> bool:
          
     # Return true if count is odd, false otherwise
     return (count % 2 == 1)
-
-
-def random_string() -> str:
-    '''
-    Creates a 40 char string of random characters
-    '''
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
-
 
 def sort_from_center(polygon:list) -> list:
     '''
