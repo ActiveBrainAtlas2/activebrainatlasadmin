@@ -99,7 +99,6 @@ class AnnotationManager(AnnotationBase):
             brain_region = get_region_from_abbreviation('point')
             for description_cell_type in unique_description_and_cell_types:
                 in_category = description_and_cell_types == description_cell_type
-                print(f'incat {in_category}')
                 cells = marked_cells[in_category]
                 category,cell_type = description_cell_type.split('@')
                 if cells[0].description =='positive':
@@ -248,14 +247,6 @@ class AnnotationManager(AnnotationBase):
             polygon_index += 1
 
     def get_existing_session(self, brain_region: BrainRegion, annotation_type,cell_type = None,source = None):
-        if annotation_type =='MARKED_CELL':
-            return AnnotationSession.objects.filter(animal=self.animal)\
-                                            .filter(brain_region=brain_region)\
-                                            .filter(annotator=self.annotator)\
-                                            .filter(annotation_type=annotation_type)\
-                                            .filter(source=source)\
-                                            .filter(active=1).first()
-        else:
             sessions = AnnotationSession.objects.filter(animal=self.animal)\
                                 .filter(brain_region=brain_region)\
                                 .filter(annotator=self.annotator)\
@@ -263,25 +254,28 @@ class AnnotationManager(AnnotationBase):
                                 .filter(active=1).all()
             if not sessions:
                 return None
-            cell_types = []
-            ids = []
-            for id,i in enumerate(sessions):
-                if not i.cell_type is None:
-                    cell_types.append(i.cell_type.cell_type)
-                    ids.append(id)
-                    print(i.id)
-            print(sessions)
-            print(cell_types,cell_type)
-            if cell_types ==[]:
-                return None
-            cell_types = np.array(cell_types)==cell_type
-            print(cell_types)
-            found = sum(cell_types)
-            assert found<=1
-            if found==0:
-                return None
+            if annotation_type == 'MARKED_CELL':
+
+                cell_types = []
+                source = []
+                ids = []
+                for id,i in enumerate(sessions):
+                    if not i.cell_type is None and not i.source is None:
+                        cell_types.append(i.cell_type.cell_type)
+                        source.append(i.source)
+                        ids.append(id)
+                if cell_types ==[]:
+                    return None
+                right_cell_type_and_source = np.logical_and(np.array(cell_types)==cell_type,np.array(source)==source)
+                found = sum(right_cell_type_and_source)
+                assert found<=1
+                if found==0:
+                    return None
+                else:
+                    return sessions[ids[int(np.where(right_cell_type_and_source)[0][0])]]
             else:
-                return sessions[ids[int(np.where(cell_types)[0][0])]]
+                assert len(sessions)==1
+                return sessions[0]
 
     def create_new_session(self, brain_region: BrainRegion, annotation_type, parent=0):
         annotation_session = AnnotationSession.objects.create(
