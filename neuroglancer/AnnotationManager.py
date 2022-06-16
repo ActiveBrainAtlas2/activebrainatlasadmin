@@ -248,7 +248,7 @@ class AnnotationManager(AnnotationBase):
             polygon_index += 1
 
     def get_existing_session(self, brain_region: BrainRegion, annotation_type,cell_type = None,source = None):
-        if annotation_type !='MARKED_CELL':
+        if annotation_type =='MARKED_CELL':
             return AnnotationSession.objects.filter(animal=self.animal)\
                                             .filter(brain_region=brain_region)\
                                             .filter(annotator=self.annotator)\
