@@ -100,19 +100,25 @@ class AnnotationManager(AnnotationBase):
             for description_cell_type in unique_description_and_cell_types:
                 in_category = description_and_cell_types == description_cell_type
                 cells = marked_cells[in_category]
-                category,cell_type = description_cell_type.split('@')
+                _,cell_type = description_cell_type.split('@')
                 if cells[0].description =='positive':
                     source = 'HUMAN_POSITIVE'
-                if cells[0].description =='negative':
+                elif cells[0].description =='negative':
                     source = 'HUMAN_NEGATIVE'
+                else:
+                    source = 'NULL'
                 new_session = self.get_new_session_and_archive_points(
                     brain_region=brain_region, annotation_type='MARKED_CELL',cell_type=cell_type,source=source)
                 for annotationi in cells:
-                    cell_type = CellType.objects.filter(
-                        cell_type=cell_type).first()
-                    if cell_type is not None:
+                    if cell_type == 'Null':
                         brain_region = get_region_from_abbreviation('point')
-                        self.add_marked_cells(annotationi, new_session, cell_type,source)
+                        self.add_marked_cells(annotationi, new_session, None,source)
+                    else:
+                        cell_type = CellType.objects.filter(
+                            cell_type=cell_type).first()
+                        if cell_type is not None:
+                            brain_region = get_region_from_abbreviation('point')
+                            self.add_marked_cells(annotationi, new_session, cell_type,source)
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
@@ -207,7 +213,7 @@ class AnnotationManager(AnnotationBase):
             f.name for f in data_model._meta.get_fields() if not f.name == 'id']
         if rows is not None and len(rows) > 0:
             for row in rows:
-                fields = [getattr(row, namei) for namei in field_names]
+                fields = [getattr(row, namei) for namei in field_names if hasattr(row, namei)]
                 input = dict(zip(field_names, fields))
                 self.bulk_mgr.add(AnnotationPointArchive(**input))
         self.bulk_mgr.done()
@@ -257,16 +263,16 @@ class AnnotationManager(AnnotationBase):
             if annotation_type == 'MARKED_CELL':
 
                 cell_types = []
-                source = []
+                sources = []
                 ids = []
                 for id,i in enumerate(sessions):
                     if not i.cell_type is None and not i.source is None:
                         cell_types.append(i.cell_type.cell_type)
-                        source.append(i.source)
+                        sources.append(i.source)
                         ids.append(id)
                 if cell_types ==[]:
                     return None
-                right_cell_type_and_source = np.logical_and(np.array(cell_types)==cell_type,np.array(source)==source)
+                right_cell_type_and_source = np.logical_and(np.array(cell_types)==cell_type,np.array(sources)==source)
                 found = sum(right_cell_type_and_source)
                 assert found<=1
                 if found==0:

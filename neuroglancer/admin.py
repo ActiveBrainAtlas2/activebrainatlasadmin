@@ -98,7 +98,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         host = "https://webdev.dk.ucsd.edu/preview"
         if settings.DEBUG:
             # stop changing this.
-            host = "http://127.0.0.1:38015"
+            host = "http://127.0.0.1:8080"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -418,8 +418,11 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         elif annotation_type=='MARKED_CELL':
             points = MarkedCell.objects.filter(annotation_session__id = session.id)
             title = f"Marked Cell {session.id} Animal ID: {session.animal.prep_id} \
-                Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}\
-                     Cell Type:{points[0].cell_type.cell_type}"
+                    Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}"
+            if hasattr(points[0],'cell_type'):
+                title = title+f"Cell Type:{points[0].cell_type.cell_type}"
+            else:
+                title = title+'Cell Type:None'
         elif annotation_type=='STRUCTURE_COM':
             points = StructureCom.objects.filter(annotation_session__id = session.id)
             title = f"Structure Com {session.id} Animal ID: {session.animal.prep_id} \
