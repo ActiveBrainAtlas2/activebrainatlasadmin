@@ -157,7 +157,7 @@ class CellType(models.Model):
     """Model corresponding to the cell type table in the database"""
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
-    description = models.TextField(max_length=2001, blank=False, null=False)
+    description = models.TextField(max_length=2001)
     active = models.IntegerField(default=1)
     created = models.DateTimeField(auto_now_add=True)
     class Meta:
@@ -227,7 +227,13 @@ class AnnotationSession(models.Model):
             if one_row is None:
                 return None
             else:
-                return one_row.cell_type
+                if hasattr(one_row,'cell_type'):
+                    return one_row.cell_type
+                else:
+                    class NullCellType:...
+                    null_cell_type = NullCellType()
+                    null_cell_type.cell_type = 'Null'
+                    return null_cell_type
         elif self.is_structure_com():
             return None
 
@@ -292,10 +298,10 @@ class MarkedCell(AnnotationAbstract):
     source = models.CharField(
         max_length=25,
         choices=SourceChoices.choices,
-        default=SourceChoices.MACHINE_SURE,
+        default=None,
     )    
     cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
-                               verbose_name="Cell Type", blank=False, null=False)
+                               verbose_name="Cell Type", default=None)
     class Meta:
         managed = False
         db_table = 'marked_cells'
