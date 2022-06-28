@@ -1,3 +1,4 @@
+from django.http import Http404
 import numpy as np
 from statistics import mode
 from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, BrainRegion, \
@@ -5,9 +6,8 @@ from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, Brai
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType
-from abakit.lib.annotation_layer import AnnotationLayer, Annotation
+from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.AnnotationBase import AnnotationBase
-from background_task import background
 
 class AnnotationManager(AnnotationBase):
     '''This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence'''
@@ -18,7 +18,7 @@ class AnnotationManager(AnnotationBase):
         Args:
             neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
-        self.debug = True
+        self.debug = False
         self.neuroglancer_state = neuroglancerModel.url
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
@@ -40,12 +40,17 @@ class AnnotationManager(AnnotationBase):
         self.label = str(state_layer['name']).strip()
         self.current_layer = AnnotationLayer(state_layer)
 
-    def update_data_in_current_layer(self):
-        """Update the databse with the annotations in the current layer
-           This moves the old annotations to the archive, set old sessions 
-           as inactive and inserts the new annotation points.
+    
+    def update_data_in_current_layerXXX(self):
+        """Deprecated - Update the database with the annotations in the current layer
+           This: 
+
+            1. Moves the old annotations to the archive 
+            2. Sets old sessions as inactive 
+            3. Inserts the new annotation points.
+           
            The main function archive_and_insert_annotations runs either directly 
-           or in the background depending if the debug option is selected
+           or in the background depending if the debug option is selected.
         """
         if self.animal is not None and self.annotator is not None:
             if self.debug:
@@ -53,8 +58,8 @@ class AnnotationManager(AnnotationBase):
             else:
                 self.archive_and_insert_annotations()
 
-    def update_annotation_data(self):
-        """
+    def update_annotation_dataXXX(self):
+        """ Deprecated
         This method goes through all the annotation layer in a neuroglancer state and update the database entries.
         Currently this is not being used
         """
@@ -63,14 +68,21 @@ class AnnotationManager(AnnotationBase):
             for state_layer in state_layers:
                 if 'annotations' in state_layer:
                     self.set_current_layer(state_layer)
-                    self.update_data_in_current_layer()
+                    self.archive_and_insert_annotations()
 
-    # @background(schedule=60)
     def archive_and_insert_annotations(self):
         """The main function that updates the database with annotations in the current_layer attribute
            This function loops each annotation in the curent layer and inserts/archive points in the 
            appropriate table
+           This: 
+
+            1. Moves the old annotations to the archive 
+            2. Sets old sessions as inactive 
+            3. Inserts the new annotation points.
         """
+        if self.animal is None or self.annotator is None:
+            raise Http404
+
         marked_cells = []
         for annotationi in self.current_layer.annotations:
             if annotationi.is_com():
@@ -130,7 +142,7 @@ class AnnotationManager(AnnotationBase):
         Returns:
             boolean: True or False
         """
-        # TODO Nage implemented changes in neuroglancer that explicitly distinguish between marked cells and COMs.  
+        # TODO Naga implemented changes in neuroglancer that explicitly distinguish between marked cells and COMs.  
         # Code change that utilize those
         # markings will identify the two categories in a more robust manner
         assert annotationi.is_point()
@@ -252,7 +264,7 @@ class AnnotationManager(AnnotationBase):
                 ordering += 1
             polygon_index += 1
 
-    def get_existing_session(self, brain_region: BrainRegion, annotation_type,cell_type = None,source = None):
+    def get_existing_session(self, brain_region: BrainRegion, annotation_type, cell_type = None, source = None):
             sessions = AnnotationSession.objects.filter(animal=self.animal)\
                                 .filter(brain_region=brain_region)\
                                 .filter(annotator=self.annotator)\
@@ -260,8 +272,8 @@ class AnnotationManager(AnnotationBase):
                                 .filter(active=1).all()
             if not sessions:
                 return None
-            if annotation_type == 'MARKED_CELL':
 
+            if annotation_type == 'MARKED_CELL':
                 cell_types = []
                 sources = []
                 ids = []

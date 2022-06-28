@@ -2,7 +2,7 @@
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
-from abakit.lib.annotation_layer import random_string
+from neuroglancer.annotation_layer import random_string
 hexcolor = "#FF0000"
 
 def next_item(odic, key):
