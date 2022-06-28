@@ -18,7 +18,7 @@ class AnnotationManager(AnnotationBase):
         Args:
             neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
-        self.debug = False
+        self.debug = True
         self.neuroglancer_state = neuroglancerModel.url
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
