@@ -8,7 +8,7 @@ from django.http import Http404
 from background_task import background
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, CellType, UrlModel, get_region_from_abbreviation
-from neuroglancer.AnnotationManager import AnnotationManager
+from neuroglancer.annotation_manager import AnnotationManager
 
 
 @background(schedule=0)

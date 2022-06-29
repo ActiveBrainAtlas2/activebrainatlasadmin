@@ -7,7 +7,7 @@ from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
-from neuroglancer.AnnotationBase import AnnotationBase
+from neuroglancer.annotation_base import AnnotationBase
 
 class AnnotationManager(AnnotationBase):
     '''This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence'''
@@ -40,35 +40,6 @@ class AnnotationManager(AnnotationBase):
         self.label = str(state_layer['name']).strip()
         self.current_layer = AnnotationLayer(state_layer)
 
-    
-    def update_data_in_current_layerXXX(self):
-        """Deprecated - Update the database with the annotations in the current layer
-           This: 
-
-            1. Moves the old annotations to the archive 
-            2. Sets old sessions as inactive 
-            3. Inserts the new annotation points.
-           
-           The main function archive_and_insert_annotations runs either directly 
-           or in the background depending if the debug option is selected.
-        """
-        if self.animal is not None and self.annotator is not None:
-            if self.debug:
-                self.archive_and_insert_annotations()
-            else:
-                self.archive_and_insert_annotations()
-
-    def update_annotation_dataXXX(self):
-        """ Deprecated
-        This method goes through all the annotation layer in a neuroglancer state and update the database entries.
-        Currently this is not being used
-        """
-        if 'layers' in self.neuroglancer_state:
-            state_layers = self.neuroglancer_state['layers']
-            for state_layer in state_layers:
-                if 'annotations' in state_layer:
-                    self.set_current_layer(state_layer)
-                    self.archive_and_insert_annotations()
 
     def archive_and_insert_annotations(self):
         """The main function that updates the database with annotations in the current_layer attribute
@@ -205,19 +176,20 @@ class AnnotationManager(AnnotationBase):
 
 
     def archive_annotations(self, annotation_session: AnnotationSession):
-        '''
-        Move existing annotations into the archive. First we get the existing
+        """Move existing annotations into the archive. First we get the existing
         rows and then we insert those into the archive table. This is a background
         task as we're doing:
-            1. a select of the existing rows.
-            2. bulk inserts of those rows
-            3. deleting those rows from the primary table
+        1. a select of the existing rows.
+        2. bulk inserts of those rows
+        3. deleting those rows from the primary table
+        
         :param animal: animal object
         :param label: char of label name
+        
         TODO, we need to get the FK from the archive table, insert
         an appropriate parent in archive_set. After we get the animal,
         we need to create an archive
-        '''
+        """
         data_model = annotation_session.get_session_model()
         rows = data_model.objects.filter(
             annotation_session__id=annotation_session.id)

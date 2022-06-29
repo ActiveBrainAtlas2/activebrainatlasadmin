@@ -26,15 +26,16 @@ that describe a database schema table.
 
    modules/brain/admin.rst
    modules/brain/models.rst
-   modules/brain/views.rst
    modules/brain/serializers.rst
+   modules/brain/views.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Neuroglancer:
 
    modules/neuroglancer/admin.rst
+   modules/neuroglancer/annotation_manager.rst
    modules/neuroglancer/models.rst
-   modules/neuroglancer/views.rst
    modules/neuroglancer/serializers.rst
    modules/neuroglancer/tests.rst
+   modules/neuroglancer/views.rst
