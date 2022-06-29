@@ -1,5 +1,5 @@
 from django.db.models import Count
-from neuroglancer.AnnotationManager import AnnotationManager
+from neuroglancer.annotation_manager import AnnotationManager
 from neuroglancer.atlas import align_atlas, get_scales
 from django.shortcuts import render
 from rest_framework import viewsets, views
@@ -14,7 +14,7 @@ from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, Ma
     IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.models import UrlModel, BrainRegion, StructureCom, CellType
 from neuroglancer.annotation_controller import create_polygons
-from neuroglancer.AnnotationBase import AnnotationBase
+from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import AnnotationLayer, random_string, create_point_annotation
 import logging
 

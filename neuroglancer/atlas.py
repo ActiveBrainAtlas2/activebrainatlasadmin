@@ -7,7 +7,7 @@ from neuroglancer.models import BrainRegion, LAUREN_ID, \
 from brain.models import Animal, ScanRun
 from abakit.registration.algorithm import umeyama
 import logging
-from neuroglancer.AnnotationBase import AnnotationBase
+from neuroglancer.annotation_base import AnnotationBase
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 MANUAL = 1
