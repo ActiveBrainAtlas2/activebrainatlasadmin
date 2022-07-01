@@ -17,11 +17,12 @@ from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import AnnotationLayer, random_string, create_point_annotation
 import logging
-
+from abakit.atlas.VolumeMaker import VolumeMaker
+from abakit.atlas.NgSegmentMaker import NgConverter
 from neuroglancer.tasks import background_archive_and_insert_annotations
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-
+import os
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -334,9 +335,7 @@ class ContoursToVolume(views.APIView):
         res = scan_run.resolution
         return [downsample_factor*res*1000, downsample_factor*res*1000, scan_run.zresolution*1000]
 
-    def make_volumes(self, volume, animal='DK55', downsample_factor=100):
-        pass
-        """
+    def make_volumes(self, volume, animal='DK55', downsample_factor=20):    
         vmaker = VolumeMaker()
         structure,contours = volume.get_volume_name_and_contours()
         downsampled_contours = self.downsample_contours(contours,downsample_factor)
@@ -345,13 +344,12 @@ class ContoursToVolume(views.APIView):
         volume = (vmaker.volumes[structure]).astype(np.uint8)
         offset = list(vmaker.origins[structure])
         folder_name = f'{animal}_{structure}'
-        path = FileLocationManager(animal)
-        output_dir = os.path.join(path.segmentation_layer,folder_name)
+        path = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/structures'
+        output_dir = os.path.join(path,folder_name)
         scale = self.get_scale(animal,downsample_factor)
         maker = NgConverter(volume = volume,scales = scale,offset=offset)
         maker.create_neuroglancer_files(output_dir,segment_properties=[(1,structure)])
         return folder_name
-        """
 
 
 class SaveAnnotation(views.APIView):
