@@ -56,24 +56,22 @@ class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
-    list_display = ('animal', 'open_neuroglancer', 'open_multiuser',
-                    'owner', 'created')
+    list_display = ('animal', 'open_neuroglancer', 'owner', 'created')
     ordering = ['-vetted', '-updated']
-    readonly_fields = ['animal', 'created', 'user_date', 'updated']
+    readonly_fields = ['animal', 'pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
     list_filter = ['updated', 'created', 'vetted', UrlFilter, ]
     search_fields = ['comments']
-    fieldsets = [
-        (None, {'fields': ()}),
-    ]
+    # fieldsets = [(None, {'fields': ()}),]
 
     def __init__(self, model, admin_site):
         super().__init__(model, admin_site)
 
+    '''
     def get_list_display_links(self, request, list_display):
         super().get_list_display_links(request, list_display)
         return None
-
+    '''
     def pretty_url(self, instance):
         """Function to display pretty version of the JSON data.
         It uses the pygments library to make the JSON readable.
