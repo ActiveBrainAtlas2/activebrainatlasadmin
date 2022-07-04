@@ -15,8 +15,7 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.models import AlignmentScore, \
-    AnnotationSession, \
+from neuroglancer.models import AnnotationSession, \
     UrlModel,  BrainRegion, Points, \
     PolygonSequence, MarkedCell, StructureCom, CellType, AnnotationPointArchive
 from neuroglancer.dash_view import dash_scatter_view
@@ -29,7 +28,7 @@ from background_task.models import CompletedTask
 def datetime_format(dtime):
     return dtime.strftime("%d %b %Y %H:%M")
 
-
+'''
 @admin.register(AlignmentScore)
 class AlignmentScoreAdmin(admin.ModelAdmin):
     """This class provides information for constructing the alignment score graph page."""
@@ -46,7 +45,7 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """Returns false as it is readonly"""
         return False
-
+'''
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
@@ -94,7 +93,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     pretty_url.short_description = 'Formatted URL'
 
     def open_neuroglancer(self, obj):
-        host = "https://webdev.dk.ucsd.edu/preview"
+        host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
             # stop changing this.
             host = "http://127.0.0.1:8080"

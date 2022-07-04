@@ -5,12 +5,13 @@ from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, Brai
     PolygonSequence, StructureCom, PolygonSequence, MarkedCell, get_region_from_abbreviation
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
-from neuroglancer.models import CellType
+from neuroglancer.models import CellType, NULL
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
 
 class AnnotationManager(AnnotationBase):
-    '''This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence'''
+    """This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence
+    """
 
     def __init__(self, neuroglancerModel):
         """iniatiate the class starting from a perticular url
@@ -30,7 +31,7 @@ class AnnotationManager(AnnotationBase):
 
     def set_current_layer(self, state_layer):
         """set the current layer attribute from a layer component of neuroglancer json state.
-           The incoming neuroglancer json state is parsed by abakit custom class named AnnotationLayer that 
+           The incoming neuroglancer json state is parsed by a custom class named AnnotationLayer that 
            groups points according to it's membership to a polygon seqence or volume
 
         Args:
@@ -89,11 +90,11 @@ class AnnotationManager(AnnotationBase):
                 elif cells[0].description =='negative':
                     source = 'HUMAN_NEGATIVE'
                 else:
-                    source = 'NULL'
+                    source = NULL
                 new_session = self.get_new_session_and_archive_points(
-                    brain_region=brain_region, annotation_type='MARKED_CELL',cell_type=cell_type,source=source)
+                    brain_region=brain_region, annotation_type='MARKED_CELL', cell_type=cell_type,source=source)
                 for annotationi in cells:
-                    if cell_type == 'Null':
+                    if cell_type == NULL:
                         brain_region = get_region_from_abbreviation('point')
                         self.add_marked_cells(annotationi, new_session, None,source)
                     else:
@@ -101,14 +102,14 @@ class AnnotationManager(AnnotationBase):
                             cell_type=cell_type).first()
                         if cell_type is not None:
                             brain_region = get_region_from_abbreviation('point')
-                            self.add_marked_cells(annotationi, new_session, cell_type,source)
+                            self.add_marked_cells(annotationi, new_session, cell_type, source)
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
         """ determines if a point annotation is a structure COM
             A point annotation is a COM if the description correspond to a structure existing in the database
         Args:
-            annotationi (abakit:Annotation): the annotation object 
+            annotationi (Annotation): the annotation object 
 
         Returns:
             boolean: True or False

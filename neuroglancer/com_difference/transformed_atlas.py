@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from neuroglancer.atlas import get_annotation_dict
 from plotly.subplots import make_subplots
-from neuroglancer.com_difference.DifferencePlot import DifferencePlot
+from difference_plot import DifferencePlot
 import os
 import pickle 
 
