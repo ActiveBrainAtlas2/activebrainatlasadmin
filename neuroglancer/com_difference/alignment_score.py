@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from neuroglancer.atlas import get_annotation_dict
-from abakit.registration.algorithm import brain_to_atlas_transform, umeyama
+from neuroglancer.atlas import brain_to_atlas_transform, umeyama
 from plotly.subplots import make_subplots
 from neuroglancer.models import LAUREN_ID, AnnotationPoints
-from neuroglancer.com_difference.DifferencePlot import DifferencePlot
+from neuroglancer.com_difference.difference_plot import DifferencePlot
 
 class AlignmentScore(DifferencePlot):
 
