@@ -1,29 +1,77 @@
 from django.contrib import admin
-from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
+from django.forms import SelectMultiple, TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
-from django.urls import path
-from django.template.response import TemplateResponse
+from django.contrib.admin.widgets import AdminDateWidget
 from django.db.models import Count
 from django.utils.html import strip_tags
 from plotly.offline import plot
 import plotly.graph_objects as go
 
-from neuroglancer.models import UrlModel
 from brain.models import Animal
-from workflow.models import Task, ProgressLookup, TaskView, Log, FileLog, TableMetadata
+from workflow.models import Task, ProgressLookup, Log, FileLog, TableMetadata
 
-from workflow.forms import PipelineForm
 # from celery import chain
 # from workflow.tasks import setup, make_meta, make_tifs, make_scenes
 
 
-class WorkflowAdminModel(admin.ModelAdmin):
+class AtlasWorkflowAdminModel(admin.ModelAdmin):
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Simple formatting for foreign keys
+
+        :param db_field: data row field
+        :param request: http request
+        :param kwargs: extra args
+        :return: the HTML of the form field
+        """
+        kwargs['widget'] = Select(attrs={'style': 'width: 250px;'})
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
     formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size':'100'})},
-        models.DateTimeField: {'widget': DateInput(attrs={'size':'20'})},
-        models.IntegerField: {'widget': NumberInput(attrs={'size':'20'})},
-        models.TextField: {'widget': Textarea(attrs={'rows':10, 'cols':100})},
+        models.CharField: {'widget': Select(attrs={'style': 'width:250px;'})},
+        models.CharField: {'widget': TextInput(attrs={'style': 'width:250px;'})},
+        models.DateTimeField: {'widget': DateInput(attrs={'size': '20'})},
+        models.DateField: {'widget': AdminDateWidget(attrs={'size': '20'})},
+        models.IntegerField: {'widget': NumberInput(attrs={'size': '250'})},
+        models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 40})},
     }
+
+
+@admin.register(FileLog)
+class FileLogAdmin(AtlasWorkflowAdminModel):
+    list_display = ('prep_id', 'progress', 'filename', 'created')
+    list_filter = ['created']
+    search_fields = ('prep__prep_id', 'filename',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+
+
+@admin.register(Log)
+class LogAdmin(admin.ModelAdmin):
+    list_display = ('prep_id', 'level', 'logger', 'msg', 'created')
+    ordering = ['prep_id', 'created']
+    list_filter = ['created', 'level']
+    list_display_links = None
+    search_fields = ['prep__prep_id', 'msg']
+
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(ProgressLookup)
 class ProgressLookupAdmin(admin.ModelAdmin):
@@ -33,8 +81,8 @@ class ProgressLookupAdmin(admin.ModelAdmin):
 
 
 @admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'task', 'is_complete')
+class TaskAdmin(AtlasWorkflowAdminModel):
+    list_display = ('prep_id', 'task', 'is_complete', 'created')
     search_fields = ('prep__prep_id',)
     ordering = ['prep', 'lookup']
     list_filter = ['created']
@@ -172,26 +220,8 @@ class TaskViewAdmin(admin.ModelAdmin):
 
 
 
-@admin.register(Log)
-class LogAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'level', 'logger', 'msg', 'created')
-    ordering = ['prep_id', 'created']
-    list_filter = ['created', 'level']
-    list_display_links = None
-    search_fields = ['prep__prep_id', 'msg']
 
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-@admin.register(TableMetadata)
+# @admin.register(TableMetadata)
 class TableMetadataAdmin(admin.ModelAdmin):
     list_display = ('tablename', 'category', 'created')
     readonly_fields = ['pretty_entry']
@@ -207,7 +237,3 @@ class TableMetadataAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-
-@admin.register(FileLog)
-class FileLogAdmin(admin.ModelAdmin):
-    list_display = ('prep_id', 'filename')

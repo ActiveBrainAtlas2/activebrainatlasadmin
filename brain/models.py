@@ -72,21 +72,6 @@ class Animal(AtlasModel):
 
     histogram.short_description = 'Histogram'
 
-class FileOperation(AtlasModel):
-    """This class stores the logs of operations done during the pre-processing pipeline"""
-    id = models.AutoField(primary_key=True)
-    tif = models.ForeignKey('SlideCziToTif', models.CASCADE)
-    operation = models.CharField(max_length=200)
-    created = models.DateTimeField(auto_now_add=True)
-    file_size = models.FloatField()
-    active = models.IntegerField()
-
-    class Meta:
-        managed = False
-        db_table = 'file_operation'
-        verbose_name = 'File Operation'
-        verbose_name_plural = 'File Operations'
-
 class Histology(AtlasModel):
     """This class provides the metadata associated with the histology of the animal"""
     id = models.AutoField(primary_key=True)
@@ -105,7 +90,7 @@ class Histology(AtlasModel):
     block = models.CharField(max_length=200, blank=True, null=True)
     date_sectioned = models.DateField(blank=True, null=True)
     side_sectioned_first = EnumField(choices=[('ASC', 'Left'), ('DESC','Right')], blank=False, null=False, default = 'ASC')
-    scene_order = EnumField(choices=[('ASC', 'Assending'), ('DESC','Desending')], blank=False, null=False, default = 'ASC')
+    scene_order = EnumField(choices=[('ASC', 'Ascending'), ('DESC','Desending')], blank=False, null=False, default = 'ASC')
     sectioning_method = EnumField(choices=['cryoJane','cryostat','vibratome','optical','sliding microtiome'], blank=True, null=True)
     section_thickness = models.PositiveIntegerField()
     orientation = EnumField(choices=['coronal','horizontal','sagittal','oblique'], blank=True, null=True)
@@ -348,6 +333,7 @@ class Section(AtlasModel):
     """This class describes a view and not an actual database table.
     This table provides the names, locations and ordering of the 
     TIFF files."""
+    
     id = models.AutoField(primary_key=True)
     prep_id = models.CharField(max_length=20)
     czi_file = models.CharField(max_length=200)
@@ -412,7 +398,9 @@ class Section(AtlasModel):
     image_tag.short_description = 'Image'
 
 class Virus(AtlasModel):
-    """A class that describes the Virus metadata. There will be one or more of these in each Injection"""
+    """A class that describes the Virus metadata. There will be one or more of these in each Injection
+    """
+    
     id = models.AutoField(primary_key=True)
     virus_name = models.CharField(max_length=50)
     virus_type = EnumField(choices=['Adenovirus','AAV','CAV','DG rabies','G-pseudo-Lenti','Herpes','Lenti','N2C rabies','Sinbis'], blank=True, null=True)

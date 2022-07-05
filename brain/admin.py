@@ -13,40 +13,6 @@ from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
                           OrganicLabel, ScanRun, Slide, SlideCziToTif, Section)
 
 
-class ExportCsvMixin:
-    """A class used by most of the admin categories. It adds formatting 
-    to make fields look consistent and also adds the method to export 
-    to CSV from each of the 'Action' dropdowns in each category. 
-    """
-
-    def export_as_csv(self, request, queryset):
-        """Set the callback function to be executed when the device sends a
-        notification to the client.
-
-        :param request: The http request
-        :param queryset: The query used to fetch the CSV data
-        :return: a http response
-        """
-
-        meta = self.model._meta
-        excludes = ['histogram',  'image_tag']
-        field_names = [
-            field.name for field in meta.fields if field.name not in excludes]
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(
-            meta)
-        writer = csv.writer(response)
-
-        writer.writerow(field_names)
-        for obj in queryset:
-            row = writer.writerow([getattr(obj, field)
-                                  for field in field_names])
-
-        return response
-
-    export_as_csv.short_description = "Export Selected"
-
-
 class AtlasAdminModel(admin.ModelAdmin):
     """This is used as a base class for most of the other classes. It contains
     all the common variables that all the tables/objects have. It inherits
@@ -81,11 +47,11 @@ class AtlasAdminModel(admin.ModelAdmin):
 
 
     formfield_overrides = {
-        models.CharField: {'widget': Select(attrs={'size': '250'})},
-        models.CharField: {'widget': TextInput(attrs={'size': '20'})},
+        models.CharField: {'widget': Select(attrs={'size': '20', 'style': 'width:250px;'})},
+        models.CharField: {'widget': TextInput(attrs={'size': '20','style': 'width:100px;'})},
         models.DateTimeField: {'widget': DateInput(attrs={'size': '20'})},
         models.DateField: {'widget': AdminDateWidget(attrs={'size': '20'})},
-        models.IntegerField: {'widget': NumberInput(attrs={'size': '20'})},
+        models.IntegerField: {'widget': NumberInput(attrs={'size': '40', 'style': 'width:100px;'})},
         models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 40})},
     }
 
@@ -93,6 +59,41 @@ class AtlasAdminModel(admin.ModelAdmin):
     list_filter = ('created', )
     fields = []
     actions = ["export_as_csv"]
+
+
+class ExportCsvMixin:
+    """A class used by most of the admin categories. It adds formatting 
+    to make fields look consistent and also adds the method to export 
+    to CSV from each of the 'Action' dropdowns in each category. 
+    """
+
+    def export_as_csv(self, request, queryset):
+        """Set the callback function to be executed when the device sends a
+        notification to the client.
+
+        :param request: The http request
+        :param queryset: The query used to fetch the CSV data
+        :return: a http response
+        """
+
+        meta = self.model._meta
+        excludes = ['histogram',  'image_tag']
+        field_names = [
+            field.name for field in meta.fields if field.name not in excludes]
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(
+            meta)
+        writer = csv.writer(response)
+
+        writer.writerow(field_names)
+        for obj in queryset:
+            row = writer.writerow([getattr(obj, field)
+                                  for field in field_names])
+
+        return response
+
+    export_as_csv.short_description = "Export Selected"
+
 
 
 @admin.register(Animal)
