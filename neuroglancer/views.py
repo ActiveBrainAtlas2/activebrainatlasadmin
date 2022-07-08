@@ -17,8 +17,6 @@ from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import AnnotationLayer, random_string, create_point_annotation
 import logging
-from abakit.atlas.VolumeMaker import VolumeMaker
-from abakit.atlas.NgSegmentMaker import NgConverter
 from neuroglancer.tasks import background_archive_and_insert_annotations
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -99,7 +97,8 @@ class GetVolume(AnnotationBase, views.APIView):
 
 
 class GetCOM(AnnotationBase, views.APIView):
-    '''view that returns the COM for a perticular annotator in neuroglancer json format'''
+    """view that returns the COM for a perticular annotator in neuroglancer json format
+    """
 
     def get(self, request, prep_id, annotator_id, source, format=None):
         self.set_animal_from_id(prep_id)
@@ -122,7 +121,8 @@ class GetCOM(AnnotationBase, views.APIView):
 
 
 class GetMarkedCell(AnnotationBase, views.APIView):
-    '''view that returns the marked cells for a specific annotation session in neuroglancer json format'''
+    """view that returns the marked cells for a specific annotation session in neuroglancer json format
+    """
 
     def get(self, request, session_id, format=None):
         try:
@@ -182,15 +182,15 @@ class GetPolygonList(views.APIView):
         This will get the layer_data
         """
         data = []
-        active_sessions = AnnotationSession.objects.filter(
+        annotation_sessions = AnnotationSession.objects.filter(
             active=True).filter(annotation_type='POLYGON_SEQUENCE').all()
-        for sessioni in active_sessions:
+        for annotation_session in annotation_sessions:
             data.append({
-                'session_id': sessioni.id,
-                "prep_id": sessioni.animal.prep_id,
-                "annotator": sessioni.annotator.username,
-                "brain_region": sessioni.brain_region.abbreviation,
-                "source": sessioni.source,
+                'session_id': annotation_session.id,
+                "prep_id": annotation_session.animal.prep_id,
+                "annotator": annotation_session.annotator.username,
+                "brain_region": annotation_session.brain_region.abbreviation,
+                "source": annotation_session.source,
             })
         serializer = PolygonListSerializer(data, many=True)
         return Response(serializer.data)
@@ -206,18 +206,20 @@ class GetMarkedCellList(views.APIView):
         This will get the layer_data
         """
         data = []
-        active_sessions = AnnotationSession.objects.filter(
+        annotation_sessions = AnnotationSession.objects.filter(
             active=True).filter(annotation_type='MARKED_CELL').all()
-        for sessioni in active_sessions:
+        for annotation_session in annotation_sessions:
+            if annotation_session.cell_type is None:
+                continue
             data.append({
-                'session_id': sessioni.id,
-                "prep_id": sessioni.animal.prep_id,
-                "annotator": sessioni.annotator.username,
-                "source": sessioni.source,
-                "cell_type": sessioni.cell_type.cell_type,
-                "cell_type_id": sessioni.cell_type.id,
-                "structure": sessioni.brain_region.abbreviation,
-                "structure_id": sessioni.brain_region.id,
+                'session_id': annotation_session.id,
+                "prep_id": annotation_session.animal.prep_id,
+                "annotator": annotation_session.annotator.username,
+                "source": annotation_session.source,
+                "cell_type": annotation_session.cell_type.cell_type,
+                "cell_type_id": annotation_session.cell_type.id,
+                "structure": annotation_session.brain_region.abbreviation,
+                "structure_id": annotation_session.brain_region.id,
             })
             if data[-1]['structure'] == 'point':
                 data[-1]['structure'] = 'NA'
@@ -240,7 +242,8 @@ class Rotation(views.APIView):
 
 
 class Rotations(views.APIView):
-    '''view that returns the available set of rotations'''
+    """view that returns the available set of rotations
+    """
 
     def get(self, request, format=None):
         data = []
@@ -276,7 +279,8 @@ def public_list(request):
 
 
 class LandmarkList(views.APIView):
-    '''View that returns a list of active brain regions in the structures table'''
+    """View that returns a list of active brain regions in the structures table
+    """
 
     def get(self, request, format=None):
 
@@ -288,7 +292,8 @@ class LandmarkList(views.APIView):
 
 
 class AnnotationStatus(views.APIView):
-    '''View that returns the current status of COM annotations.  This is to be updated or depricated'''
+    """View that returns the current status of COM annotations.  This is to be updated or deprecated
+    """
 
     def get(self, request, format=None):
         list_of_landmarks = BrainRegion.objects.all().filter(active=True).all()
@@ -310,7 +315,7 @@ class AnnotationStatus(views.APIView):
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals,
                                                           'brain_regions': list_of_landmarks_name, 'counts': counts})
 
-
+"""
 class ContoursToVolume(views.APIView):
     def get(self, request, url_id, volume_id):
         urlModel = UrlModel.objects.get(pk=url_id)
@@ -350,7 +355,7 @@ class ContoursToVolume(views.APIView):
         maker = NgConverter(volume = volume,scales = scale,offset=offset)
         maker.create_neuroglancer_files(output_dir,segment_properties=[(1,structure)])
         return folder_name
-
+"""
 
 class SaveAnnotation(views.APIView):
     """View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table
@@ -380,7 +385,8 @@ class SaveAnnotation(views.APIView):
 
 
 class GetCellTypes(views.APIView):
-    '''View that returns a list of cell types'''
+    """View that returns a list of cell types
+    """
 
     def get(self, request, format=None):
         data = {}

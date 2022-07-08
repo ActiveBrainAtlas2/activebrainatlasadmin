@@ -17,6 +17,7 @@ CORRECTED = 2
 POINT_ID = 52
 LINE_ID = 53
 POLYGON_ID = 54
+NULL = 'NULL'
 
 class UrlModel(models.Model):
     """Model corresponding to the neuroglancer json states stored in the neuroglancer_url table.
@@ -232,7 +233,7 @@ class AnnotationSession(models.Model):
                 else:
                     class NullCellType:...
                     null_cell_type = NullCellType()
-                    null_cell_type.cell_type = 'Null'
+                    null_cell_type.cell_type = NULL
                     return null_cell_type
         elif self.is_structure_com():
             return None
