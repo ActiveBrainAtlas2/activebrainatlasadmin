@@ -23,7 +23,7 @@ from neuroglancer.tasks import background_archive_and_insert_annotations
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 import os
-
+from abakit.atlas.VolumeToContour import average_masks
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -340,7 +340,7 @@ class ContoursToVolume(views.APIView):
         structure,contours = volume.get_volume_name_and_contours()
         downsampled_contours = self.downsample_contours(contours,downsample_factor)
         vmaker.set_aligned_contours({structure:downsampled_contours})
-        vmaker.compute_origins_and_volumes_for_all_segments()
+        vmaker.compute_origins_and_volumes_for_all_segments(interpolate=1)
         volume = (vmaker.volumes[structure]).astype(np.uint8)
         offset = list(vmaker.origins[structure])
         folder_name = f'{animal}_{structure}'
