@@ -16,7 +16,7 @@ transformation_relate_urls = [
 volume_related_urls = [
     path('get_volume/<str:session_id>', views.GetVolume.as_view()),
     path('get_volume_list', views.GetPolygonList.as_view()),
-    path('contour_to_segmentation/<int:url_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
+    # path('contour_to_segmentation/<int:url_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
 ]
 general_urls = [
     path('', include(router.urls)),

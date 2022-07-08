@@ -297,6 +297,28 @@ class TestNeuroglancer(TestSetUp):
         response = self.client.get("/save_annotations/494/cell")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_save_annotations_574(self):
+        """Test saving annotations ID = 574.
+        
+        URL = /save_annotations/<int:url_id>/<str:annotation_layer_name>
+        """
+        response = self.client.get("/save_annotations/574/Sure")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get("/save_annotations/574/Unure")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_save_annotations_577(self):
+        """Test saving annotations ID = 577.
+        
+        URL = /save_annotations/<int:url_id>/<str:annotation_layer_name>
+        """
+        response = self.client.get("/save_annotations/577/Sure")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get("/save_annotations/577/Unure")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def test_brain_region_count(self):
         n = BrainRegion.objects.count()
         self.assertGreater(n, 0, msg='Error: Brain region table is empty')
