@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.forms import SelectMultiple, TextInput, Textarea, DateInput, NumberInput, Select
+from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
 from django.contrib.admin.widgets import AdminDateWidget
 from django.db.models import Count
@@ -8,7 +8,7 @@ from plotly.offline import plot
 import plotly.graph_objects as go
 
 from brain.models import Animal
-from workflow.models import Task, ProgressLookup, Log, FileLog, TableMetadata
+from workflow.models import Task, ProgressLookup, Log, FileLog
 
 # from celery import chain
 # from workflow.tasks import setup, make_meta, make_tifs, make_scenes
