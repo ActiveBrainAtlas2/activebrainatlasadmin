@@ -1,5 +1,6 @@
 import pandas as pd
 from django.db import models
+from django.db.models import Count
 import json
 from django.conf import settings
 from django.contrib import admin, messages
@@ -15,7 +16,7 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.models import AnnotationSession, \
+from neuroglancer.models import AnnotationSession, MarkedCellWorkflow, \
     UrlModel,  BrainRegion, Points, \
     PolygonSequence, MarkedCell, StructureCom, CellType, AnnotationPointArchive
 from neuroglancer.dash_view import dash_scatter_view
@@ -272,6 +273,62 @@ def make_active(modeladmin, request, queryset):
 make_active.short_description = "Mark selected COMs as active"
 
 
+
+@admin.register(MarkedCellWorkflow)
+class MarkedCellWorkflowAdmin(admin.ModelAdmin):
+    """This class provides the ability to manage the data entered through Neuroglancer. 
+    These are points are entered by an anatomist and are solely for marked cells (premotor, starter etc) 
+    """
+
+    list_filter = ('cell_type',)
+    search_fields = ['annotation_session__animal__prep_id', 'annotation_session__annotator__username']
+
+    change_list_template = 'markedcell_change_list.html'
+
+    def changelist_view(self, request, extra_context=None):
+        response = super().changelist_view(
+            request,
+            extra_context=extra_context,
+        )
+
+        try:
+            qs = response.context_data['cl'].queryset
+        except (AttributeError, KeyError):
+            return response
+
+        metrics = {
+            'marked_cells': Count('id'),
+        }
+
+        response.context_data['summary'] = list(
+            qs
+            .values('annotation_session__animal__prep_id', 'cell_type__cell_type', 'annotation_session__annotator__username', 'source')
+            .annotate(**metrics)
+            .order_by('annotation_session__animal__prep_id', 'cell_type__cell_type', 'annotation_session__annotator__username', 'source')
+        )
+
+        total = "{:,}".format(qs.count())
+        response.context_data['summary_total'] =  {'cell_total': total}
+
+
+        return response
+    
+    """
+    def get_queryset(self, request):
+        queryset = MarkedCell.objects.filter(cell_type__id=11) \
+            .values('annotation_session__annotator__id') \
+            .annotate(marked_cells=Count('id')) \
+            .order_by('annotation_session__animal__prep_id', 'annotation_session__annotator__username')
+    """
+
+    def marked_cells(self, obj):
+      return obj.marked_cells
+    marked_cells.short_description = 'Marked cells count'
+    marked_cells.admin_order_field = 'marked_cells'
+
+
+
+
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
     """This class provides the ability to manage the data entered through Neuroglancer. 
@@ -521,6 +578,9 @@ class AnnotationArchiveAdmin(AnnotationSessionAdmin):
             request).filter(active=0)
         return qs
 
+
+##### The code below if for the tasks. It doesn't really belong in the neuroglancer category
+##### but we had to put it somewhere
 
 admin.site.unregister(Task)
 admin.site.unregister(CompletedTask)

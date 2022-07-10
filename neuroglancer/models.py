@@ -289,7 +289,9 @@ class MarkedCell(AnnotationAbstract):
     """This model is for the marked cell points entered in Neuroglancer.
     
     :Inheritance:
-        AnnotationAbstract"""
+        AnnotationAbstract
+    """
+
     class SourceChoices(models.TextChoices):
             MACHINE_SURE = 'MACHINE_SURE', gettext_lazy('Machine Sure')
             MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
@@ -308,6 +310,21 @@ class MarkedCell(AnnotationAbstract):
         db_table = 'marked_cells'
         verbose_name = 'Marked cell'
         verbose_name_plural = 'Marked cells'
+    def __str__(self):
+        return u'{}'.format(self.annotation_session)
+
+class MarkedCellWorkflow(MarkedCell):
+    """This model is for the marked cell points workflow entered in Neuroglancer.
+    
+    :Inheritance:
+        MarkedCells
+    """
+    
+    class Meta:
+        managed = False
+        proxy = True
+        verbose_name = 'Marked cell workflow'
+        verbose_name_plural = 'Marked cells workflow'
     def __str__(self):
         return u'{}'.format(self.annotation_session)
 
