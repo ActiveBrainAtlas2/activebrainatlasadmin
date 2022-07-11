@@ -1,26 +1,26 @@
+import numpy as np
+
 from django.db.models import Count
-from neuroglancer.annotation_manager import AnnotationManager
-from neuroglancer.atlas import align_atlas, get_scales
-from django.shortcuts import render
 from rest_framework import viewsets, views
 from rest_framework import permissions
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from rest_framework.response import Response
-from django.utils.html import escape
-import numpy as np
-from brain.models import ScanRun
-from neuroglancer.models import AnnotationSession, MarkedCell, PolygonSequence
-from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, MarkedCellListSerializer, PolygonListSerializer, \
-    IdSerializer, PolygonSerializer, RotationSerializer, UrlSerializer
-from neuroglancer.models import UrlModel, BrainRegion, StructureCom, CellType
+
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
-from neuroglancer.annotation_layer import AnnotationLayer, random_string, create_point_annotation
-import logging
+from neuroglancer.annotation_layer import random_string, create_point_annotation
+from neuroglancer.annotation_manager import AnnotationManager
+from neuroglancer.atlas import align_atlas, get_scales
+from neuroglancer.models import AnnotationSession, MarkedCell, PolygonSequence, \
+    UrlModel, BrainRegion, StructureCom, CellType
+from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, MarkedCellListSerializer, PolygonListSerializer, \
+    PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations
+
+import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-import os
+
 
 class UrlViewSet(viewsets.ModelViewSet):
     """
@@ -29,26 +29,6 @@ class UrlViewSet(viewsets.ModelViewSet):
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
-
-
-class UrlDataView(views.APIView):
-    """This is the API component that allows neuroglancer to fetch the json state for a perticular entry in the neuroglancer_url table
-
-    Args:
-        The row id in neuroglancer_url is passed to the function in the request variable.  This is part of django formats
-
-    Returns:
-        HttpResponse: a http page with the json state as the content
-    """
-
-    def get(self, request, *args, **kwargs):
-        # Validate the incoming input (provided through query parameters)
-        serializer = IdSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        id = serializer.validated_data['id']
-        urlModel = UrlModel.objects.get(pk=id)
-        return HttpResponse(f"#!{escape(urlModel.url)}")
-
 
 def apply_scales_to_annotation_rows(rows, prep_id):
     """To fetch the scan resolution of an animal from the database and apply it to a list of annotation rows
@@ -65,8 +45,7 @@ def apply_scales_to_annotation_rows(rows, prep_id):
 
 
 class GetVolume(AnnotationBase, views.APIView):
-    """
-    view that returns the volume annotation for a session in neuroglancer json format
+    """A view that returns the volume annotation for a session in neuroglancer json format
     """
 
     def get(self, request, session_id, format=None):
@@ -97,7 +76,7 @@ class GetVolume(AnnotationBase, views.APIView):
 
 
 class GetCOM(AnnotationBase, views.APIView):
-    """view that returns the COM for a perticular annotator in neuroglancer json format
+    """A view that returns the COM for a perticular annotator in neuroglancer json format
     """
 
     def get(self, request, prep_id, annotator_id, source, format=None):
@@ -121,7 +100,7 @@ class GetCOM(AnnotationBase, views.APIView):
 
 
 class GetMarkedCell(AnnotationBase, views.APIView):
-    """view that returns the marked cells for a specific annotation session in neuroglancer json format
+    """A view that returns the marked cells for a specific annotation session in neuroglancer json format.
     """
 
     def get(self, request, session_id, format=None):
@@ -148,8 +127,7 @@ class GetMarkedCell(AnnotationBase, views.APIView):
 
 
 class GetComList(views.APIView):
-    """
-    view that returns a list of available COMs
+    """A view that returns a list of available COMs.
     """
 
     def get(self, request, format=None):
@@ -173,8 +151,7 @@ class GetComList(views.APIView):
 
 
 class GetPolygonList(views.APIView):
-    """
-    view that returns a list of available brain region volumes
+    """A view that returns a list of available brain region volumes.
     """
 
     def get(self, request, format=None):
@@ -197,8 +174,7 @@ class GetPolygonList(views.APIView):
 
 
 class GetMarkedCellList(views.APIView):
-    """
-    view that returns a list of available marked cell annotations
+    """A view that returns a list of available marked cell annotations.
     """
 
     def get(self, request, format=None):
@@ -228,7 +204,7 @@ class GetMarkedCellList(views.APIView):
 
 
 class Rotation(views.APIView):
-    """view that returns the transformation from the atlas to the image of one perticular brain.
+    """A view that returns the transformation from the atlas to the image of one perticular brain.
     prep_id: the animal id, not the primary key in the animal table
     """
 
@@ -242,7 +218,7 @@ class Rotation(views.APIView):
 
 
 class Rotations(views.APIView):
-    """view that returns the available set of rotations
+    """A view that returns the available set of rotations.
     """
 
     def get(self, request, format=None):
@@ -259,27 +235,8 @@ class Rotations(views.APIView):
         return Response(serializer.data)
 
 
-def load_layers(request):
-    layers = []
-    url_id = request.GET.get('id')
-    urlModel = UrlModel.objects.get(pk=url_id).all()
-    if urlModel.layers is not None:
-        layers = urlModel.layers
-    return render(request, 'layer_dropdown_list_options.html', {'layers': layers})
-
-
-def public_list(request):
-    """
-    Shows a listing of urls made available to the public
-    :param request:
-    :return:
-    """
-    urls = UrlModel.objects.filter(public=True).order_by('comments')
-    return render(request, 'public.html', {'urls': urls})
-
-
 class LandmarkList(views.APIView):
-    """View that returns a list of active brain regions in the structures table
+    """A view that returns a list of active brain regions in the structures table.
     """
 
     def get(self, request, format=None):
@@ -290,30 +247,6 @@ class LandmarkList(views.APIView):
         data['land_marks'] = list_of_landmarks
         return JsonResponse(data)
 
-
-class AnnotationStatus(views.APIView):
-    """View that returns the current status of COM annotations.  This is to be updated or deprecated
-    """
-
-    def get(self, request, format=None):
-        list_of_landmarks = BrainRegion.objects.all().filter(active=True).all()
-        list_of_landmarks_id = [i.id for i in list_of_landmarks]
-        list_of_landmarks_name = [i.abbreviation for i in list_of_landmarks]
-        list_of_animals = ['DK39', 'DK41', 'DK43', 'DK46', 'DK52', 'DK54', 'DK55', 'DK61',
-                           'DK62', 'DK63']
-        n_landmarks = len(list_of_landmarks_id)
-        n_animals = len(list_of_animals)
-        has_annotation = np.zeros([n_landmarks, n_animals])
-        for animali in range(n_animals):
-            for landmarki in range(n_landmarks):
-                prep_id = list_of_animals[animali]
-                brain_region = list_of_landmarks_id[landmarki]
-                has_annotation[landmarki, animali] = \
-                    StructureCom.objects.all().filter(prep=prep_id)\
-                    .filter(brain_region=brain_region).exists()
-                counts = has_annotation.sum(axis=0)
-        return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals,
-                                                          'brain_regions': list_of_landmarks_name, 'counts': counts})
 
 """
 class ContoursToVolume(views.APIView):
@@ -358,9 +291,10 @@ class ContoursToVolume(views.APIView):
 """
 
 class SaveAnnotation(views.APIView):
-    """View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table
+    """A view that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table
     There are two methods to save the data, one is in the background and the other is the default way without
-    using the background process.
+    using the background process. We use the background task in production as the method can take a long time
+    to complete.
     """
 
     def get(self, request, url_id, annotation_layer_name):
