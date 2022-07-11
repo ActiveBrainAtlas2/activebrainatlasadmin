@@ -20,9 +20,7 @@ volume_related_urls = [
 ]
 general_urls = [
     path('', include(router.urls)),
-    path(r'public', views.public_list, name='public'),
     path('landmark_list',views.LandmarkList.as_view()),
-    path('annotation_status',views.AnnotationStatus.as_view(),name = 'status'),
     path('save_annotations/<int:url_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),]
 
 com_related_urls = [
