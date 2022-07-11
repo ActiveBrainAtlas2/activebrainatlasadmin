@@ -401,16 +401,6 @@ class StructureComAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "points_table.html", context)
 
 
-"""
-@admin.register(AnnotationPointArchive)
-class AnnotationPointArchiveAdmin(admin.ModelAdmin):
-    # change_list_template = 'layer_data_group.html'
-    list_display = ('annotation_session', 'label', 'x', 'y', 'z')
-    ordering = ['label', 'z']
-    search_fields = ['label']
-"""
-
-
 @admin.action(description='Restore the selected archive')
 def restore_archive(modeladmin, request, queryset):
     """This method will restore data from the annotation_points_archive table to the 
