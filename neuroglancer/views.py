@@ -20,8 +20,10 @@ import logging
 from neuroglancer.tasks import background_archive_and_insert_annotations
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+from subprocess import check_output
 import os
-from abakit.atlas.VolumeToContour import average_masks
+from time import sleep
+
 class UrlViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -315,47 +317,23 @@ class AnnotationStatus(views.APIView):
         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals,
                                                           'brain_regions': list_of_landmarks_name, 'counts': counts})
 
-"""
 class ContoursToVolume(views.APIView):
     def get(self, request, url_id, volume_id):
-        urlModel = UrlModel.objects.get(pk=url_id)
-        state_json = urlModel.url
-        layers = state_json['layers']
-        for layeri in layers:
-            if layeri['type'] == 'annotation':
-                layer = AnnotationLayer(layeri)
-                volume = layer.get_annotation_with_id(volume_id)
-                if volume is not None:
-                    break
-        folder_name = self.make_volumes(volume, urlModel.animal)
-        segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}"
-        return JsonResponse({'url': segmentation_save_folder, 'name': folder_name})
-
-    def downsample_contours(self, contours, downsample_factor):
-        values = [i/downsample_factor for i in contours.values()]
-        return dict(zip(contours.keys(), values))
-
-    def get_scale(self, animal, downsample_factor):
-        scan_run = ScanRun.objects.filter(prep_id=animal).first()
-        res = scan_run.resolution
-        return [downsample_factor*res*1000, downsample_factor*res*1000, scan_run.zresolution*1000]
-
-    def make_volumes(self, volume, animal='DK55', downsample_factor=20):    
-        vmaker = VolumeMaker()
-        structure,contours = volume.get_volume_name_and_contours()
-        downsampled_contours = self.downsample_contours(contours,downsample_factor)
-        vmaker.set_aligned_contours({structure:downsampled_contours})
-        vmaker.compute_origins_and_volumes_for_all_segments(interpolate=1)
-        volume = (vmaker.volumes[structure]).astype(np.uint8)
-        offset = list(vmaker.origins[structure])
-        folder_name = f'{animal}_{structure}'
-        path = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/structures'
-        output_dir = os.path.join(path,folder_name)
-        scale = self.get_scale(animal,downsample_factor)
-        maker = NgConverter(volume = volume,scales = scale,offset=offset)
-        maker.create_neuroglancer_files(output_dir,segment_properties=[(1,structure)])
-        return folder_name
-"""
+        out = check_output(["sbatch", "contour_to_volume_slurm", "312","2b9c285bdf34b5df5378b572748da0512238ab31"])
+        start_id = out.find(b'job')+4
+        job_id = int(out[start_id:-1])
+        output_file = f'/opt/slurm/output/slurm_{job_id}.out'
+        error_file = f'/opt/slurm/output/slurm_{job_id}.err'
+        while not os.path.exists(output_file):
+            sleep(1)
+            print('waiting for job to finish')
+        print('finished')
+        text_file = open(output_file, "r")
+        data = text_file.read()
+        text_file.close()
+        url = data.split('\n')[-1]
+        folder_name = url.split('/')[-1]
+        return JsonResponse({'url': url, 'name': folder_name})
 
 class SaveAnnotation(views.APIView):
     """View that saves all the annotation in one annotation layer of a specific row in the neuroglancer url table
