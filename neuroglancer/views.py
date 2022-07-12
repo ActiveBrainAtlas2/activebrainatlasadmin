@@ -319,7 +319,7 @@ class AnnotationStatus(views.APIView):
 
 class ContoursToVolume(views.APIView):
     def get(self, request, url_id, volume_id):
-        out = check_output(["sbatch", "contour_to_volume_slurm", "312","2b9c285bdf34b5df5378b572748da0512238ab31"])
+        out = check_output(["sbatch", "contour_to_volume_slurm", str(url_id),volume_id])
         start_id = out.find(b'job')+4
         job_id = int(out[start_id:-1])
         output_file = f'/opt/slurm/output/slurm_{job_id}.out'
