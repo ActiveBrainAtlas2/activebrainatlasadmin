@@ -7,32 +7,18 @@ from django.contrib.auth.models import User
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 
-class AnimalInputSerializer(serializers.Serializer):
-    animal = serializers.CharField()
-
-class IdSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
 
 class AnnotationSerializer(serializers.Serializer):
-    """
-    This one feeds the data import
+    """This one feeds the data import of annotations.
     """
     id = serializers.CharField()
     point = serializers.ListField()
     type = serializers.CharField()
     description = serializers.CharField()
 
-class LineSerializer(serializers.Serializer):
-    """
-    This one feeds the data import
-    """
-    id = serializers.CharField()
-    pointA = serializers.ListField()
-    pointB = serializers.ListField()
-    type = serializers.CharField()
-    description = serializers.CharField()
-
 class PolygonSerializer(serializers.Serializer):
+    """This class serializes the polygons that are created in Neuroglancer.
+    """
     source = serializers.ListField(required=False)
     pointA = serializers.ListField(required=False)
     pointB = serializers.ListField(required=False)
@@ -45,7 +31,7 @@ class PolygonSerializer(serializers.Serializer):
 
 class ComListSerializer(serializers.Serializer):
     """
-    This one feeds the dropdown
+    This one feeds the dropdown in Neuroglancer.
     """
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
@@ -55,7 +41,7 @@ class ComListSerializer(serializers.Serializer):
 
 class MarkedCellListSerializer(serializers.Serializer):
     """
-    This one feeds the dropdown
+    This one feeds the marked cell dropdown in Neuroglancer.
     """
     session_id = serializers.CharField()
     prep_id = serializers.CharField()
@@ -68,7 +54,7 @@ class MarkedCellListSerializer(serializers.Serializer):
 
 class PolygonListSerializer(serializers.Serializer):
     """
-    This one feeds the dropdown
+    This one feeds the dropdown for importing within Neuroglancer.
     """
     session_id = serializers.CharField()
     prep_id = serializers.CharField()
@@ -77,28 +63,16 @@ class PolygonListSerializer(serializers.Serializer):
     brain_region = serializers.CharField()
 
 class BrainRegionSerializer(serializers.ModelSerializer):
+    """A serializer class for the brain region model. Not currently used."""
 
     class Meta:
         model = BrainRegion
         fields = '__all__'
 
-
-class AnnotationPointsSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        # model = AnnotationPoints
-        fields = '__all__'
-
-
-class RotationModelSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(read_only=True, source="person__username")
-
-    class Meta:
-        model = StructureCom
-        fields = '__all__'
-        # fields = ['animal', 'input_type_id', 'owner_id', 'username']
-
 class RotationSerializer(serializers.Serializer):
+    """A serializer class for the rotations/transformations used in the alignment
+    tool in Neuroglancer.
+    """
     prep_id = serializers.CharField()
     label = serializers.CharField()
     source = serializers.CharField()
@@ -115,7 +89,7 @@ class UrlSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        This gets called when a user clicks New in Neuroglancer
+        This method gets called when a user clicks New in Neuroglancer
         """
         obj = UrlModel(
             url=validated_data['url'],
@@ -140,11 +114,12 @@ class UrlSerializer(serializers.ModelSerializer):
         return obj
 
     def save_neuroglancer_state(self, obj, owner):
-        '''
-        Takes care of tasks that are in both create and update
+        """This method takes care of tasks that are in both create and update
+        
         :param obj: the neuroglancerModel object
         :param owner: the owner object from the validated_data
-        '''
+        
+        """
         try:
             # authUser = User.objects.get(pk=owner)
             obj.owner = owner
