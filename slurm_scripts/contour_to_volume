@@ -1,0 +1,2 @@
+source /usr/local/share/pipeline/bin/activate
+python create_volume_from_contours.py --url $1 --volume $2
