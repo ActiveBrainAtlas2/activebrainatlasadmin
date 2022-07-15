@@ -555,7 +555,7 @@ class TaskAdmin(admin.ModelAdmin):
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', ]
+                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
 
     def has_add_permission(self, request, obj=None):
         """Returns false as this data comes in from the pre-processing pipeline."""
@@ -567,10 +567,11 @@ class CompletedTaskAdmin(admin.ModelAdmin):
     """This class is used to admin the completed tasks. These are tasks that are long running
     and take to long for an HTTP request. They get sent to the supervisord daemon to be run
     outside the scope of the HTTP request."""
+
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', ]
+                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
 
     def has_add_permission(self, request):
         """Returns false as it is added by another process."""
