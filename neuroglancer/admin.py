@@ -578,14 +578,14 @@ admin.site.unregister(CompletedTask)
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    """This admin class is for taking care of the tasks associated with the pre-processing pipeline."""
+    """This admin class is for taking care of the tasks associated with the pre-processing """
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts',
                     'has_error', 'locked_by', 'locked_by_pid_running', ]
 
     def has_add_permission(self, request, obj=None):
-        """Returns false as this data comes in from the pre-processing pipeline."""
+        """Returns false as this data comes in from the pre-processing """
         return False
 
 

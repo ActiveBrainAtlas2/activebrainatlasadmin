@@ -212,7 +212,7 @@ class OrganicLabelAdmin(AtlasAdminModel, ExportCsvMixin):
 class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
     """This class describes what occurs when the slides are actually 
     scanned. Many of the attributes from this class are used 
-    throughout the preprocessing pipeline. An animal can have multiple
+    throughout the preprocessing  An animal can have multiple
     scan runs, but usually, there is just one scanning done 
     for each animal.
 

@@ -146,7 +146,7 @@ class TaskAdmin(AtlasWorkflowAdminModel):
             animal = animal,
             celery_task_ids = celery_task_ids
         )
-        return TemplateResponse(request, "pipeline.html", context)
+        return TemplateResponse(request, "html", context)
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [

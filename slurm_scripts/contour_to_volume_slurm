@@ -1,5 +1,0 @@
-#!/bin/bash
-#SBATCH -e /opt/slurm/output/slurm.err
-#SBATCH -o /opt/slurm/output/slurm.out
-
-/opt/slurm/contour_to_volume $1 $2
