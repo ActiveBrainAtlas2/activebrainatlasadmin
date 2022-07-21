@@ -16,7 +16,7 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.models import AnnotationSession, MarkedCellWorkflow, \
+from neuroglancer.models import AnnotationArchive, AnnotationSession, MarkedCellWorkflow, \
     UrlModel,  BrainRegion, Points, \
     PolygonSequence, MarkedCell, StructureCom, CellType, AnnotationPointArchive
 from neuroglancer.dash_view import dash_scatter_view
@@ -531,33 +531,6 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         return TemplateResponse(request, "points_table.html", context)
 
 
-class AnnotationArchive(AnnotationSession):
-    class Meta:
-        proxy = True
-
-    @property
-    def cell_type(self):
-        if self.is_polygon_sequence():
-            return None
-        elif self.is_marked_cell():
-            one_row = AnnotationPointArchive.objects.filter(
-                annotation_session__id=self.id).first()
-            if one_row is None:
-                return None
-            else:
-                return one_row.cell_type
-        elif self.is_structure_com():
-            return None
-
-    @property
-    def source(self):
-        one_row = AnnotationPointArchive.objects.filter(
-            annotation_session__id=self.id).first()
-        if one_row is None:
-            return None
-        else:
-            return one_row.source
-
 
 @admin.register(AnnotationArchive)
 class AnnotationArchiveAdmin(AnnotationSessionAdmin):
@@ -582,7 +555,7 @@ class TaskAdmin(admin.ModelAdmin):
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', ]
+                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
 
     def has_add_permission(self, request, obj=None):
         """Returns false as this data comes in from the pre-processing """
@@ -594,10 +567,11 @@ class CompletedTaskAdmin(admin.ModelAdmin):
     """This class is used to admin the completed tasks. These are tasks that are long running
     and take to long for an HTTP request. They get sent to the supervisord daemon to be run
     outside the scope of the HTTP request."""
+
     display_filter = ['task_name']
     search_fields = ['task_name', 'task_params', ]
     list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', ]
+                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
 
     def has_add_permission(self, request):
         """Returns false as it is added by another process."""

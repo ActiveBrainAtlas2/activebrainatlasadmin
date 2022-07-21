@@ -397,6 +397,35 @@ class AnnotationPointArchive(AnnotationAbstract):
     cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
                                verbose_name="Cell Type", default=None)
 
+
+class AnnotationArchive(AnnotationSession):
+    class Meta:
+        proxy = True
+
+    @property
+    def cell_type(self):
+        if self.is_polygon_sequence():
+            return None
+        elif self.is_marked_cell():
+            one_row = AnnotationPointArchive.objects.filter(
+                annotation_session__id=self.id).first()
+            if one_row is None:
+                return None
+            else:
+                return one_row.cell_type
+        elif self.is_structure_com():
+            return None
+
+    @property
+    def source(self):
+        one_row = AnnotationPointArchive.objects.filter(
+            annotation_session__id=self.id).first()
+        if one_row is None:
+            return None
+        else:
+            return one_row.source
+
+
 class BrainShape(AtlasModel):
     """This class will hold the numpy data for a brain region."""
     id = models.BigAutoField(primary_key=True)
