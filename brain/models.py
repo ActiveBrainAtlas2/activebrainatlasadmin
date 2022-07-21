@@ -188,7 +188,7 @@ class OrganicLabel(AtlasModel):
 class ScanRun(AtlasModel):
     """This class describes the blueprint of a scan. Each animal will usually have just one 
     scan run, but they can have more than one. Information in this table is used
-    extensively throughout the pre-processing pipeline."""
+    extensively throughout the pre-processing """
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)

@@ -274,14 +274,16 @@ class LandmarkList(views.APIView):
 
 class ContoursToVolume(views.APIView):
     def get(self, request, url_id, volume_id):
-        out = check_output(["sbatch", "contour_to_volume_slurm", str(url_id),volume_id])
+        command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(url_id),volume_id]
+        print(command)
+        out = check_output(command)
         start_id = out.find(b'job')+4
         job_id = int(out[start_id:-1])
         output_file = f'/opt/slurm/output/slurm_{job_id}.out'
         error_file = f'/opt/slurm/output/slurm_{job_id}.err'
         while not os.path.exists(output_file):
             sleep(1)
-            print('waiting for job to finish')
+            print(f'waiting for job {job_id} to finish')
         print('finished')
         text_file = open(output_file, "r")
         data = text_file.read()
