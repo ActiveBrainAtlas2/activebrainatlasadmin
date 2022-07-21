@@ -511,9 +511,9 @@ def check_if_contour_points_are_in_order(first_point, start_points, end_points):
 
 
 def random_string() -> str:
-    '''
-    Creates a 40 char string of random characters
-    '''
+    """Creates a 40 char string of random characters
+    """
+    
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=40))
 
 
