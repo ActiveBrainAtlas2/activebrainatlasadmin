@@ -324,6 +324,19 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
         link = format_html("{} <b>{}</b> {}", obj.annotation_session__animal__prep_id, obj.annotation_session__annotator__username)
         return link
 
+    def has_add_permission(self, request, obj=None):
+        """Returns false as this data is just a report """
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Returns false as it is just a report."""
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Returns false as it is just a report."""
+        return False
+
+
     def marked_cells(self, obj):
       return obj.marked_cells
     marked_cells.short_description = 'Marked cells count'
