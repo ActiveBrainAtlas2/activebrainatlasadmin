@@ -320,6 +320,9 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
             .annotate(marked_cells=Count('id')) \
             .order_by('annotation_session__animal__prep_id', 'annotation_session__annotator__username')
     """
+    def drilldown_link(self, obj):
+        link = format_html("{} <b>{}</b> {}", obj.annotation_session__animal__prep_id, obj.annotation_session__annotator__username)
+        return link
 
     def marked_cells(self, obj):
       return obj.marked_cells
