@@ -585,9 +585,9 @@ class CompletedTaskAdmin(admin.ModelAdmin):
     outside the scope of the HTTP request."""
 
     display_filter = ['task_name']
-    search_fields = ['task_name', 'task_params', ]
-    list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
+    list_display = ['task_name', 'run_at', 'attempts',
+                    'has_error',  'creator']
+    list_filter = ['run_at', ]
 
     def has_add_permission(self, request):
         """Returns false as it is added by another process."""
