@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import ModelChoiceField
 
-from neuroglancer.models import LayerData, UrlModel
+from neuroglancer.models import UrlModel
 
 class AnimalChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
@@ -9,7 +9,7 @@ class AnimalChoiceField(forms.ModelChoiceField):
 
 class LayerForm(forms.ModelForm):
     urlModels = ModelChoiceField(label='Annotation Layer',
-                            queryset=UrlModel.objects.filter(vetted=True).all().order_by('comments'),
+                            queryset=UrlModel.objects.filter(readonly=True).all().order_by('comments'),
                             required=True,
                             widget=forms.Select(attrs={'onchange': 'layerdata_form.submit();', 'class': 'form-control'}))
     class Meta:

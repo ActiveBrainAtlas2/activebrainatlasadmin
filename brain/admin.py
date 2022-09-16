@@ -359,13 +359,13 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         """
         count = self.scene_count(obj)
         fields = ['file_name', 'scan_run', 'slide_physical_id', 'slide_status', 'rescan_number',
-                  'insert_before_one', 'scene_qc_1','scene_rotation_1',
-                  'insert_between_one_two', 'scene_qc_2','scene_rotation_2']
+                  'insert_before_one', 'scene_qc_1',
+                  'insert_between_one_two', 'scene_qc_2']
 
-        scene_3_fields = ['insert_between_two_three', 'scene_qc_3','scene_rotation_3']
-        scene_4_fields = ['insert_between_three_four', 'scene_qc_4','scene_rotation_4']
-        scene_5_fields = ['insert_between_four_five', 'scene_qc_5','scene_rotation_5']
-        scene_6_fields = ['insert_between_five_six', 'scene_qc_6','scene_rotation_6']
+        scene_3_fields = ['insert_between_two_three', 'scene_qc_3']
+        scene_4_fields = ['insert_between_three_four', 'scene_qc_4']
+        scene_5_fields = ['insert_between_four_five', 'scene_qc_5']
+        scene_6_fields = ['insert_between_five_six', 'scene_qc_6']
         if count > 2:
             fields.extend(scene_3_fields)
         if count > 3:
