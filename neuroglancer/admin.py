@@ -57,15 +57,19 @@ class UrlModelAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
     list_display = ('animal', 'open_neuroglancer', 'owner', 'created')
-    ordering = ['-vetted', '-updated']
+    ordering = ['-readonly', '-updated']
     readonly_fields = ['animal', 'pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
-    list_filter = ['updated', 'created', 'vetted', UrlFilter, ]
+    list_filter = ['updated', 'created', 'readonly', UrlFilter, ]
     search_fields = ['comments']
-    # fieldsets = [(None, {'fields': ()}),]
 
     def __init__(self, model, admin_site):
         super().__init__(model, admin_site)
+
+    def has_add_permission(self, request, obj=None):
+        """Returns false as the data is only added via Neuroglancer"""
+        return False
+
 
     '''
     def get_list_display_links(self, request, list_display):
@@ -126,7 +130,7 @@ class PointsAdmin(admin.ModelAdmin):
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
     search_fields = ['comments']
-    list_filter = ['created', 'updated', 'vetted']
+    list_filter = ['created', 'updated', 'readonly']
 
     def created_display(self, obj):
         """Returns a nicely formatted creation date."""

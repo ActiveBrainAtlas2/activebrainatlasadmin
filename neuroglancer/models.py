@@ -28,7 +28,7 @@ class UrlModel(models.Model):
                               blank=False, db_column="person_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
-    vetted = models.BooleanField(default = False)
+    readonly = models.BooleanField(default = False, verbose_name='Read only')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
     user_date = models.CharField(max_length=25)
