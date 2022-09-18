@@ -85,7 +85,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         # Convert the data to sorted, indented JSON
         response = json.dumps(instance.url, sort_keys=True, indent=2)
         # Truncate the data. Alter as needed
-        # response = response[:5000]
+        response = response[:3000]
         # Get the Pygments formatter
         formatter = HtmlFormatter(style='colorful')
         # Highlight the data
