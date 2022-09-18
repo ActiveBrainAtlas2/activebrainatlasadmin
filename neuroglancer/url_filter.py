@@ -18,7 +18,7 @@ class UrlFilter(SimpleListFilter):
         if not self.value():
             return queryset
         if self.value().lower() == 'plain':
-            return queryset.filter(comments__icontains = 'plain' )
+            return queryset.filter(comments__endswith = 'plain' )
         if self.value().lower() == 'cell detection':
             return queryset.filter(comments__icontains = 'cell detection' )
         if self.value().lower() == 'com annotation':
