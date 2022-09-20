@@ -159,7 +159,7 @@ class TestTransformation(TestSetUp):
 
     def test_get_rotation(self):
         """Test the API that returns the list of available transformations
-
+        path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/'
         URL = /rotation/{self.prep_id}/{self.annotator_id}/{self.COMsource}/
 
         """
@@ -168,6 +168,7 @@ class TestTransformation(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_rotation_is_not_identity(response)
 
+    '''
     def test_get_rotation_inverse(self):
         """Test the API that returns the list of available transformations
 
@@ -211,7 +212,7 @@ class TestTransformation(TestSetUp):
         s = np.sum(translation)
         self.assertEqual(s, 0, msg="Translation is equal to zero")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+    '''
 class TestAnnotations(TestSetUp):
     """A class for testing the annotations
     """
@@ -273,6 +274,7 @@ class TestAnnotations(TestSetUp):
         response = self.client.get(f"/get_com_list")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    '''
     def test_get_marked_cell_list(self):
         """Test the API that returns the list of marked cell
 
@@ -281,7 +283,7 @@ class TestAnnotations(TestSetUp):
         """
         response = self.client.get(f"/get_marked_cell_list")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
+    '''
 class TestNeuroglancer(TestSetUp):
     """URLs taken from neuroglancer/urls.py. 
     We should have one test per url.    
@@ -323,28 +325,28 @@ class TestNeuroglancer(TestSetUp):
         response = self.client.get("/save_annotations/494/cell")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_save_annotations_574(self):
-        """Test saving annotations ID = 574.
+    def test_save_annotations_377(self):
+        """Test saving annotations ID = 377.
         
         URL = /save_annotations/<int:url_id>/<str:annotation_layer_name>
 
         """
-        response = self.client.get("/save_annotations/574/Sure")
+        response = self.client.get("/save_annotations/377/Sure")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get("/save_annotations/574/Unure")
+        response = self.client.get("/save_annotations/377/Unure")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_save_annotations_577(self):
-        """Test saving annotations ID = 577.
+    def test_save_annotations_377(self):
+        """Test saving annotations ID = 377.
         
         URL = /save_annotations/<int:url_id>/<str:annotation_layer_name>
 
         """
-        response = self.client.get("/save_annotations/577/Sure")
+        response = self.client.get("/save_annotations/377/Sure")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get("/save_annotations/577/Unure")
+        response = self.client.get("/save_annotations/377/Unure")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_brain_region_count(self):
