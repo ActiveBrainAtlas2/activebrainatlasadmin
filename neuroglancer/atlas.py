@@ -12,9 +12,8 @@ MANUAL = 1
 CORRECTED = 2
 
 
-def align_atlas(animal,annotator_id,source,reverse = False,reference_scales = None):
-    """
-    This prepares the data for the align_point_sets method.
+def align_atlas(animal, annotator_id, source, reverse=False, reference_scales=None):
+    """This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
     :param animal: the animal we are aligning to
     :param input_type_id: the int defining what type of input. Taken from the
@@ -23,8 +22,8 @@ def align_atlas(animal,annotator_id,source,reverse = False,reference_scales = No
     table column=id
     :return: a 3x3 matrix and a 1x3 matrix
     """
-    atlas_centers = get_annotation_dict('atlas',16,'MANUAL')
-    reference_centers = get_annotation_dict(animal,annotator_id,source)
+    atlas_centers = get_annotation_dict('atlas', 16, 'MANUAL')
+    reference_centers = get_annotation_dict(animal, annotator_id, source)
     try:
         scanRun = ScanRun.objects.get(prep__prep_id=animal)
     except ScanRun.DoesNotExist:
@@ -65,8 +64,8 @@ def get_annotation_dict(prep_id, annotator_id,source):
     base = AnnotationBase()
     base.set_animal_from_id(prep_id)
     base.set_annotator_from_id(annotator_id)
-    rows = StructureCom.objects.filter(annotation_session__animal=base.animal)\
-                .filter(source=source).filter(annotation_session__annotator=base.annotator)
+    rows = StructureCom.objects.filter(annotation_session__animal__prep_id=prep_id)\
+                .filter(source=source).filter(annotation_session__annotator=base.annotator) 
     brain_region_dict = {}
     brain_regions = BrainRegion.objects.filter(active=True).all()
     for brain_region in brain_regions:
