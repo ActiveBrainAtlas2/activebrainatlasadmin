@@ -11,7 +11,7 @@ from neuroglancer.annotation_layer import random_string, create_point_annotation
 from neuroglancer.annotation_manager import AnnotationManager
 from neuroglancer.atlas import align_atlas, get_scales
 from neuroglancer.models import AnnotationSession, MarkedCell, PolygonSequence, \
-    UrlModel, BrainRegion, StructureCom, CellType
+    UrlModel, BrainRegion, StructureCom, CellType, NULL
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, MarkedCellListSerializer, PolygonListSerializer, \
     PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations
@@ -181,11 +181,12 @@ class GetMarkedCellList(views.APIView):
         """
         This will get the layer_data
         """
+
         data = []
         annotation_sessions = AnnotationSession.objects.filter(
             active=True).filter(annotation_type='MARKED_CELL').all()
         for annotation_session in annotation_sessions:
-            if annotation_session.cell_type is None:
+            if not isinstance(annotation_session.cell_type, CellType):
                 continue
             data.append({
                 'session_id': annotation_session.id,
