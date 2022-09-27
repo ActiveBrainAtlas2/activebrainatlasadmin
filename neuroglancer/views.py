@@ -1,8 +1,7 @@
 import numpy as np
 
 from django.db.models import Count
-from rest_framework import viewsets, views
-from rest_framework import permissions
+from rest_framework import viewsets, views, permissions, status
 from django.http import JsonResponse
 from rest_framework.response import Response
 from neuroglancer.annotation_controller import create_polygons
@@ -106,9 +105,10 @@ class GetMarkedCell(AnnotationBase, views.APIView):
     def get(self, request, session_id, format=None):
         try:
             session = AnnotationSession.objects.get(pk=session_id)
-            rows = MarkedCell.objects.filter(annotation_session__pk=session_id)
         except:
             print('bad query')
+            return Response({"Error": "Record does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        rows = MarkedCell.objects.filter(annotation_session__pk=session_id)
         apply_scales_to_annotation_rows(rows, session.animal.prep_id)
         data = []
         for row in rows:
@@ -184,7 +184,8 @@ class GetMarkedCellList(views.APIView):
 
         data = []
         annotation_sessions = AnnotationSession.objects.filter(
-            active=True).filter(annotation_type='MARKED_CELL').all()
+            active=True).filter(annotation_type='MARKED_CELL')\
+            .order_by('animal', 'annotation_type', 'annotator')
         for annotation_session in annotation_sessions:
             if not isinstance(annotation_session.cell_type, CellType):
                 continue

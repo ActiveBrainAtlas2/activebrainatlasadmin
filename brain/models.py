@@ -46,6 +46,9 @@ class Animal(AtlasModel):
     aliases_5 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_5')
     comments = models.TextField(max_length=2001, blank=True, null=True, db_column='comments')
 
+# adjust scan run machine column to include axios 1 and axios 2
+
+
     class Meta:
         managed = False
         db_table = 'animal'
