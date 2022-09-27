@@ -46,9 +46,6 @@ class Animal(AtlasModel):
     aliases_5 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_5')
     comments = models.TextField(max_length=2001, blank=True, null=True, db_column='comments')
 
-# adjust scan run machine column to include axios 1 and axios 2
-
-
     class Meta:
         managed = False
         db_table = 'animal'
@@ -195,7 +192,7 @@ class ScanRun(AtlasModel):
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
-    machine = EnumField(choices=['Invitrogen','Sigma','Thermo-Fisher'], blank=True, null=True)
+    machine = EnumField(choices=['Axioscan I', 'Axioscan II'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
     resolution = models.FloatField(verbose_name="XY Resolution (um)")
     zresolution = models.FloatField(verbose_name="Z Resolution (um)")
