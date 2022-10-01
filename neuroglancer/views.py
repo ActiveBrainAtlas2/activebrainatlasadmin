@@ -309,14 +309,15 @@ class SaveAnnotation(views.APIView):
         manager = AnnotationManager(urlModel)
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
-                    manager.set_current_layer(layeri)
-                    if manager.debug:
-                        manager.archive_and_insert_annotations()
-                    else:
-                        background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", 
-                        creator=urlModel.owner)
+                manager.set_current_layer(layeri)
+                if manager.debug:
+                    #manager.archive_and_insert_annotations()
+                    background_archive_and_insert_annotations(layeri, url_id)
+                else:
+                    background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", 
+                    creator=urlModel.owner)
 
-                    found = True
+                found = True
         if found:
             return Response('success')
         else:
