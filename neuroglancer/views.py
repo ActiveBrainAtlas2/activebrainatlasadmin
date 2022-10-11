@@ -116,10 +116,17 @@ class GetMarkedCell(AnnotationBase, views.APIView):
             description = row.source
             if description == 'HUMAN_POSITIVE':
                 source = 'positive'
-            if description == 'HUMAN_NEGATIVE':
+            elif description == 'HUMAN_NEGATIVE':
                 source = 'negative'
-            point_annotation = create_point_annotation(
-                coordinates, source, type='cell')
+            elif description == 'MACHINE_SURE':
+                source = 'machine_sure'
+            elif description == 'MACHINE_UNSURE':
+                source = 'machine_unsure'
+            else:
+                source = NULL
+             
+            print(source)
+            point_annotation = create_point_annotation(coordinates, source, type='cell')
             point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
