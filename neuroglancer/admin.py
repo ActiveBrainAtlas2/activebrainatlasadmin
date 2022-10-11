@@ -56,7 +56,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
-    list_display = ('animal', 'open_neuroglancer', 'owner', 'created')
+    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'owner', 'created')
     ordering = ['-readonly', '-updated']
     readonly_fields = ['animal', 'pretty_url', 'created', 'user_date', 'updated']
     exclude = ['url']
@@ -112,7 +112,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
-        comments = "Testing"
+        comments = "Multi-user"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
         return format_html(links)
 
