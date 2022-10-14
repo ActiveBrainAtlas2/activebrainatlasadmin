@@ -6,18 +6,27 @@
 The ActiveBrainAtlas's documentation
 ============================================
 These pages contain documentation regarding the MVC (model, view, and controller) programming
-classes for the Django database interface. Django breaks up this interface into 'apps'.
+classes for the Django database interface. Django breaks up this interface into 'apps'. The two
+main apps of interest are:
 
-These apps contain classes for each of the MVC components. The models.py file contains classes
+* Brain - modules that describe all the tools used to manage the animal, scan run, histology, and organic label tables.
+* Neuroglancer - tools that are used to manage the Neuroglancer JSON data and annotation data.
+
+There are several other apps that deal with authentictaion and various Django tools, but they
+are not listed. 
+
+These apps contain classes for each of the MVC components. The models.py files contains classes
 that describe a database schema table.
 
+Use the side navigation panel to view different classes and methods within each module.
 
 ****
 
 .. toctree::
    :titlesonly:
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Brain
+   :hidden:
    
    Admin module <modules/brain/admin.rst>
    Brain forms <modules/brain/forms.rst> 
@@ -40,7 +49,13 @@ that describe a database schema table.
    Align atlas tools <modules/neuroglancer/atlas.rst>
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Entity relationship diagram for the Active brain atlas database:
    
    Diagram showing database tables and columns <modules/erd.rst>
+
+Indices and tables
+~~~~~~~~~~~~~~~~~~
+
+* :ref:`genindex`
+* :ref:`modindex`
