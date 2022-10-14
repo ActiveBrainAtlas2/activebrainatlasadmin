@@ -1,3 +1,10 @@
+"""This module creates the admin interface for all the Neuroglancer tools used by the user.
+It lists the classes and methods used to administer the 'Neuroglancer' app in 
+our database portal. This is where the end user can create, retrieve, update and delete (CRUD)
+metadata associated with the 'Neuroglancer' app. It does not list the fields (database columns). Look 
+in the models document for the database table model. 
+"""
+
 import pandas as pd
 from django.db import models
 from django.db.models import Count
@@ -27,6 +34,8 @@ from background_task.models import CompletedTask
 
 
 def datetime_format(dtime):
+    """A method to return a nicely formatted date and time.
+    """
     return dtime.strftime("%d %b %Y %H:%M")
 
 '''
@@ -52,7 +61,8 @@ class AlignmentScoreAdmin(admin.ModelAdmin):
 class UrlModelAdmin(admin.ModelAdmin):
     """This class provides the admin backend to the JSON data produced by Neuroglancer.
     In the original version of Neuroglancer, all the data was stored in the URL, hence
-    the name of this class. The name: 'UrlModel' will be changed in future versions."""
+    the name of this class. The name: 'UrlModel' will be changed in future versions.
+    """
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
@@ -81,7 +91,9 @@ class UrlModelAdmin(admin.ModelAdmin):
         It uses the pygments library to make the JSON readable.
         
         :param instance: admin obj
-        :returns: nicely formatted JSON data that is viewed in the page."""
+        :returns: nicely formatted JSON data that is viewed in the page.
+        """
+        
         # Convert the data to sorted, indented JSON
         response = json.dumps(instance.url, sort_keys=True, indent=2)
         # Truncate the data. Alter as needed
@@ -98,6 +110,7 @@ class UrlModelAdmin(admin.ModelAdmin):
     pretty_url.short_description = 'Formatted URL'
 
     def open_neuroglancer(self, obj):
+        """This method creates an HTML link that allows the user to access Neuroglancer"""
         host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
             # stop changing this.
@@ -108,6 +121,9 @@ class UrlModelAdmin(admin.ModelAdmin):
         return format_html(links)
 
     def open_multiuser(self, obj):
+        """This method creates an HTML link that allows the user to access Neuroglancer 
+        in multi user mode.
+        """
         host = "https://activebrainatlas.ucsd.edu/ng_multi"
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
@@ -125,7 +141,9 @@ class UrlModelAdmin(admin.ModelAdmin):
 @admin.register(Points)
 class PointsAdmin(admin.ModelAdmin):
     """This class may become deprecated, but for now it gets point data
-    from the actual JSON and not the 3 new tables we have that contain x,y,z data."""
+    from the actual JSON and not the 3 new tables we have that contain x,y,z data.
+    """
+
     list_display = ('animal', 'comments', 'owner', 'show_points', 'updated')
     ordering = ['-created']
     readonly_fields = ['url', 'created', 'user_date', 'updated']
@@ -231,7 +249,9 @@ class PointsAdmin(admin.ModelAdmin):
 @admin.register(BrainRegion)
 class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     """Class that provides admin capability for managing a region of the brain. This
-    was also called a structure."""
+    was also called a structure.
+    """
+
     list_display = ('abbreviation', 'description', 'color',
                     'show_hexadecimal', 'active', 'created_display')
     ordering = ['abbreviation']
@@ -252,6 +272,8 @@ class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
 
 @admin.register(CellType)
 class CellTypeAdmin(AtlasAdminModel, ExportCsvMixin):
+    """"This class administers the different type of cells.
+    """
     list_display = ('cell_type', 'description', 'active')
     ordering = ['cell_type']
     readonly_fields = ['created']
@@ -259,11 +281,18 @@ class CellTypeAdmin(AtlasAdminModel, ExportCsvMixin):
     search_fields = ['cell_type', 'description']
 
     def created_display(self, obj):
+        """Formats the date nicely."""
         return datetime_format(obj.created)
     created_display.short_description = 'Created'
 
 
 def make_inactive(modeladmin, request, queryset):
+    """A method to set any object inactive
+    
+    :param request: HTTP request.
+    :param queryset: set of querys used to update.
+    """
+    
     queryset.update(active=False)
 
 
@@ -271,6 +300,11 @@ make_inactive.short_description = "Mark selected COMs as inactive"
 
 
 def make_active(modeladmin, request, queryset):
+    """A method to set any object active
+    
+    :param request: HTTP request.
+    :param queryset: set of querys used to update.
+    """
     queryset.update(active=True)
 
 
@@ -316,14 +350,7 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
 
 
         return response
-    
-    """
-    def get_queryset(self, request):
-        queryset = MarkedCell.objects.filter(cell_type__id=11) \
-            .values('annotation_session__annotator__id') \
-            .annotate(marked_cells=Count('id')) \
-            .order_by('annotation_session__animal__prep_id', 'annotation_session__annotator__username')
-    """
+
     def drilldown_link(self, obj):
         link = format_html("{} <b>{}</b> {}", obj.annotation_session__animal__prep_id, obj.annotation_session__annotator__username)
         return link
@@ -352,7 +379,9 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
     """This class provides the ability to manage the data entered through Neuroglancer. 
-    These are points are entered by an anatomist and are solely for the center of mass (COM) for a brain region (structure)"""
+    These are points are entered by an anatomist and are solely for the center of mass (COM) for a brain region (structure)
+    """
+
     list_display = ('animal', 'annotator', 'created', 'show_com', 'source')
     ordering = ('annotation_session__animal__prep_id', 'annotation_session__annotator__username',
                 'annotation_session__brain_region__abbreviation', 'source')
@@ -465,7 +494,8 @@ def delete_session(modeladmin, request, queryset):
 
 @admin.register(AnnotationSession)
 class AnnotationSessionAdmin(AtlasAdminModel):
-    """Administer the annotation session data."""
+    """Administer the annotation session data.
+    """
     list_display = ['animal',  'annotator', 'label',
                     'source', 'show_points', 'annotation_type', 'created']
     ordering = ['animal', 'annotation_type', 'parent', 'created', 'annotator']
@@ -483,14 +513,16 @@ class AnnotationSessionAdmin(AtlasAdminModel):
             return obj.brain_region.abbreviation
 
     def show_points(self, obj):
-        """Shows the HTML for the link to the graph of data."""
+        """Shows the HTML for the link to the graph of data.
+        """
         return format_html(
             '<a href="{}">Data</a>',
             reverse('admin:annotationsession-data', args=[obj.pk])
         )
 
     def get_urls(self):
-        """Shows the HTML of the links to go to the graph, and table data."""
+        """Shows the HTML of the links to go to the graph, and table data.
+        """
         urls = super().get_urls()
         custom_urls = [
             path('annotationsession-data/<id>',
@@ -554,6 +586,8 @@ class AnnotationSessionAdmin(AtlasAdminModel):
 
 @admin.register(AnnotationArchive)
 class AnnotationArchiveAdmin(AnnotationSessionAdmin):
+    """A class to admin the archived annotations.
+    """
     actions = [restore_archive]
 
     def get_queryset(self, request):

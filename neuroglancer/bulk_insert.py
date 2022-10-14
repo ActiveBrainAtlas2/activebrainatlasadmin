@@ -1,3 +1,6 @@
+"""This module is called when the user saves annotations in Neuroglancer.
+It does a bulk insert which is faster than looping through individual inserts.
+"""
 from collections import defaultdict
 from django.apps import apps
 

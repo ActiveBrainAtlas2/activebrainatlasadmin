@@ -1,3 +1,6 @@
+"""This module defines the serializers for the REST API endpoints for Neuroglancer.
+"""
+
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
@@ -30,8 +33,7 @@ class PolygonSerializer(serializers.Serializer):
     props = serializers.ListField()
 
 class ComListSerializer(serializers.Serializer):
-    """
-    This one feeds the dropdown in Neuroglancer.
+    """This one feeds the dropdown in Neuroglancer.
     """
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
@@ -40,8 +42,7 @@ class ComListSerializer(serializers.Serializer):
     count = serializers.CharField()
 
 class MarkedCellListSerializer(serializers.Serializer):
-    """
-    This one feeds the marked cell dropdown in Neuroglancer.
+    """This one feeds the marked cell dropdown in Neuroglancer.
     """
     session_id = serializers.CharField()
     prep_id = serializers.CharField()
@@ -53,8 +54,7 @@ class MarkedCellListSerializer(serializers.Serializer):
     structure_id = serializers.CharField()
 
 class PolygonListSerializer(serializers.Serializer):
-    """
-    This one feeds the dropdown for importing within Neuroglancer.
+    """This one feeds the dropdown for importing within Neuroglancer.
     """
     session_id = serializers.CharField()
     prep_id = serializers.CharField()
@@ -80,7 +80,8 @@ class RotationSerializer(serializers.Serializer):
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url *probably* can't be in the UrlModel when it is returned
-    to neuroglancer as it crashes neuroglancer."""
+    to neuroglancer as it crashes neuroglancer.
+    """
 
     class Meta:
         model = UrlModel
@@ -88,8 +89,7 @@ class UrlSerializer(serializers.ModelSerializer):
         ordering = ['-created']
 
     def create(self, validated_data):
-        """
-        This method gets called when a user clicks New in Neuroglancer
+        """This method gets called when a user clicks New in Neuroglancer
         """
         obj = UrlModel(
             url=validated_data['url'],
@@ -102,8 +102,7 @@ class UrlSerializer(serializers.ModelSerializer):
         return obj
 
     def update(self, obj, validated_data):
-        """
-        This gets called when a user clicks Save in Neuroglancer
+        """This gets called when a user clicks Save in Neuroglancer
         """
         obj.url = validated_data.get('url', obj.url)
         obj.user_date = validated_data.get('user_date', obj.user_date)

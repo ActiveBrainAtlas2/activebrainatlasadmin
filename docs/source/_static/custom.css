@@ -5,4 +5,8 @@
 .propertyXXX {
     font-size: smaller;
 }
+
+sectionXXX#setup span.caption-text {
+    display: none;
+}
    

@@ -1,5 +1,9 @@
-import numpy as np
+"""This is the module that the user will use to connect to the database. This can be defined in either
+a web page or in a REST API call. This module is the 'V' in the MVC framework for the Neuroglancer app
+portion of the portal.
+"""
 
+import numpy as np
 from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
 from django.http import JsonResponse
@@ -22,8 +26,7 @@ import os
 from time import sleep
 
 class UrlViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows the neuroglancer urls to be viewed or edited.
+    """API endpoint that allows the neuroglancer urls to be viewed or edited.
     """
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
@@ -32,9 +35,8 @@ class UrlViewSet(viewsets.ModelViewSet):
 def apply_scales_to_annotation_rows(rows, prep_id):
     """To fetch the scan resolution of an animal from the database and apply it to a list of annotation rows
 
-    Args:
-        rows (list): list of query result from either the StructureCom, MarkedCell or PolygonSequence table
-        prep_id (string): animal id
+    :param rows: list of query result from either the StructureCom, MarkedCell or PolygonSequence table
+    :param prep_id: string animal id
     """
     scale_xy, z_scale = get_scales(prep_id)
     for row in rows:
