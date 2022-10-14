@@ -15,27 +15,32 @@ that describe a database schema table.
 ****
 
 .. toctree::
+   :titlesonly:
    :maxdepth: 2
-   :caption: ERD:
+   :caption: Brain
    
-   modules/erd.rst
+   Admin module <modules/brain/admin.rst>
+   Brain forms <modules/brain/forms.rst> 
+   Brain models (database columns) <modules/brain/models.rst> 
+   REST API serializers <modules/brain/serializers.rst> 
+   REST API endpoints <modules/brain/views.rst>
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Brain:
-
-   modules/brain/admin.rst
-   modules/brain/models.rst
-   modules/brain/serializers.rst
-   modules/brain/views.rst
-
-.. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Neuroglancer:
+   :hidden:
 
-   modules/neuroglancer/admin.rst
-   modules/neuroglancer/annotation_manager.rst
-   modules/neuroglancer/models.rst
-   modules/neuroglancer/serializers.rst
-   modules/neuroglancer/tests.rst
-   modules/neuroglancer/views.rst
+   Neuroglancer admin module <modules/neuroglancer/admin.rst> 
+   Module to admin annotations <modules/neuroglancer/annotation_manager.rst>
+   Neuroglancer models (database columns) <modules/neuroglancer/models.rst> 
+   REST API serializers <modules/neuroglancer/serializers.rst> 
+   Neuroglancer tests <modules/neuroglancer/tests.rst>
+   REST API endpoints <modules/neuroglancer/views.rst>
+   Bulk annotation inserts <modules/neuroglancer/bulk_insert.rst>
+   Align atlas tools <modules/neuroglancer/atlas.rst>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Entity relationship diagram for the Active brain atlas database:
+   
+   Diagram showing database tables and columns <modules/erd.rst>

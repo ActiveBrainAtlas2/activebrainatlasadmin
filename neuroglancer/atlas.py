@@ -1,5 +1,4 @@
-"""
-Some important static methods used throughout the Django project.
+"""Some important static methods used throughout the Django project.
 """
 import numpy as np
 from neuroglancer.models import BrainRegion, StructureCom
@@ -15,11 +14,12 @@ CORRECTED = 2
 def align_atlas(animal, annotator_id, source, reverse=False, reference_scales=None):
     """This prepares the data for the align_point_sets method.
     Make sure we have at least 3 points
+
     :param animal: the animal we are aligning to
     :param input_type_id: the int defining what type of input. Taken from the
-    input_type table with  column=id
+        input_type table with  column=id
     :param owner_id: the int defining the person. Taken from the auth_user
-    table column=id
+        table column=id
     :return: a 3x3 matrix and a 1x3 matrix
     """
     atlas_centers = get_annotation_dict('atlas', 16, 'MANUAL')
@@ -48,12 +48,11 @@ def align_atlas(animal, annotator_id, source, reverse=False, reference_scales=No
     return R, t
 
 def get_annotation_dict(prep_id, annotator_id,source):
-    '''
-    This method replaces get_centers_dict and get_layer_data_row
+    """This method replaces get_centers_dict and get_layer_data_row.
+
     :param prep_id: string name of animal
     :param label: formerly layer, the string name of the layer
-    '''
-
+    """
 
     row_dict = {}
     try:
@@ -78,10 +77,11 @@ def get_annotation_dict(prep_id, annotator_id,source):
 
 
 def get_scales(prep_id):
+    """A generic method to safely query and return resolutions.
+
+    :param prep_id: varchar of the primary key of the animal
     """
-    A generic method to safely query and return resolutions
-    param: prep_id varchar of the primary key of the animal
-    """
+
     try:
         query_set = ScanRun.objects.filter(prep_id=prep_id)
     except ScanRun.DoesNotExist:
@@ -100,11 +100,11 @@ def get_scales(prep_id):
 def brain_to_atlas_transform(brain_coord, r, t):
     """Taken from abakit
     Takes an x,y,z brain coordinates, and a rotation matrix and translation vector.
-    params:
-        atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
-        r: float of the rotation matrix
-        t: vector of the translation matrix
-    Returns the point in atlas coordinates in micrometers.
+    
+    :param atlas_coord: tuple of x,y,z coordinates of the atlas in micrometers
+    :param r: float of the rotation matrix
+    :param t: vector of the translation matrix
+    :return: the point in atlas coordinates in micrometers.
     """
     # Transform brain coordinates to physical space
     brain_coord = np.array(brain_coord).reshape(3, 1) # Convert to a column vector
@@ -113,11 +113,14 @@ def brain_to_atlas_transform(brain_coord, r, t):
 
 
 def umeyama(src, dst, with_scaling=True):
-    """Take from abakit.
-    The Umeyama algorithm to register landmarks with rigid transform.
+    """The Umeyama algorithm to register landmarks with rigid transform.
 
-    See the paper "Least-squares estimation of transformation parameters
-    between two point patterns".
+    See the paper 'Least-squares estimation of transformation parameters
+    between two point patterns'.
+
+    :param src: List of data points.
+    :param dst: List of data points.
+    :param with_scaling: A boolean determining if we should scale or not.
     """
     src = np.array(src)
     dst = np.array(dst)

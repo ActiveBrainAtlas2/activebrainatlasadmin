@@ -1,3 +1,6 @@
+"""This is the module that the user will use to connect to the database. This can be defined in either
+a web page or in a REST API call. This module is the 'V' in the MVC framework for the brain.
+"""
 from django.shortcuts import render
 from brain.models import Animal, Section
 from brain.forms import AnimalForm

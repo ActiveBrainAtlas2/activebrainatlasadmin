@@ -1,3 +1,5 @@
+"""This module defines the serializers for the REST API endpoints.
+"""
 from rest_framework import serializers
 from brain.models import Animal
 
