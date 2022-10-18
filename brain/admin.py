@@ -9,12 +9,14 @@ import os
 from django.contrib import admin
 from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
+from django.db.models import Count
 import csv
 from django.http import HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
+from django.shortcuts import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 
-from brain.forms import save_slide_model, TifInlineFormset
+from brain.forms import save_slide_model, TifInlineFormset, scene_reorder
 from brain.models import (Animal, Histology, Injection, Virus, InjectionVirus,
                           OrganicLabel, ScanRun, Slide, SlideCziToTif, Section)
 
@@ -241,13 +243,30 @@ class TifInline(admin.TabularInline):
             laid out on the page.
     """
     model = SlideCziToTif
-    fields = ('file_name','scene_number', 'scene_index', 'channel', 'scene_image', 'section_image')
-    readonly_fields = ['file_name', 'scene_number', 'channel', 'scene_index', 'scene_image', 'section_image']
+    fields = ('file_name','scene_number', 'scene_index', 'section_number', 'channel', 'scene_image', 'section_image')
+    readonly_fields = ['file_name', 'scene_number', 'section_number', 'channel', 'scene_index', 'scene_image', 'section_image']
     ordering = ['-active', 'scene_number', 'scene_index']
     extra = 0
     can_delete = False
     formset = TifInlineFormset
     template = 'tabular_tifs.html'
+
+    def section_number(self, obj) -> str:
+        animal = obj.slide.scan_run.prep_id
+        histology = Histology.objects.get(prep_id=animal)
+        orderby = histology.side_sectioned_first
+
+        if orderby == 'DESC':
+            sections =  Section.objects.filter(prep_id__exact=animal).filter(channel=1)\
+                .order_by('-slide_physical_id', '-scene_number')
+        else:
+            sections = Section.objects.filter(prep_id__exact=animal).filter(channel=1)\
+                .order_by('slide_physical_id', 'scene_number')
+
+        index = list(sections.values_list('id', flat=True)).index(obj.id)
+        return str(index).zfill(3) + ".tif"
+
+    section_number.short_description = 'Section' 
 
     def scene_image(self, obj):
         """This method tests if there is a 
@@ -348,11 +367,11 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         :ExportCsvMixin: The class with standard features and CSV 
             exporter method.
     """
+    change_form_template = 'slide_change_form.html'   
     list_display = ('prep_id', 'file_name', 'slide_status', 'scene_qc_1', 'scene_qc_2', 'scene_qc_3', 'scene_qc_4', 'scene_count')
     search_fields = ['scan_run__prep__prep_id', 'file_name']
     ordering = ['file_name', 'created']
     readonly_fields = ['file_name', 'slide_physical_id', 'scan_run', 'processed', 'file_size']
-
 
     def get_fields(self, request, obj):
         """This method fetches the correct 
@@ -443,6 +462,29 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         """
         return instance.scan_run.prep.prep_id
 
+    def response_change(self, request, obj):
+        """Reset all tifs belong to this slide to its original state
+        """
+        if "_reset-slide" in request.POST:
+            Slide.objects.filter(id=obj.id)\
+                .update(insert_before_one=0, scene_qc_1=0,
+                insert_between_one_two=0, scene_qc_2=0,
+                insert_between_two_three=0, scene_qc_3=0,
+                insert_between_three_four=0, scene_qc_4=0,
+                insert_between_four_five=0, scene_qc_5=0,
+                insert_between_five_six=0, scene_qc_6=0)
+            SlideCziToTif.objects.filter(slide__id=obj.id).update(active=True)
+            existing_file_names = []
+            for placeholder in SlideCziToTif.objects.filter(slide__id=obj.id).all():
+                if placeholder.file_name in existing_file_names:
+                    placeholder.delete()
+                else:
+                    existing_file_names.append(placeholder.file_name)
+            scene_reorder(obj.id)
+            self.message_user(request, "The slide has been reset to it's original state.")
+            return HttpResponseRedirect(".")
+        return super().response_change(request, obj)
+
 @admin.register(SlideCziToTif)
 class SlideCziToTifAdmin(AtlasAdminModel, ExportCsvMixin):
     """A class to administer the individual scene, AKA the TIFF file.
@@ -499,6 +541,12 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
     class Media:
         css = {'all': ('admin/css/thumbnail.css',)}
 
+    def changelist_view(self, request, extra_context=None):
+        title = 'List sections by animal name'
+        subtitle = 'Enter a valid animal name in the search field below'
+        extra_context = {'title': title, 'subtitle': subtitle}
+        return super(SectionAdmin, self).changelist_view(request, extra_context=extra_context)
+
     def section_number(self, instance):
         """ Description of section_number - this is just an ordered query,
         so to get the section number, we
@@ -528,8 +576,14 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
         sections = Section.objects.filter(prep_id='XXXX')
         if request and request.GET:
             prep_id = request.GET['q']
-            histology = Histology.objects.get(prep_id=prep_id)
-            orderby = histology.side_sectioned_first
+            histology = None
+            try:
+                histology = Histology.objects.get(prep_id=prep_id)
+            except Histology.DoesNotExist:
+                orderby = 'ASC'
+
+            if histology is not None: 
+                orderby = histology.side_sectioned_first
 
             if orderby == 'DESC':
                 sections =  Section.objects.filter(prep_id__exact=prep_id).filter(channel=1)\
