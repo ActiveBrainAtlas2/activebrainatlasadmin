@@ -531,6 +531,8 @@ def create_point_annotation(coordinates, description=None, category=None, type='
     point_annotation['type'] = type
     if description is not None:
         point_annotation['description'] = description
+    else:
+        point_annotation['description'] = ''
     if category is not None:
         point_annotation['category'] = category
     return point_annotation
