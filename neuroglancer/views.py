@@ -116,19 +116,18 @@ class GetMarkedCell(AnnotationBase, views.APIView):
         for row in rows:
             coordinates = [int(round(row.x)), int(round(row.y)), row.z]
             description = row.source
-            if description == 'HUMAN_POSITIVE':
-                source = 'positive'
-            elif description == 'HUMAN_NEGATIVE':
-                source = 'negative'
-            elif description == 'MACHINE_SURE':
-                source = 'machine_sure'
-            elif description == 'MACHINE_UNSURE':
-                source = 'machine_unsure'
+            if row.source == 'HUMAN_POSITIVE':
+                description = 'positive'
+            elif row.source == 'HUMAN_NEGATIVE':
+                description = 'negative'
+            elif row.source == 'MACHINE_SURE':
+                description = 'machine_sure'
+            elif row.source == 'MACHINE_UNSURE':
+                description = 'machine_unsure'
             else:
-                source = NULL
+                description = NULL
              
-            print(source)
-            point_annotation = create_point_annotation(coordinates, source, type='cell')
+            point_annotation = create_point_annotation(coordinates, description, type='cell')
             point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
         serializer = AnnotationSerializer(data, many=True)
@@ -258,30 +257,6 @@ class LandmarkList(views.APIView):
         data['land_marks'] = list_of_landmarks
         return JsonResponse(data)
 
-
-# class AnnotationStatus(views.APIView):
-#     """View that returns the current status of COM annotations.  This is to be updated or deprecated
-#     """
-
-#     def get(self, request, format=None):
-#         list_of_landmarks = BrainRegion.objects.all().filter(active=True).all()
-#         list_of_landmarks_id = [i.id for i in list_of_landmarks]
-#         list_of_landmarks_name = [i.abbreviation for i in list_of_landmarks]
-#         list_of_animals = ['DK39', 'DK41', 'DK43', 'DK46', 'DK52', 'DK54', 'DK55', 'DK61',
-#                            'DK62', 'DK63']
-#         n_landmarks = len(list_of_landmarks_id)
-#         n_animals = len(list_of_animals)
-#         has_annotation = np.zeros([n_landmarks, n_animals])
-#         for animali in range(n_animals):
-#             for landmarki in range(n_landmarks):
-#                 prep_id = list_of_animals[animali]
-#                 brain_region = list_of_landmarks_id[landmarki]
-#                 has_annotation[landmarki, animali] = \
-#                     StructureCom.objects.all().filter(prep=prep_id)\
-#                     .filter(brain_region=brain_region).exists()
-#                 counts = has_annotation.sum(axis=0)
-#         return render(request, 'annotation_status.html', {'has_annotation': has_annotation, 'animals': list_of_animals,
-#                                                           'brain_regions': list_of_landmarks_name, 'counts': counts})
 
 class ContoursToVolume(views.APIView):
     def get(self, request, url_id, volume_id):

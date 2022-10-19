@@ -25,7 +25,7 @@ from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from neuroglancer.models import AnnotationArchive, AnnotationSession, MarkedCellWorkflow, \
     UrlModel,  BrainRegion, Points, \
-    PolygonSequence, MarkedCell, StructureCom, CellType, AnnotationPointArchive
+    PolygonSequence, MarkedCell, StructureCom, CellType
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
@@ -324,19 +324,14 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
     change_list_template = 'markedcell_change_list.html'
 
     def changelist_view(self, request, extra_context=None):
-        response = super().changelist_view(
-            request,
-            extra_context=extra_context,
-        )
+        response = super().changelist_view(request, extra_context=extra_context)
 
         try:
             qs = response.context_data['cl'].queryset
         except (AttributeError, KeyError):
             return response
 
-        metrics = {
-            'marked_cells': Count('id'),
-        }
+        metrics = {'marked_cells': Count('id'),}
 
         response.context_data['summary'] = list(
             qs
@@ -347,7 +342,6 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
 
         total = "{:,}".format(qs.count())
         response.context_data['summary_total'] =  {'cell_total': total}
-
 
         return response
 
