@@ -2,7 +2,7 @@ import string
 import random
 import numpy as np
 from django.http.response import Http404
-from neuroglancer.models import NULL
+from neuroglancer.models import UNMARKED
 default_annotation_layer = dict(
     type='annotation', annotations=[], name='annotation', source='')
 
@@ -70,7 +70,7 @@ class AnnotationLayer:
         if 'category' in point_json:
             point.category = point_json['category']
             if point.category == '':
-                point.category = NULL
+                point.category = UNMARKED
         return point
 
     def parse_line(self, line_json):
@@ -297,8 +297,8 @@ class Cell(Point):
     def __init__(self, coord, id):
         super().__init__(coord, id)
         self._type = 'cell'
-        self.category = NULL
-        self.description = NULL
+        self.category = UNMARKED
+        self.description = ''
 
 
 class Line(Annotation):

@@ -13,8 +13,8 @@ from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import random_string, create_point_annotation
 from neuroglancer.annotation_manager import AnnotationManager
 from neuroglancer.atlas import align_atlas, get_scales
-from neuroglancer.models import AnnotationSession, MarkedCell, PolygonSequence, \
-    UrlModel, BrainRegion, StructureCom, CellType, NULL
+from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, PolygonSequence, \
+    UrlModel, BrainRegion, StructureCom, CellType
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, MarkedCellListSerializer, PolygonListSerializer, \
     PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations
@@ -108,7 +108,6 @@ class GetMarkedCell(AnnotationBase, views.APIView):
         try:
             session = AnnotationSession.objects.get(pk=session_id)
         except:
-            print('bad query')
             return Response({"Error": "Record does not exist"}, status=status.HTTP_404_NOT_FOUND)
         rows = MarkedCell.objects.filter(annotation_session__pk=session_id)
         apply_scales_to_annotation_rows(rows, session.animal.prep_id)
@@ -124,12 +123,16 @@ class GetMarkedCell(AnnotationBase, views.APIView):
                 description = 'machine_sure'
             elif row.source == 'MACHINE_UNSURE':
                 description = 'machine_unsure'
+            elif row.source == UNMARKED:
+                description = 'unmarked'
             else:
-                description = NULL
+                return Response({"Error": "Source is not correct on annotation session"}, status=status.HTTP_404_NOT_FOUND)
+                
              
             point_annotation = create_point_annotation(coordinates, description, type='cell')
             point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
+        print('session id', session.id)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -189,28 +192,40 @@ class GetMarkedCellList(views.APIView):
         """
         This will get the layer_data
         """
-
+        from timeit import default_timer as timer
+        start_time = timer()
         data = []
-        annotation_sessions = AnnotationSession.objects.filter(
-            active=True).filter(annotation_type='MARKED_CELL')\
-            .order_by('animal', 'annotation_type', 'annotator')
-        for annotation_session in annotation_sessions:
-            if not isinstance(annotation_session.cell_type, CellType):
-                continue
+        #rows = MarkedCell.objects.filter()
+        rows = MarkedCell.objects.order_by('annotation_session__animal', 
+            'annotation_session__annotator__username')\
+            .values('annotation_session__id',
+            'annotation_session__animal', 
+            'annotation_session__annotator__username',
+            'source',
+            'cell_type__cell_type',
+            'cell_type__id',
+            'annotation_session__brain_region__abbreviation',
+            'annotation_session__brain_region__id',
+            )\
+            .distinct()
+
+        print(rows.query)
+        for row in rows:
             data.append({
-                'session_id': annotation_session.id,
-                "prep_id": annotation_session.animal.prep_id,
-                "annotator": annotation_session.annotator.username,
-                "source": annotation_session.source,
-                "cell_type": annotation_session.cell_type.cell_type,
-                "cell_type_id": annotation_session.cell_type.id,
-                "structure": annotation_session.brain_region.abbreviation,
-                "structure_id": annotation_session.brain_region.id,
+                'session_id': row['annotation_session__id'],
+                "prep_id": row['annotation_session__animal'],
+                "annotator": row['annotation_session__annotator__username'],
+                "source": row['source'],
+                "cell_type": row['cell_type__cell_type'],
+                "cell_type_id": row['cell_type__id'],
+                "structure": row['annotation_session__brain_region__abbreviation'],
+                "structure_id": row['annotation_session__brain_region__id'],
             })
-            if data[-1]['structure'] == 'point':
-                data[-1]['structure'] = 'NA'
+        end_time = timer()
+        print(f"get took {end_time - start_time} seconds")
         serializer = MarkedCellListSerializer(data, many=True)
         return Response(serializer.data)
+
 
 
 class Rotation(views.APIView):

@@ -15,7 +15,7 @@ class BulkCreateManager(object):
     call `done()` to ensure the final set of objects is created for all models.
     """
 
-    def __init__(self, chunk_size=100):
+    def __init__(self, chunk_size=50):
         self._create_queues = defaultdict(list)
         self.chunk_size = chunk_size
 

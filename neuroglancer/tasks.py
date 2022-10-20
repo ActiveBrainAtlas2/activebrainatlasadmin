@@ -8,7 +8,7 @@ from django.http import Http404
 from background_task import background
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, CellType, UrlModel, \
-    get_region_from_abbreviation, NULL
+    get_region_from_abbreviation, UNMARKED
 from neuroglancer.annotation_manager import AnnotationManager
 
 
@@ -34,7 +34,7 @@ def restore_annotations(session_id):
     data_model.objects.filter(annotation_session=annotation_session).delete()
     field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
     rows = AnnotationPointArchive.objects.filter(annotation_session=annotation_session)
-    bulk_mgr = BulkCreateManager(chunk_size=100)
+    bulk_mgr = BulkCreateManager(chunk_size=50)
     for row in rows:
         fields = [getattr(row,namei) for namei in field_names]
         input = dict(zip(field_names,fields))
@@ -91,12 +91,12 @@ def background_archive_and_insert_annotations(layeri, url_id):
             elif cells[0].description == 'negative':
                 source = 'HUMAN_NEGATIVE'
             else:
-                source = NULL
+                source = UNMARKED
 
             new_session = manager.get_new_session_and_archive_points(
                 brain_region=brain_region, annotation_type='MARKED_CELL', cell_type=cell_type, source=source)
             for annotationi in cells:
-                if cell_type == NULL:
+                if cell_type == UNMARKED:
                     brain_region = get_region_from_abbreviation('point')
                     manager.add_marked_cells(annotationi, new_session, None, source)
                 else:
