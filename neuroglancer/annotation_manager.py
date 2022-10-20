@@ -5,7 +5,7 @@ from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, Brai
     PolygonSequence, StructureCom, PolygonSequence, MarkedCell, get_region_from_abbreviation
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
-from neuroglancer.models import CellType, NULL
+from neuroglancer.models import CellType, UNMARKED
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
 
@@ -90,11 +90,11 @@ class AnnotationManager(AnnotationBase):
                 elif cells[0].description =='negative':
                     source = 'HUMAN_NEGATIVE'
                 else:
-                    source = NULL
+                    source = UNMARKED
                 new_session = self.get_new_session_and_archive_points(
                     brain_region=brain_region, annotation_type='MARKED_CELL', cell_type=cell_type,source=source)
                 for annotationi in cells:
-                    if cell_type == NULL:
+                    if cell_type == UNMARKED:
                         brain_region = get_region_from_abbreviation('point')
                         self.add_marked_cells(annotationi, new_session, None,source)
                     else:
@@ -209,7 +209,8 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                                        source='MANUAL', x=x, y=y, z=z))
 
-    def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, cell_type,source):
+    def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, 
+        cell_type, source):
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
                           source=source, x=x, y=y, z=z, cell_type=cell_type))

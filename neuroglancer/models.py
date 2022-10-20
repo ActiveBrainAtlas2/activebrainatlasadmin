@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
+from django.http import HttpResponseNotFound
 import re
 import json
 import pandas as pd
@@ -17,7 +18,7 @@ CORRECTED = 2
 POINT_ID = 52
 LINE_ID = 53
 POLYGON_ID = 54
-NULL = 'NULL'
+UNMARKED = 'UNMARKED'
 
 class UrlModel(models.Model):
     """Model corresponding to the neuroglancer json states stored in the neuroglancer_url table.
@@ -208,7 +209,7 @@ class AnnotationSession(models.Model):
         verbose_name_plural = 'Annotation sessions'
 
     @property
-    def source(self):
+    def sourceXXX(self):
         if self.is_polygon_sequence():
             one_row = PolygonSequence.objects.filter(annotation_session__id=self.id).first()
         elif self.is_marked_cell():
@@ -220,23 +221,16 @@ class AnnotationSession(models.Model):
         return one_row.source
     
     @property
-    def cell_type(self):
-        if self.is_polygon_sequence():
-            return None
-        elif self.is_marked_cell():
+    def cell_typeXXX(self):
+        cell_type = None
+        if self.is_marked_cell():
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
-            if one_row is None:
-                return None
-            else:
-                if hasattr(one_row,'cell_type'):
-                    return one_row.cell_type
-                else:
-                    class NullCellType:...
-                    null_cell_type = NullCellType()
-                    null_cell_type.cell_type = NULL
-                    return null_cell_type
-        elif self.is_structure_com():
-            return None
+            if one_row is not None and one_row.cell_type is not None:
+                cell_type = one_row.cell_type
+        else:
+            cell_type = None
+
+        return cell_type
 
     def __str__(self):
         return f'{self.animal} {self.brain_region} {self.annotation_type}'
@@ -297,14 +291,11 @@ class MarkedCell(AnnotationAbstract):
             MACHINE_UNSURE = 'MACHINE_UNSURE', gettext_lazy('Machine Unsure')
             HUMAN_POSITIVE = 'HUMAN_POSITIVE', gettext_lazy('Human Positive')
             HUMAN_NEGATIVE = 'HUMAN_NEGATIVE', gettext_lazy('Human Negative')
+            UNMARKED = UNMARKED, gettext_lazy('Unmarked')
 
-    source = models.CharField(
-        max_length=25,
-        choices=SourceChoices.choices,
-        default=None,
-    )    
+    source = models.CharField(max_length=25, choices=SourceChoices.choices, default=None)    
     cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
-                               verbose_name="Cell Type", default=None)
+                               verbose_name="Cell Type")
     class Meta:
         managed = False
         db_table = 'marked_cells'
