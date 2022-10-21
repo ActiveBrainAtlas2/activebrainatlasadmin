@@ -276,16 +276,9 @@ class AnnotationManager(AnnotationBase):
     def get_existing_session(self, brain_region: BrainRegion, annotation_type, 
         cell_type, source = None):
         session = None
-        sessions = AnnotationSession.objects.filter(animal=self.animal)\
-                            .filter(brain_region=brain_region)\
-                            .filter(annotator=self.annotator)\
-                            .filter(annotation_type=annotation_type)\
-                            .filter(active=True).all()
-        if not sessions:
-            return session
             
         if annotation_type == 'MARKED_CELL':
-            marked_cells = MarkedCell.objects.filter(annotation_session__animal=self.animal)\
+            marked_cells = MarkedCell.objects.order_by('-annotation_session__created').filter(annotation_session__animal=self.animal)\
                                 .filter(annotation_session__brain_region=brain_region)\
                                 .filter(annotation_session__annotator=self.annotator)\
                                 .filter(annotation_session__annotation_type=annotation_type)\
@@ -295,12 +288,17 @@ class AnnotationManager(AnnotationBase):
             if source is not None:
                 marked_cells = marked_cells.filter(source=source)
             if len(marked_cells) > 0:
-                marked_cell = marked_cells[0]
+                marked_cell = marked_cells.first()
                 session = marked_cell.annotation_session
-            #print(marked_cells.query)
         else:
-            assert len(sessions)==1
-            session = sessions[0]
+            try:
+                session = AnnotationSession.objects.order_by('-created').filter(animal=self.animal)\
+                        .filter(brain_region=brain_region)\
+                        .filter(annotator=self.annotator)\
+                        .filter(annotation_type=annotation_type)\
+                        .filter(active=True).first()
+            except AnnotationSession.DoesNotExist:
+                session = None
         return session
 
 
