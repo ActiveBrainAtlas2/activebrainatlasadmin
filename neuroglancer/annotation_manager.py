@@ -163,7 +163,8 @@ class AnnotationManager(AnnotationBase):
             _type_: _description_
         """
         annotation_session = self.get_existing_session(
-            brain_region=brain_region, annotation_type=annotation_type,cell_type=cell_type,source=source)
+            brain_region=brain_region, annotation_type=annotation_type,
+            cell_type=cell_type, source=source)
         if annotation_session is not None:
             parent_id = self.get_parent_id_for_current_session_and_achrive_points(
                 annotation_session)
@@ -238,12 +239,13 @@ class AnnotationManager(AnnotationBase):
                 ordering += 1
             polygon_index += 1
 
-    def get_existing_session(self, brain_region: BrainRegion, annotation_type, cell_type = None, source = None):
+    def get_existing_sessionXXX(self, brain_region: BrainRegion, annotation_type, 
+        cell_type = None, source = None):
             sessions = AnnotationSession.objects.filter(animal=self.animal)\
                                 .filter(brain_region=brain_region)\
                                 .filter(annotator=self.annotator)\
                                 .filter(annotation_type=annotation_type)\
-                                .filter(active=1).all()
+                                .filter(active=True).all()
             if not sessions:
                 return None
 
@@ -251,14 +253,15 @@ class AnnotationManager(AnnotationBase):
                 cell_types = []
                 sources = []
                 ids = []
-                for id,i in enumerate(sessions):
-                    if not i.cell_type is None and not i.source is None:
-                        cell_types.append(i.cell_type.cell_type)
-                        sources.append(i.source)
-                        ids.append(id)
+                for i, session in enumerate(sessions):
+                    if session.cell_type is not None and session.source is not None:
+                        cell_types.append(session.cell_type.cell_type)
+                        sources.append(session.source)
+                        ids.append(i)
                 if cell_types ==[]:
                     return None
-                right_cell_type_and_source = np.logical_and(np.array(cell_types)==cell_type,np.array(sources)==source)
+                right_cell_type_and_source = \
+                    np.logical_and(np.array(cell_types)==cell_type, np.array(sources)==source)
                 found = sum(right_cell_type_and_source)
                 assert found<=1
                 if found==0:
@@ -268,6 +271,38 @@ class AnnotationManager(AnnotationBase):
             else:
                 assert len(sessions)==1
                 return sessions[0]
+
+
+    def get_existing_session(self, brain_region: BrainRegion, annotation_type, 
+        cell_type, source = None):
+        session = None
+        sessions = AnnotationSession.objects.filter(animal=self.animal)\
+                            .filter(brain_region=brain_region)\
+                            .filter(annotator=self.annotator)\
+                            .filter(annotation_type=annotation_type)\
+                            .filter(active=True).all()
+        if not sessions:
+            return session
+            
+        if annotation_type == 'MARKED_CELL':
+            marked_cells = MarkedCell.objects.filter(annotation_session__animal=self.animal)\
+                                .filter(annotation_session__brain_region=brain_region)\
+                                .filter(annotation_session__annotator=self.annotator)\
+                                .filter(annotation_session__annotation_type=annotation_type)\
+                                .filter(annotation_session__active=True)\
+                                .filter(cell_type__cell_type=cell_type)\
+                                .all()
+            if source is not None:
+                marked_cells = marked_cells.filter(source=source)
+            if len(marked_cells) > 0:
+                marked_cell = marked_cells[0]
+                session = marked_cell.annotation_session
+            #print(marked_cells.query)
+        else:
+            assert len(sessions)==1
+            session = sessions[0]
+        return session
+
 
     def create_new_session(self, brain_region: BrainRegion, annotation_type, parent=0):
         annotation_session = AnnotationSession.objects.create(

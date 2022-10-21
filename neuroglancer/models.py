@@ -190,7 +190,7 @@ class BrainRegion(AtlasModel):
 def get_region_from_abbreviation(abbreviation):
     return BrainRegion.objects.filter(abbreviation=abbreviation).first()
     
-class AnnotationSession(models.Model):
+class AnnotationSession(AtlasModel):
     """This model describes a user session in Neuroglancer."""
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
@@ -198,10 +198,9 @@ class AnnotationSession(models.Model):
                                verbose_name="Brain region")
     annotator = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_annotator_id",
                                verbose_name="Annotator", blank=False, null=False)
-    created = models.DateTimeField(auto_now_add=True)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
-    active = models.IntegerField(default=0)
+
     class Meta:
         managed = False
         db_table = 'annotation_session'
@@ -209,7 +208,7 @@ class AnnotationSession(models.Model):
         verbose_name_plural = 'Annotation sessions'
 
     @property
-    def sourceXXX(self):
+    def source(self):
         if self.is_polygon_sequence():
             one_row = PolygonSequence.objects.filter(annotation_session__id=self.id).first()
         elif self.is_marked_cell():
@@ -221,7 +220,7 @@ class AnnotationSession(models.Model):
         return one_row.source
     
     @property
-    def cell_typeXXX(self):
+    def cell_type(self):
         cell_type = None
         if self.is_marked_cell():
             one_row = MarkedCell.objects.filter(annotation_session__id=self.id).first()
