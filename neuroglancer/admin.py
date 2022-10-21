@@ -526,7 +526,7 @@ class AnnotationSessionAdmin(AtlasAdminModel):
 
     def get_queryset(self, request):
         qs = super(AnnotationSessionAdmin, self).get_queryset(
-            request).filter(active=1)
+            request).filter(active=True)
         return qs
 
     def view_points_in_session(self, request, id, *args, **kwargs):

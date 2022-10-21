@@ -100,8 +100,7 @@ def background_archive_and_insert_annotations(layeri, url_id):
                     brain_region = get_region_from_abbreviation('point')
                     manager.add_marked_cells(annotationi, new_session, None, source)
                 else:
-                    cell_type = CellType.objects.filter(
-                        cell_type=cell_type).first()
+                    cell_type = CellType.objects.filter(cell_type=cell_type).first()
                     if cell_type is not None:
                         brain_region = get_region_from_abbreviation('point')
                         manager.add_marked_cells(annotationi, new_session, cell_type, source)

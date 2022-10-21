@@ -33,9 +33,12 @@ class UrlViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 def apply_scales_to_annotation_rows(rows, prep_id):
-    """To fetch the scan resolution of an animal from the database and apply it to a list of annotation rows
+    """To fetch the scan resolution of an animal from the database and apply it to a 
+    list of annotation rows
 
-    :param rows: list of query result from either the StructureCom, MarkedCell or PolygonSequence table
+    :param rows: list of query result from either the StructureCom, MarkedCell, 
+    or PolygonSequence table.
+
     :param prep_id: string animal id
     """
     scale_xy, z_scale = get_scales(prep_id)
@@ -132,7 +135,6 @@ class GetMarkedCell(AnnotationBase, views.APIView):
             point_annotation = create_point_annotation(coordinates, description, type='cell')
             point_annotation['category'] = row.cell_type.cell_type
             data.append(point_annotation)
-        print('session id', session.id)
         serializer = AnnotationSerializer(data, many=True)
         return Response(serializer.data)
 
@@ -143,12 +145,14 @@ class GetComList(views.APIView):
 
     def get(self, request, format=None):
         """
-        This will get the layer_data
+        This will get the layers of COMs for the dropdown menu
         """
         data = []
-        coms = StructureCom.objects.order_by('annotation_session')\
-            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username', 'annotation_session__annotator__id', 'source')\
-            .annotate(Count("id")).order_by()
+        coms = StructureCom.objects.order_by('annotation_session__animal__prep_id', 
+            'annotation_session__annotator__username')\
+            .values('annotation_session__animal__prep_id', 'annotation_session__annotator__username', 
+            'annotation_session__annotator__id', 'source')\
+            .annotate(Count("id"))
         for com in coms:
             data.append({
                 "prep_id": com['annotation_session__animal__prep_id'],
@@ -164,21 +168,20 @@ class GetComList(views.APIView):
 class GetPolygonList(views.APIView):
     """A view that returns a list of available brain region volumes.
     """
-
     def get(self, request, format=None):
         """
         This will get the layer_data
         """
         data = []
-        annotation_sessions = AnnotationSession.objects.filter(
+        rows = AnnotationSession.objects.filter(
             active=True).filter(annotation_type='POLYGON_SEQUENCE').all()
-        for annotation_session in annotation_sessions:
+        for row in rows:
             data.append({
-                'session_id': annotation_session.id,
-                "prep_id": annotation_session.animal.prep_id,
-                "annotator": annotation_session.annotator.username,
-                "brain_region": annotation_session.brain_region.abbreviation,
-                "source": annotation_session.source,
+                'session_id': row.id,
+                "prep_id": row.animal.prep_id,
+                "annotator": row.annotator.username,
+                "brain_region": row.brain_region.abbreviation,
+                "source": 'NA'
             })
         serializer = PolygonListSerializer(data, many=True)
         return Response(serializer.data)
@@ -190,12 +193,9 @@ class GetMarkedCellList(views.APIView):
 
     def get(self, request, format=None):
         """
-        This will get the layer_data
+        This will get the layer_data for the marked cell requested
         """
-        from timeit import default_timer as timer
-        start_time = timer()
         data = []
-        #rows = MarkedCell.objects.filter()
         rows = MarkedCell.objects.order_by('annotation_session__animal', 
             'annotation_session__annotator__username')\
             .values('annotation_session__id',
@@ -209,20 +209,17 @@ class GetMarkedCellList(views.APIView):
             )\
             .distinct()
 
-        print(rows.query)
         for row in rows:
             data.append({
                 'session_id': row['annotation_session__id'],
-                "prep_id": row['annotation_session__animal'],
-                "annotator": row['annotation_session__annotator__username'],
-                "source": row['source'],
-                "cell_type": row['cell_type__cell_type'],
-                "cell_type_id": row['cell_type__id'],
-                "structure": row['annotation_session__brain_region__abbreviation'],
-                "structure_id": row['annotation_session__brain_region__id'],
+                'prep_id': row['annotation_session__animal'],
+                'annotator': row['annotation_session__annotator__username'],
+                'source': row['source'],
+                'cell_type': row['cell_type__cell_type'],
+                'cell_type_id': row['cell_type__id'],
+                'structure': row['annotation_session__brain_region__abbreviation'],
+                'structure_id': row['annotation_session__brain_region__id'],
             })
-        end_time = timer()
-        print(f"get took {end_time - start_time} seconds")
         serializer = MarkedCellListSerializer(data, many=True)
         return Response(serializer.data)
 
