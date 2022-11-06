@@ -243,8 +243,10 @@ class TifInline(admin.TabularInline):
             laid out on the page.
     """
     model = SlideCziToTif
-    fields = ('file_name','scene_number', 'scene_index', 'section_number', 'channel', 'scene_image', 'section_image')
-    readonly_fields = ['file_name', 'scene_number', 'section_number', 'channel', 'scene_index', 'scene_image', 'section_image']
+    fields = ('file_name','scene_number', 'scene_index', 'section_number', 'channel', 
+        'scene_image', 'section_image')
+    readonly_fields = ['file_name', 'scene_number', 'section_number', 'channel', 
+        'scene_index', 'scene_image', 'section_image']
     ordering = ['-active', 'scene_number', 'scene_index']
     extra = 0
     can_delete = False
@@ -299,12 +301,12 @@ class TifInline(admin.TabularInline):
         :return: HTML that displays a link to the scene PNG file
         """
         animal = obj.slide.scan_run.prep_id
-        tif_file = obj.file_name
+        tif_file = self.section_number(obj)
         png = tif_file.replace('tif', 'png')
-        # DK55_slide112_2020_09_21_9205_S1_C1.png
-        testfile = f"/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{animal}/www/{png}"
+        filepath = f"{animal}/www/section/{png}"
+        testfile = f"/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/{filepath}"
         if os.path.isfile(testfile):
-            thumbnail = f"https://activebrainatlas.ucsd.edu/data/{animal}/www/{png}"
+            thumbnail = f"https://activebrainatlas.ucsd.edu/data/{filepath}"
             return mark_safe(
                 '<div class="profile-pic-wrapper"><img src="{}" /></div>'.format(thumbnail))
         else:
