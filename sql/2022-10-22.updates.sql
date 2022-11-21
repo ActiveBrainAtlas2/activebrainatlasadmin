@@ -1,6 +1,6 @@
 select *
 from elastix_transformation
-where prep_id = 'DK79' 
+where prep_id = 'DK52' 
 -- and  section in ('005','006','007')
 order by metric;
 
