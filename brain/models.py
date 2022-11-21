@@ -24,7 +24,9 @@ class AtlasModel(models.Model):
 
 class Animal(AtlasModel):
     """This is the main model used by almost all the other models in the entire project.
-    It includes the fields originally set by David and Yoav."""
+    It includes the fields originally set by David and Yoav.
+    """
+
     prep_id = models.CharField(primary_key=True, max_length=20, db_column='prep_id')
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True, db_column='performance_center')
     date_of_birth = models.DateField(blank=True, null=True, db_column='date_of_birth')
@@ -73,7 +75,9 @@ class Animal(AtlasModel):
     histogram.short_description = 'Histogram'
 
 class Histology(AtlasModel):
-    """This class provides the metadata associated with the histology of the animal"""
+    """This class provides the metadata associated with the histology of the animal
+    """
+    
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True)
@@ -114,8 +118,11 @@ class Histology(AtlasModel):
         return histology_label
 
 class Injection(AtlasModel):
-    """This class provides information regarding an injection. An animal can have one or more injections
-    and and injection can contain one or more viruses."""
+    """This class provides information regarding an injection. 
+    An animal can have one or more injections and and injection can 
+    contain one or more viruses.
+    """
+    
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
@@ -144,8 +151,11 @@ class Injection(AtlasModel):
         return "{} {}".format(self.prep.prep_id, self.comments)
 
 class InjectionVirus(AtlasModel):
-    """This class describes a many to many relationship for the injections and viruses.
-    An animal can have one or more injections and a injection can have one or more viruses."""
+    """This class describes a many to many relationship for the injections 
+    and viruses. An animal can have one or more injections and a injection 
+    can have one or more viruses.
+    """
+    
     id = models.AutoField(primary_key=True)
     injection = models.ForeignKey(Injection, models.CASCADE)
     virus = models.ForeignKey('Virus', models.CASCADE)
@@ -157,7 +167,9 @@ class InjectionVirus(AtlasModel):
         verbose_name_plural = 'Injection Viruses'
 
 class OrganicLabel(AtlasModel):
-    """This class holds the organic label metadata."""
+    """This class holds the organic label metadata.
+    """
+    
     id = models.AutoField(primary_key=True)
     label_id = models.CharField(max_length=20)
     label_type = EnumField(choices=['Cascade Blue','Chicago Blue','Alexa405','Alexa488','Alexa647','Cy2','Cy3','Cy5','Cy5.5','Cy7','Fluorescein','Rhodamine B','Rhodamine 6G','Texas Red','TMR'], blank=True, null=True)
@@ -186,9 +198,11 @@ class OrganicLabel(AtlasModel):
         return "{} {}".format(self.label_id, self.label_type)
 
 class ScanRun(AtlasModel):
-    """This class describes the blueprint of a scan. Each animal will usually have just one 
-    scan run, but they can have more than one. Information in this table is used
-    extensively throughout the pre-processing """
+    """This class describes the blueprint of a scan. Each animal will usually 
+    have just one scan run, but they can have more than one. Information in 
+    this table is used extensively throughout the pre-processing 
+    """
+    
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
@@ -223,8 +237,11 @@ class ScanRun(AtlasModel):
         db_table = 'scan_run'
 
 class Slide(AtlasModel):
-    """This class describes an individual slide. Each slide usually has 4 scenes (pieces of tissue).
-    This is the parent class to the TIFF (SlideCziToTif) class."""
+    """This class describes an individual slide. Each slide usually has 
+    4 scenes (pieces of tissue). This is the parent class to the 
+    TIFF (SlideCziToTif) class.
+    """
+
     id = models.AutoField(primary_key=True)
     scan_run = models.ForeignKey(ScanRun, models.CASCADE)
     slide_physical_id = models.IntegerField()
@@ -279,8 +296,11 @@ class Slide(AtlasModel):
         db_table = 'slide'
 
 class SlideCziToTif(AtlasModel):
-    """This is the child class of the Slide class. This model describes the metadata associated
-    with a TIFF file, or another way to think of it, it describes one piece of brain tissue on a slide."""
+    """This is the child class of the Slide class. This model describes the 
+    metadata associated with a TIFF file, or another way to think of it, 
+    it describes one piece of brain tissue on a slide.
+    """
+    
     id = models.AutoField(primary_key=True)
     slide = models.ForeignKey(Slide, models.CASCADE, db_column='FK_slide_id')
     file_name = models.CharField(max_length=200, null=False)
@@ -314,7 +334,8 @@ class SlideCziToTif(AtlasModel):
 class Section(AtlasModel):
     """This class describes a view and not an actual database table.
     This table provides the names, locations and ordering of the 
-    TIFF files."""
+    TIFF files.
+    """
     
     id = models.AutoField(primary_key=True)
     prep_id = models.CharField(max_length=20)
