@@ -23,7 +23,7 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.models import AnnotationArchive, AnnotationSession, MarkedCellWorkflow, \
+from neuroglancer.models import AnnotationArchive, AnnotationPointArchive, AnnotationSession, ArchiveSet, MarkedCellWorkflow, \
     UrlModel,  BrainRegion, Points, \
     PolygonSequence, MarkedCell, StructureCom, CellType
 from neuroglancer.dash_view import dash_scatter_view
@@ -38,24 +38,23 @@ def datetime_format(dtime):
     """
     return dtime.strftime("%d %b %Y %H:%M")
 
-'''
-@admin.register(AlignmentScore)
-class AlignmentScoreAdmin(admin.ModelAdmin):
-    """This class provides information for constructing the alignment score graph page."""
-    change_list_template = "alignment_score.html"
+def get_points_in_session(id):
+    """Shows how many points are in data.
+    """
 
-    def has_add_permission(self, request):
-        """Returns false as it is readonly"""
-        return False
+    session = AnnotationSession.objects.get(pk=id)
+    annotation_type = session.annotation_type
+    if annotation_type == 'POLYGON_SEQUENCE':
+        points = PolygonSequence.objects.filter(
+            annotation_session__id=session.id)
+    elif annotation_type == 'MARKED_CELL':
+        points = MarkedCell.objects.filter(
+            annotation_session__id=session.id)
+    elif annotation_type == 'STRUCTURE_COM':
+        points = StructureCom.objects.filter(
+            annotation_session__id=session.id)
+    return len(points)
 
-    def has_change_permission(self, request, obj=None):
-        """Returns false as it is readonly"""
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """Returns false as it is readonly"""
-        return False
-'''
 
 @admin.register(UrlModel)
 class UrlModelAdmin(admin.ModelAdmin):
@@ -461,10 +460,10 @@ def restore_archive(modeladmin, request, queryset):
         messages.error(
             request, 'Check just one archive. You cannot restore more than one archive.')
     else:
-        session = queryset[0]
-        restore_annotations(session.id, session.animal.prep_id, session.source)
+        archive = queryset[0]
+        restore_annotations(archive)
         messages.info(
-            request, f'The {session.source} layer for {session.animal.prep_id} has been restored. ID={session.id}')
+            request, f'The {archive.annotation_session.source} layer for {archive.annotation_session.animal.prep_id} has been restored. ID={archive.id}')
 
 
 @admin.action(description='Delete Data related to the Selected Session')
@@ -509,10 +508,14 @@ class AnnotationSessionAdmin(AtlasAdminModel):
     def show_points(self, obj):
         """Shows the HTML for the link to the graph of data.
         """
-        return format_html(
-            '<a href="{}">Data</a>',
-            reverse('admin:annotationsession-data', args=[obj.pk])
+
+        len_points = get_points_in_session(obj.pk)
+        return format_html(    
+            '<a href="{}">{} points</a>',
+            reverse('admin:annotationsession-data', args=[obj.pk]), len_points
         )
+
+
 
     def get_urls(self):
         """Shows the HTML of the links to go to the graph, and table data.
@@ -530,7 +533,9 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         return qs
 
     def view_points_in_session(self, request, id, *args, **kwargs):
-        """Provides the HTML link to the table data"""
+        """Provides the HTML link to the table data
+        """
+        
         session = AnnotationSession.objects.get(pk=id)
         annotation_type = session.annotation_type
         if annotation_type == 'POLYGON_SEQUENCE':
@@ -576,21 +581,61 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         )
         return TemplateResponse(request, "points_table.html", context)
 
-
-
-@admin.register(AnnotationArchive)
-class AnnotationArchiveAdmin(AnnotationSessionAdmin):
-    """A class to admin the archived annotations.
+@admin.register(ArchiveSet)
+class ArchiveSetAdmin(AtlasAdminModel):
+    """Class that provides admin capability for managing a region of the brain. This
+    was also called a structure.
     """
     actions = [restore_archive]
 
+    list_display = ('get_animal', 'get_name', 'get_annotation_type', 'created')
+    #ordering = ['abbreviation']
+    #list_filter = ['created', 'active']
+    #search_fields = ['abbreviation', 'description']
+    def get_animal(self, obj):
+            return obj.annotation_session.animal
+    get_animal.admin_order_field  = 'annotation_session__animal__prep_id'  #Allows column order sorting
+    get_animal.short_description = 'Animal'  #Renames column head    
+    def get_name(self, obj):
+            return obj.annotation_session.annotator
+    get_name.admin_order_field  = 'annotation_session__annotator'  #Allows column order sorting
+    get_name.short_description = 'Annotator'  #Renames column head    
+    def get_annotation_type(self, obj):
+            return obj.annotation_session.annotation_type
+    get_annotation_type.admin_order_field  = 'annotation_session__annotation_type'  #Allows column order sorting
+    get_annotation_type.short_description = 'Annotation type'  #Renames column head    
+
+    def has_delete_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Returns false as the data is readonly"""
+        return False
+
+'''
+@admin.register(AnnotationPointArchive)
+class AnnotationArchiveAdmin(admin.ModelAdmin):
+    """A class to admin the archived annotations. 
+    It inherits from the AnnotationSessionAdmin
+    This should show annotations that are inactive.
+    """
+    
+    list_display = ['animal', 'annotation_type', 'annotator', 'created']
+    ordering = ['animal__prep_id'] 
+    search_fields = ['animal__prep_id', 'annotation_type']
+    
+
     def get_queryset(self, request):
-        qs = super(AnnotationSessionAdmin, self).get_queryset(
-            request).filter(active=0)
+        distinct = AnnotationPointArchive.objects.values_list('annotation_session_id', flat=True).distinct()
+        qs = AnnotationSession.objects.filter(pk__in=[id for id in distinct])
         return qs
-
-
-##### The code below if for the tasks. It doesn't really belong in the neuroglancer category
+'''
+##### The code below is for the tasks. It doesn't really belong in the neuroglancer category
 ##### but we had to put it somewhere
 
 admin.site.unregister(Task)
