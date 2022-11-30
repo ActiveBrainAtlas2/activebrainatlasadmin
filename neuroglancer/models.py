@@ -264,6 +264,9 @@ class AnnotationAbstract(models.Model):
     def animal(self):
         return '%s'%self.annotation_session.animal.prep_id
     @property
+    def annotation_type(self):
+        return '%s'%self.annotation_session.annotation_type
+    @property
     def brain_region(self):
         return '%s'%self.annotation_session.brain_region.abbreviation
     @property
@@ -275,6 +278,7 @@ class AnnotationAbstract(models.Model):
     @property
     def session_id(self):
         return '%s'%self.annotation_session.id
+
     class Meta:
         abstract = True
 
@@ -369,24 +373,47 @@ class StructureCom(AnnotationAbstract):
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
 
+
+class ArchiveSet(AtlasModel):
+    """This class model is for set of archives. It gets used by the AnnotationPointArchive.
+    """
+    
+    id = models.BigAutoField(primary_key=True)
+    annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
+                               verbose_name="Annotation session")
+    class Meta:
+        managed = False
+        db_table = 'archive_set'
+        verbose_name = 'Annotation Archive'
+        verbose_name_plural = 'Annotation Archives'
+
+
 class AnnotationPointArchive(AnnotationAbstract):
-    """This class is for an archive of annotation points"""
+    """This class is for an archive of annotation points
+    """
+    x = models.DecimalField(verbose_name="X (um)", max_digits=6, decimal_places=2)
+    y = models.DecimalField(verbose_name="Y (um)", max_digits=6, decimal_places=2)
+    z = models.DecimalField(verbose_name="Z (um)", max_digits=6, decimal_places=2)
+    
+    polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
+    point_order = models.IntegerField(blank=False, null=False, default=0)
+    source = models.CharField(max_length=255)
+    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
+                               verbose_name="Cell type", default=None)
+    archive = models.ForeignKey(ArchiveSet, models.CASCADE, db_column="FK_archive_set_id",
+                               verbose_name="Archive set", default=None)
+
     class Meta:
         managed = False
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
         constraints = [
-                models.UniqueConstraint(fields=['annotation_session'], name='unique backup')
+                models.UniqueConstraint(fields=['annotation_session', 'x', 'y', 'z'], name='unique backup')
             ]        
+    
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
-    polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
-    point_order = models.IntegerField(blank=False, null=False, default=0)
-    source = models.CharField(max_length=255)
-    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
-                               verbose_name="Cell Type", default=None)
-
 
 class AnnotationArchive(AnnotationSession):
     class Meta:
