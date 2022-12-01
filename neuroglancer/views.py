@@ -1,5 +1,6 @@
-"""This is the module that the user will use to connect to the database. This can be defined in either
-a web page or in a REST API call. This module is the 'V' in the MVC framework for the Neuroglancer app
+"""This is the module that the user will use to connect to the database.
+This can be defined in either a web page or in a REST API call. This module
+is the 'V' in the MVC framework for the Neuroglancer app
 portion of the portal.
 """
 
@@ -28,6 +29,7 @@ from time import sleep
 class UrlViewSet(viewsets.ModelViewSet):
     """API endpoint that allows the neuroglancer urls to be viewed or edited.
     """
+    
     queryset = UrlModel.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
@@ -37,10 +39,10 @@ def apply_scales_to_annotation_rows(rows, prep_id):
     list of annotation rows
 
     :param rows: list of query result from either the StructureCom, MarkedCell, 
-    or PolygonSequence table.
-
+        or PolygonSequence table.
     :param prep_id: string animal id
     """
+
     scale_xy, z_scale = get_scales(prep_id)
     for row in rows:
         row.x = row.x / scale_xy
@@ -168,6 +170,7 @@ class GetComList(views.APIView):
 class GetPolygonList(views.APIView):
     """A view that returns a list of available brain region volumes.
     """
+
     def get(self, request, format=None):
         """
         This will get the layer_data
@@ -226,8 +229,8 @@ class GetMarkedCellList(views.APIView):
 
 
 class Rotation(views.APIView):
-    """A view that returns the transformation from the atlas to the image of one perticular brain.
-    prep_id: the animal id, not the primary key in the animal table
+    """A view that returns the transformation from the atlas to the image stack of one 
+    particular brain.
     """
 
     def get(self, request, prep_id, annotator_id, source, reverse=0, reference_scales='None', format=None):
@@ -271,6 +274,9 @@ class LandmarkList(views.APIView):
 
 
 class ContoursToVolume(views.APIView):
+    """Method to run slurm to create a 3D volume
+    """
+    
     def get(self, request, url_id, volume_id):
         command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(url_id),volume_id]
         print(command)
@@ -306,8 +312,8 @@ class SaveAnnotation(views.APIView):
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
                 manager.set_current_layer(layeri)
-                # background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
-                background_archive_and_insert_annotations(layeri, url_id)
+                background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
+                # background_archive_and_insert_annotations(layeri, url_id)
                 found = True
 
         if found:

@@ -1,3 +1,37 @@
+"""This module is responsible for the saving and restoring of the three different annotations.
+
+A. Saving annotations - when the user clicks 'Save annotations' in Neuroglancer:
+
+
+1. All data from the active layer gets sent to one of the three tables:
+   
+   * Marked cells
+   * Polygon sequences
+   * Structure COM
+
+2. Data also gets sent to the annotations_point_archive table. This table has a unique
+constraint. When the same data gets sent to the database, it updates it instead
+of creating new useless inserts. This is done by Django's built-in bulk_create
+method with the 'ignore_conficts' flag set to true. It also gets finds an existing
+archive, or creates a new archive and uses that key for the FK_archive_set_ID. 
+The constraint is on these columns:
+
+   * Session ID (FK_session_id)
+   * x Decimal(8,2) - formerly a float
+   * y Decimal(8,2) - formerly a float
+   * z Decimal(8,2) - formerly a float
+
+B. Restoring annotations
+
+1. This occurs when the user checks one and only one checkbox on the archive page. After
+selecting a checkbox, the user chooses the 'Restore the selected archive' option from
+the dropdown menu. Once the user clicks 'Go', these events take place:
+
+    #. Get requested archive (set of points in the annotations_points_archive table)
+    #. Mark session inactive that is in the archive
+    #. Create a new active session and add it to either marked_cell, polygon_sequence or structureCOM
+"""
+
 from django.http import Http404
 import numpy as np
 from statistics import mode
@@ -10,7 +44,11 @@ from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
 
 class AnnotationManager(AnnotationBase):
-    """This class handles the inseration of annotations into the three tables: MarkedCells, StructureCOM and PolygonSequence
+    """This class handles the management of annotations into the three tables: 
+
+    #. MarkedCells
+    #. StructureCOM
+    #. PolygonSequence
     """
 
     def __init__(self, neuroglancerModel):
@@ -35,8 +73,8 @@ class AnnotationManager(AnnotationBase):
            The incoming neuroglancer json state is parsed by a custom class named AnnotationLayer that 
            groups points according to it's membership to a polygon seqence or volume
 
-        Args:
-            state_layer (dict): neuroglancer json state component of an annotation layer in dictionary form
+        
+        :param state_layer (dict): neuroglancer json state component of an annotation layer in dictionary form
         """
         assert 'name' in state_layer
         self.label = str(state_layer['name']).strip()
@@ -44,15 +82,11 @@ class AnnotationManager(AnnotationBase):
 
 
     def archive_and_insert_annotations(self):
-        """The main function that updates the database with annotations in the current_layer attribute
-           This function loops each annotation in the curent layer and inserts/archive points in the 
-           appropriate table
-           This: 
-
-            1. Moves the old annotations to the archive 
-            2. Sets old sessions as inactive 
-            3. Inserts the new annotation points.
+        """The main function that updates the database with annotations in the current_layer 
+        attribute. This function loops each annotation in the curent layer and 
+        inserts/archive points in the appropriate table.
         """
+
         if self.animal is None or self.annotator is None:
             raise Http404
 
@@ -105,19 +139,14 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
-        """ determines if a point annotation is a structure COM
-            A point annotation is a COM if the description correspond to a structure 
-            existing in the database
-        Args:
-            annotationi (Annotation): the annotation object 
-
-        Returns:
-            boolean: True or False
+        """Determines if a point annotation is a structure COM.
+        A point annotation is a COM if the description corresponds to a structure 
+        existing in the database.
+        
+        :param annotationi (Annotation): the annotation object 
+        :return boolean: True or False
         """
-        # TODO Naga implemented changes in neuroglancer that explicitly distinguish 
-        # between marked cells and COMs.  
-        # Code change that utilize those
-        # markings will identify the two categories in a more robust manner
+
         assert annotationi.is_point()
         description = annotationi.get_description()
         if description is not None:
@@ -127,19 +156,11 @@ class AnnotationManager(AnnotationBase):
             return False
 
     def archive_annotations(self, annotation_session: AnnotationSession):
-        """Move existing annotations into the archive. First we get the existing
+        """Move the existing annotations into the archive. First, we get the existing
         rows and then we insert those into the archive table. This is a background
-        task as we're doing:
-        1. a select of the existing rows.
-        2. bulk inserts of those rows
-        3. deleting those rows from the primary table
+        task.
         
-        :param animal: animal object
-        :param label: char of label name
-        
-        TODO, we need to get the FK from the archive table, insert
-        an appropriate parent in archive_set. After we get the animal,
-        we need to create an archive
+        :param annotation_session: annotation session object
         """
         data_model = annotation_session.get_session_model()
         rows = data_model.objects.filter(
@@ -157,17 +178,36 @@ class AnnotationManager(AnnotationBase):
         rows.delete()
 
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
+        """Helper method to add a COM to the bulk manager.
+
+        :param annotationi: A COM annotation
+        :param annotation_session: session object
+        """
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                                        source='MANUAL', x=x, y=y, z=z))
 
     def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, 
         cell_type, source):
+        """Helper method to add a marked cell to the bulk manager.
+
+        :param annotationi: A COM annotation
+        :param annotation_session: session object
+        :param cell_type: the cell type of the marked cell
+        :param source: the MARKED/UNMARKED source
+        """
+
         x, y, z = np.floor(annotationi.coord) * self.scales
         self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
                           source=source, x=x, y=y, z=z, cell_type=cell_type))
 
     def add_polygons(self, annotationi: Annotation, annotation_session: AnnotationSession):
+        """Helper method to add a polygon to the bulk manager.
+
+        :param annotationi: A polygon annotation
+        :param annotation_session: session object
+        """
+
         z = mode([int(np.floor(pointi.coord_start[2]) * self.z_scale)
                  for pointi in annotationi.childs])
         ordering = 1
@@ -178,6 +218,12 @@ class AnnotationManager(AnnotationBase):
             ordering += 1
 
     def add_volumes(self, annotationi: Annotation, annotation_session: AnnotationSession):
+        """Helper method to add a volume to the bulk manager.
+
+        :param annotationi: A COM annotation
+        :param annotation_session: session object
+        """
+
         polygon_index = 1
         for polygoni in annotationi.childs:
             ordering = 1
@@ -194,26 +240,35 @@ class AnnotationManager(AnnotationBase):
     def get_session(self, brain_region, annotation_type, 
             cell_type = None, source = None):
         """Gets either the existing session or creates a new one.
+
+        :param brain_region: brain region object AKA structure
+        :param annotation_type: either marked cell or polygon or COM
+        :param source: the MARKED/UNMARKED source
         """
 
-        queryset = AnnotationSession.objects.filter(active=True)\
+        annotation_session = AnnotationSession.objects.filter(active=True)\
             .filter(annotation_type=annotation_type)\
                 .filter(animal=self.animal)\
                 .filter(brain_region=brain_region)\
                 .filter(annotator=self.annotator)\
                 .order_by('-created').first()
 
-        if len(queryset) == 1:
-            session = queryset[0]
-            self.archive_annotations(session)
+        if annotation_session is not None:
+            self.archive_annotations(annotation_session)
 
         else:
-            session = self.create_new_session(
+            annotation_session = self.create_new_session(
                 brain_region=brain_region, annotation_type=annotation_type)
             
-        return session
+        return annotation_session
 
     def create_new_session(self, brain_region: BrainRegion, annotation_type):
+        """Helper method to create a new annotation_session
+        
+        :param brain_region: brain region object AKA structure
+        :param annotation_type: either marked cell or polygon or COM
+        """
+
         annotation_session = AnnotationSession.objects.create(
             animal=self.animal,
             brain_region=brain_region,
@@ -223,20 +278,27 @@ class AnnotationManager(AnnotationBase):
         return annotation_session
 
 
-    def get_archive(self, session):
-        """Gets either the existing session or creates a new one.
+    def get_archive(self, annotation_session):
+        """Gets either the existing archive or creates a new one.
+
+        :param annotation_session: session object
         """
 
         queryset = ArchiveSet.objects.filter(active=True)\
-            .filter(annotation_session=session)\
+            .filter(annotation_session=annotation_session)\
 
         if len(queryset) == 1:
             archive = queryset[0]
         else:
-            archive = self.create_new_archive(session)
+            archive = self.create_new_archive(annotation_session)
             
         return archive
 
-    def create_new_archive(self, session):
-        archive = ArchiveSet.objects.create(annotation_session=session, active=True)
+    def create_new_archive(self, annotation_session):
+        """Helper method to create a new session
+        
+        :param annotation_session: session object
+        """
+
+        archive = ArchiveSet.objects.create(annotation_session=annotation_session, active=True)
         return archive

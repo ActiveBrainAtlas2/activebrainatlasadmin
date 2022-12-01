@@ -2,49 +2,63 @@
 Background tasks must be in a file named: tasks.py
 Don't move it to another file!
 They also cannot accept objects as arguments. 
+**Note: If you modify the tasks.py file, you must restart supervisord on the web server!!!**
+``sudo systemctl restart supervisord.service``
 """
-import numpy as np
+
 from django.http import Http404
 from background_task import background
-from neuroglancer.bulk_insert import BulkCreateManager
-from neuroglancer.models import AnnotationPointArchive, AnnotationSession, CellType, UrlModel, \
-    get_region_from_abbreviation, UNMARKED
+from neuroglancer.models import AnnotationPointArchive, AnnotationSession, UrlModel
 from neuroglancer.annotation_manager import AnnotationManager
 
 
-#@background(schedule=0)
+@background(schedule=0)
 def restore_annotations(archive):
     """Restore a set of annotations associated with an archive.
-    1. Get requested archive (set of points in the annotations_points_archive table)
-    3. Add it to either marked_cell, polygon_sequence or structureCOM
-    4. Deleted that archived data
-    5. Update that session to be active
 
+    #. Get requested archive (set of points in the annotations_points_archive table)
+    #. Mark session inactive that is in the archive
+    #. Create a new active session and add it to either marked_cell, polygon_sequence or structureCOM
+
+    :param archive: archive object we want to restore
     """
 
     try:
-        annotation_session = archive.annotation_session
+        session = archive.annotation_session
     except AnnotationSession.DoesNotExist:
         print('No annotation_session to fetch')
         raise Http404
-    data_model = annotation_session.get_session_model()
+    data_model = session.get_session_model()
+    session.active = False
+    session.save()
+    new_session = AnnotationSession.objects.create(
+            animal=session.animal,
+            brain_region=session.brain_region,
+            annotator=session.annotator,
+            annotation_type=session.annotation_type, 
+            active=True)
+
     field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
     rows = AnnotationPointArchive.objects.filter(archive=archive)
     batch = []
     for row in rows:
         fields = [getattr(row, field_name) for field_name in field_names]
         input = dict(zip(field_names, fields))
+        input['annotation_session'] = new_session
         batch.append(data_model(**input))
-    data_model.objects.bulk_create(batch, 50, update_conflicts=True)
+    data_model.objects.bulk_create(batch, 50)
     
 
-
-#@background(schedule=0)
+@background(schedule=0)
 def background_archive_and_insert_annotations(layeri, url_id):
     """The main function that updates the database with annotations in the current_layer attribute
         This function loops each annotation in the curent layer and inserts/archive points in the 
-        appropriate table
+        appropriate table.
+
+    :param layeri: the active layer in Neuroglancer we are working on
+    :param url_id: the primary key of the Neuroglancer state
     """
+
     urlModel = UrlModel.objects.get(pk=url_id)
     manager = AnnotationManager(urlModel)
     manager.set_current_layer(layeri)
