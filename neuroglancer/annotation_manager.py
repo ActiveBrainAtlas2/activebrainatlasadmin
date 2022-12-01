@@ -12,7 +12,7 @@ A. Saving annotations - when the user clicks 'Save annotations' in Neuroglancer:
 2. Data also gets sent to the annotations_point_archive table. This table has a unique
 constraint. When the same data gets sent to the database, it updates it instead
 of creating new useless inserts. This is done by Django's built-in bulk_create
-method with the 'ignore_conficts' flag set to true. It also gets finds an existing
+method with the 'ignore_conficts' flag set to true. It also finds an existing
 archive, or creates a new archive and uses that key for the FK_archive_set_ID. 
 The constraint is on these columns:
 
