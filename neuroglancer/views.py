@@ -16,9 +16,11 @@ from neuroglancer.annotation_manager import AnnotationManager
 from neuroglancer.atlas import align_atlas, get_scales
 from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, PolygonSequence, \
     UrlModel, BrainRegion, StructureCom, CellType
-from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, MarkedCellListSerializer, PolygonListSerializer, \
+from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
+    MarkedCellListSerializer, PolygonListSerializer, \
     PolygonSerializer, RotationSerializer, UrlSerializer
-from neuroglancer.tasks import background_archive_and_insert_annotations
+from neuroglancer.tasks import background_archive_and_insert_annotations, \
+    nobackground_archive_and_insert_annotations
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -312,8 +314,10 @@ class SaveAnnotation(views.APIView):
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
                 manager.set_current_layer(layeri)
-                background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
-                # background_archive_and_insert_annotations(layeri, url_id)
+                if manager.debug:
+                    nobackground_archive_and_insert_annotations(layeri, url_id)
+                else:
+                    background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
                 found = True
 
         if found:
