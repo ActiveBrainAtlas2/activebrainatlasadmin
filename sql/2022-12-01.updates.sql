@@ -34,5 +34,10 @@ alter table annotations_point_archive drop column FK_input_id;
 alter table annotations_point_archive drop column label;
 delete from annotations_point_archive where FK_session_id is null;
 alter table annotations_point_archive modify column FK_session_id int(11) not null;
+alter table annotations_point_archive modify column x decimal(8,2) not null default 0;
+alter table annotations_point_archive modify column y decimal(8,2) not null default 0;
+alter table annotations_point_archive modify column z decimal(8,2) not null default 0;
+ALTER TABLE annotations_point_archive ADD CONSTRAINT UK_session_xyz UNIQUE (FK_session_id, x, y, z);
+
 
 
