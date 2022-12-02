@@ -38,6 +38,14 @@ alter table annotations_point_archive modify column x decimal(8,2) not null defa
 alter table annotations_point_archive modify column y decimal(8,2) not null default 0;
 alter table annotations_point_archive modify column z decimal(8,2) not null default 0;
 ALTER TABLE annotations_point_archive ADD CONSTRAINT UK_session_xyz UNIQUE (FK_session_id, x, y, z);
+-- end annotations_points_archive modifications
+
+-- start annotation_session modifications
+ALTER TABLE annotation_session modify column created datetime(6) not null;
+ALTER TABLE annotation_session add column updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP after created;
+UPDATE annotation_session set updated = CREATED;
+-- end annotation_session modifications
+
 
 
 

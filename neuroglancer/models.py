@@ -200,6 +200,7 @@ class AnnotationSession(AtlasModel):
                                verbose_name="Annotator", blank=False, null=False)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False

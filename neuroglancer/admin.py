@@ -367,8 +367,6 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
     marked_cells.admin_order_field = 'marked_cells'
 
 
-
-
 @admin.register(StructureCom)
 class StructureComAdmin(admin.ModelAdmin):
     """This class provides the ability to manage the data entered through Neuroglancer. 
@@ -490,7 +488,7 @@ class AnnotationSessionAdmin(AtlasAdminModel):
     """Administer the annotation session data.
     """
     list_display = ['animal',  'annotator', 'label',
-                    'show_points', 'annotation_type', 'created']
+                    'show_points', 'annotation_type', 'created', 'updated']
     ordering = ['animal', 'annotation_type', 'parent', 'created', 'annotator']
     list_filter = ['annotation_type', 'created']
     search_fields = ['animal__prep_id',
@@ -516,10 +514,10 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         )
 
 
-
     def get_urls(self):
         """Shows the HTML of the links to go to the graph, and table data.
         """
+        
         urls = super().get_urls()
         custom_urls = [
             path('annotationsession-data/<id>',
