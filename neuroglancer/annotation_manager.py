@@ -57,7 +57,7 @@ class AnnotationManager(AnnotationBase):
         Args:
             neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
-        self.debug = False
+        self.debug = True
         self.neuroglancer_state = neuroglancerModel.url
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
@@ -87,6 +87,7 @@ class AnnotationManager(AnnotationBase):
         inserts data into the bulk manager. At the end of the loop, all data is in the bulk
         manager and it gets inserted. We also save the session to update the updated column.
         """
+        session = None
 
         if self.animal is None or self.annotator is None:
             raise Http404
@@ -137,7 +138,8 @@ class AnnotationManager(AnnotationBase):
                         if cell_type is not None:
                             brain_region = get_region_from_abbreviation('point')
                             self.add_marked_cells(annotationi, session, cell_type, source)
-        session.save()
+        if session is not None:
+            session.save()
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
