@@ -83,8 +83,9 @@ class AnnotationManager(AnnotationBase):
 
     def archive_and_insert_annotations(self):
         """The main function that updates the database with annotations in the current_layer 
-        attribute. This function loops each annotation in the curent layer and 
-        inserts/archive points in the appropriate table.
+        attribute. This function loops each annotation in the current layer and 
+        inserts data into the bulk manager. At the end of the loop, all data is in the bulk
+        manager and it gets inserted. We also save the session to update the updated column.
         """
 
         if self.animal is None or self.annotator is None:
@@ -136,6 +137,7 @@ class AnnotationManager(AnnotationBase):
                         if cell_type is not None:
                             brain_region = get_region_from_abbreviation('point')
                             self.add_marked_cells(annotationi, session, cell_type, source)
+        session.save()
         self.bulk_mgr.done()
 
     def is_structure_com(self, annotationi: Annotation):
@@ -174,8 +176,8 @@ class AnnotationManager(AnnotationBase):
                 input = dict(zip(field_names, fields))
                 input['archive'] = self.get_archive(annotation_session)
                 batch.append(AnnotationPointArchive(**input))
-        AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-        rows.delete()
+            AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+            rows.delete()
 
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a COM to the bulk manager.
