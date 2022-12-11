@@ -53,24 +53,18 @@ def restore_annotations(archive):
 def background_archive_and_insert_annotations(layeri, url_id):
     """The main function that updates the database with annotations in the current_layer attribute
         This function loops each annotation in the curent layer and inserts/archive points in the 
-        appropriate table.
+        appropriate table. It calls the nobackground method, but since it is annotated
+        with the background decorator, it will run in the background.
 
     :param layeri: the active layer in Neuroglancer we are working on
     :param url_id: the primary key of the Neuroglancer state
     """
 
-    urlModel = UrlModel.objects.get(pk=url_id)
-    manager = AnnotationManager(urlModel)
-    manager.set_current_layer(layeri)
-
-    assert manager.animal is not None
-    assert manager.annotator is not None
-
-    manager.archive_and_insert_annotations()
+    nobackground_archive_and_insert_annotations(layeri, url_id)
 
 def nobackground_archive_and_insert_annotations(layeri, url_id):
     """Same as the background_archive_and_insert_annotations method except
-    it does not use supervisord and does not go into the background process.
+    it does not use supervisord and does not go into a background process.
     This will take a while to run for the user.
 
     :param layeri: the active layer in Neuroglancer we are working on
