@@ -36,7 +36,7 @@ from django.http import Http404
 import numpy as np
 from statistics import mode
 from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, ArchiveSet, BrainRegion, \
-    PolygonSequence, StructureCom, PolygonSequence, MarkedCell, get_region_from_abbreviation
+    PolygonSequence, StructureCom, PolygonSequence, MarkedCell, UrlModel, get_region_from_abbreviation
 from neuroglancer.bulk_insert import BulkCreateManager
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType, UNMARKED
@@ -58,7 +58,7 @@ class AnnotationManager(AnnotationBase):
             neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
         self.debug = True
-        self.neuroglancer_state = neuroglancerModel.url
+        self.neuroglancer_model = neuroglancerModel
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
         self.set_annotator_from_id(neuroglancerModel.owner.id)
@@ -139,6 +139,7 @@ class AnnotationManager(AnnotationBase):
                             brain_region = get_region_from_abbreviation('point')
                             self.add_marked_cells(annotationi, session, cell_type, source)
         if session is not None:
+            session.neuroglancer_model = self.neuroglancer_model
             session.save()
         self.bulk_mgr.done()
 
@@ -244,6 +245,8 @@ class AnnotationManager(AnnotationBase):
     def get_session(self, brain_region, annotation_type, 
             cell_type = None, source = None):
         """Gets either the existing session or creates a new one.
+        We first try by trying to get the exact UrlModel (AKA, neuroglancer state). 
+        If that doesn't succeed, we try without the state ID
 
         :param brain_region: brain region object AKA structure
         :param annotation_type: either marked cell or polygon or COM
@@ -252,21 +255,28 @@ class AnnotationManager(AnnotationBase):
 
         annotation_session = AnnotationSession.objects.filter(active=True)\
             .filter(annotation_type=annotation_type)\
+            .filter(animal=self.animal)\
+            .filter(neuroglancer_model=self.neuroglancer_model)\
+            .filter(brain_region=brain_region)\
+            .filter(annotator=self.annotator)\
+            .order_by('-created').first()
+            
+        if annotation_session is None:
+            annotation_session = AnnotationSession.objects.filter(active=True)\
+                .filter(annotation_type=annotation_type)\
                 .filter(animal=self.animal)\
                 .filter(brain_region=brain_region)\
                 .filter(annotator=self.annotator)\
                 .order_by('-created').first()
 
-        if annotation_session is not None:
-            self.archive_annotations(annotation_session)
-
+        if annotation_session is None:
+            annotation_session = self.create_new_session(brain_region, annotation_type)
         else:
-            annotation_session = self.create_new_session(
-                brain_region=brain_region, annotation_type=annotation_type)
+            self.archive_annotations(annotation_session)
             
         return annotation_session
 
-    def create_new_session(self, brain_region: BrainRegion, annotation_type):
+    def create_new_session(self, brain_region: BrainRegion, annotation_type: str):
         """Helper method to create a new annotation_session
         
         :param brain_region: brain region object AKA structure
@@ -275,6 +285,7 @@ class AnnotationManager(AnnotationBase):
 
         annotation_session = AnnotationSession.objects.create(
             animal=self.animal,
+            neuroglancer_model=self.neuroglancer_model,
             brain_region=brain_region,
             annotator=self.annotator,
             annotation_type=annotation_type, 

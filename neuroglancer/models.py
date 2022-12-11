@@ -4,7 +4,6 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from django.http import HttpResponseNotFound
 import re
 import json
 import pandas as pd
@@ -22,7 +21,9 @@ UNMARKED = 'UNMARKED'
 
 class UrlModel(models.Model):
     """Model corresponding to the neuroglancer json states stored in the neuroglancer_url table.
-    This name was used as the original verion of Neuroglancer stored all the data in the URL."""
+    This name was used as the original verion of Neuroglancer stored all the data in the URL.
+    """
+    
     id = models.BigAutoField(primary_key=True)
     url = models.JSONField(verbose_name="Neuroglancer State")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
@@ -148,7 +149,9 @@ class UrlModel(models.Model):
         return results
 
 class Points(UrlModel):
-    """Model corresponding to the annotation points table in the database"""
+    """Model corresponding to the annotation points table in the database
+    """
+    
     class Meta:
         managed = False
         proxy = True
@@ -156,7 +159,9 @@ class Points(UrlModel):
         verbose_name_plural = 'Points'
 
 class CellType(models.Model):
-    """Model corresponding to the cell type table in the database"""
+    """Model corresponding to the cell type table in the database
+    """
+    
     id = models.BigAutoField(primary_key=True)
     cell_type = models.CharField(max_length=200)
     description = models.TextField(max_length=2001)
@@ -171,7 +176,9 @@ class CellType(models.Model):
         return f'{self.cell_type}'
 
 class BrainRegion(AtlasModel):
-    """This class model is for the brain regions or structures in the brain."""
+    """This class model is for the brain regions or structures in the brain.
+    """
+    
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
@@ -194,12 +201,12 @@ class AnnotationSession(AtlasModel):
     """This model describes a user session in Neuroglancer."""
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
+    neuroglancer_model = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="FK_state_id", verbose_name="Neuroglancer state")
     brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_structure_id",
                                verbose_name="Brain region")
     annotator = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_annotator_id",
                                verbose_name="Annotator", blank=False, null=False)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
-    parent = models.IntegerField(null=False, blank=False, default=0, db_column='FK_parent')
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:

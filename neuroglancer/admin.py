@@ -489,7 +489,7 @@ class AnnotationSessionAdmin(AtlasAdminModel):
     """
     list_display = ['animal',  'annotator', 'label',
                     'show_points', 'annotation_type', 'created', 'updated']
-    ordering = ['animal', 'annotation_type', 'parent', 'created', 'annotator']
+    ordering = ['animal', 'annotation_type', 'created', 'annotator']
     list_filter = ['annotation_type', 'created']
     search_fields = ['animal__prep_id',
                      'annotation_type', 'annotator__first_name']
