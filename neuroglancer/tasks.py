@@ -12,34 +12,32 @@ from neuroglancer.models import AnnotationPointArchive, AnnotationSession, UrlMo
 from neuroglancer.annotation_manager import AnnotationManager
 
 
-@background(schedule=0)
-def restore_annotations(archive):
+def restore_annotations(archiveSet):
     """Restore a set of annotations associated with an archive.
 
     #. Get requested archive (set of points in the annotations_points_archive table)
     #. Mark session inactive that is in the archive
     #. Create a new active session and add it to either marked_cell, polygon_sequence or structureCOM
 
-    :param archive: archive object we want to restore
+    :param archive: ArchiveSet object we want to restore
     """
 
-    try:
-        session = archive.annotation_session
-    except AnnotationSession.DoesNotExist:
-        print('No annotation_session to fetch')
-        raise Http404
+    session = archiveSet.annotation_session
     data_model = session.get_session_model()
     session.active = False
     session.save()
+    archiveSet.active = False
+    archiveSet.save()
     new_session = AnnotationSession.objects.create(
             animal=session.animal,
+            neuroglancer_model=session.neuroglancer_model,
             brain_region=session.brain_region,
             annotator=session.annotator,
             annotation_type=session.annotation_type, 
             active=True)
 
     field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
-    rows = AnnotationPointArchive.objects.filter(archive=archive)
+    rows = AnnotationPointArchive.objects.filter(archive=archiveSet)
     batch = []
     for row in rows:
         fields = [getattr(row, field_name) for field_name in field_names]
