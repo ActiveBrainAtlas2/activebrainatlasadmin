@@ -123,7 +123,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         """This method creates an HTML link that allows the user to access Neuroglancer 
         in multi user mode.
         """
-        host = "https://activebrainatlas.ucsd.edu/ng_multi"
+        host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
             host = "http://127.0.0.1:8080"
 
@@ -589,8 +589,9 @@ class ArchiveSetAdmin(AtlasAdminModel):
     """
     actions = [restore_archive]
 
+    fields = ['annotation_session', 'created']
     list_display = ('get_animal', 'get_name', 'get_annotation_type', 'created')
-    #ordering = ['abbreviation']
+    ordering = ['annotation_session__animal__prep_id']
     list_filter = ['created', 'annotation_session__annotation_type']
     search_fields = ['annotation_session__animal__prep_id']
 

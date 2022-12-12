@@ -389,6 +389,9 @@ class ArchiveSet(AtlasModel):
     id = models.BigAutoField(primary_key=True)
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
+    def __str__(self):
+        return u'{}'.format(self.annotation_session)
+
     class Meta:
         managed = False
         db_table = 'archive_set'
@@ -407,7 +410,7 @@ class AnnotationPointArchive(AnnotationAbstract):
     point_order = models.IntegerField(blank=False, null=False, default=0)
     source = models.CharField(max_length=255)
     cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
-                               verbose_name="Cell type", default=None)
+                               verbose_name="Cell type", default=None, null=True)
     archive = models.ForeignKey(ArchiveSet, models.CASCADE, db_column="FK_archive_set_id",
                                verbose_name="Archive set", default=None)
 
