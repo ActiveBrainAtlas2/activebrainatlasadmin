@@ -23,7 +23,7 @@ from plotly.offline import plot
 import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
-from neuroglancer.models import AnnotationArchive, AnnotationPointArchive, AnnotationSession, ArchiveSet, MarkedCellWorkflow, \
+from neuroglancer.models import AnnotationSession, ArchiveSet, MarkedCellWorkflow, \
     UrlModel,  BrainRegion, Points, \
     PolygonSequence, MarkedCell, StructureCom, CellType
 from neuroglancer.dash_view import dash_scatter_view
@@ -458,10 +458,13 @@ def restore_archive(modeladmin, request, queryset):
         messages.error(
             request, 'Check just one archive. You cannot restore more than one archive.')
     else:
-        archive = queryset[0]
-        restore_annotations(archive)
+        archiveSet = queryset[0]
+        restore_annotations(archiveSet)
         messages.info(
-            request, f'The {archive.annotation_session.source} layer for {archive.annotation_session.animal.prep_id} has been restored. ID={archive.id}')
+            request, f"""The {archiveSet.annotation_session.source} layer
+                for {archiveSet.annotation_session.animal.prep_id} has been restored and 
+                moved out of the archive and into the {archiveSet.annotation_session.annotation_type} 
+                table. ID={archiveSet.id}""")
 
 
 @admin.action(description='Delete Data related to the Selected Session')
@@ -588,31 +591,42 @@ class ArchiveSetAdmin(AtlasAdminModel):
 
     list_display = ('get_animal', 'get_name', 'get_annotation_type', 'created')
     #ordering = ['abbreviation']
-    #list_filter = ['created', 'active']
-    #search_fields = ['abbreviation', 'description']
+    list_filter = ['created', 'annotation_session__annotation_type']
+    search_fields = ['annotation_session__animal__prep_id']
+
+    def get_queryset(self, request):
+        qs = ArchiveSet.objects.filter(active=True)
+        return qs
+
     def get_animal(self, obj):
             return obj.annotation_session.animal
+
     get_animal.admin_order_field  = 'annotation_session__animal__prep_id'  #Allows column order sorting
     get_animal.short_description = 'Animal'  #Renames column head    
     def get_name(self, obj):
             return obj.annotation_session.annotator
+
     get_name.admin_order_field  = 'annotation_session__annotator'  #Allows column order sorting
     get_name.short_description = 'Annotator'  #Renames column head    
     def get_annotation_type(self, obj):
             return obj.annotation_session.annotation_type
+
     get_annotation_type.admin_order_field  = 'annotation_session__annotation_type'  #Allows column order sorting
     get_annotation_type.short_description = 'Annotation type'  #Renames column head    
 
     def has_delete_permission(self, request, obj=None):
-        """Returns false as the data is readonly"""
+        """Returns false as the data is readonly
+        """
         return False
 
     def has_add_permission(self, request, obj=None):
-        """Returns false as the data is readonly"""
+        """Returns false as the data is readonly
+        """
         return False
 
     def has_change_permission(self, request, obj=None):
-        """Returns false as the data is readonly"""
+        """Returns false as the data is readonly
+        """
         return False
 
 '''
