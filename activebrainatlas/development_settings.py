@@ -195,4 +195,4 @@ GRAPH_MODELS = {
   'group_models': True,
 }
 
-PREVIEW = "http://localhost:8080"
+NG_URL = "http://localhost:8080"
