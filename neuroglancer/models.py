@@ -263,9 +263,11 @@ class AnnotationAbstract(models.Model):
     """Abstract model for the 3 new annotation data models
     """
     id = models.BigAutoField(primary_key=True)
-    x = models.FloatField(verbose_name="X (um)")
-    y = models.FloatField(verbose_name="Y (um)")
-    z = models.FloatField(verbose_name="Z (um)")
+    x = models.DecimalField(verbose_name="X (um)", max_digits=6, decimal_places=2)
+    y = models.DecimalField(verbose_name="Y (um)", max_digits=6, decimal_places=2)
+    z = models.DecimalField(verbose_name="Z (um)", max_digits=6, decimal_places=2)
+
+
     annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
                                verbose_name="Annotation session")
     @property
@@ -402,9 +404,6 @@ class ArchiveSet(AtlasModel):
 class AnnotationPointArchive(AnnotationAbstract):
     """This class is for an archive of annotation points
     """
-    x = models.DecimalField(verbose_name="X (um)", max_digits=6, decimal_places=2)
-    y = models.DecimalField(verbose_name="Y (um)", max_digits=6, decimal_places=2)
-    z = models.DecimalField(verbose_name="Z (um)", max_digits=6, decimal_places=2)
     
     polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
     point_order = models.IntegerField(blank=False, null=False, default=0)
