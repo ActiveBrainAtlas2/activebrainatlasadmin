@@ -1,4 +1,6 @@
-'''This package handles the conversion of polygon points to neuroglancer json state and vise versa'''
+"""This package handles the conversion of polygon points to neuroglancer json state and vise versa
+"""
+
 import numpy as np
 from statistics import mode
 from scipy.interpolate import splprep, splev
@@ -14,12 +16,14 @@ def next_item(odic, key):
     return result 
 
 
-def create_polygons(polygon_points,description=None) -> list:
-    '''
+def create_polygons(polygon_points, description=None) -> list:
+    """
     Takes all the polygon x,y,z data and turns them into
     Neuroglancer polygons
     :param polygons: dictionary of polygon: x,y,z values
-    '''
+    
+    """
+
     polygons, volumes = parse_polygon_points(polygon_points)
     annotation_layer_json = []
     for polygon_id, polygon_points in polygons.items(): 
@@ -40,7 +44,8 @@ def create_volume_json(volume_id, polygons, description = None):
 
     Returns:
         _type_: _description_
-    """    
+    """
+
     volume_json = []
     one_point = list(polygons.values())[0][0] 
     parent_annotataions, _ = create_parent_annotation_json(len(polygons), volume_id, one_point, _type='volume', child_ids=list(polygons.keys()),description=description)
@@ -54,14 +59,15 @@ def parse_polygon_points(polygon_points):
     """This takes a list of query results from the annotations_points table or the polygon sequence 
     table and group them into dictionaries according to their grouping of polygons and values.  
     points are grouped into polygons, and polygons are grouped into volumes
-    Args:
-        polygon_points (list): list of query results from the annotations points table or the polygon sequence table
+    TODO  This function seems to rely on the fact that points are ordered by the ordering column in the database.  
+    This need to be improved to resolve potential bugs
 
-    Returns:
-        polygons[dict]: dictionary polygons indexed by the polygon id, those are annotation points entry without a volume_id column
-        volumes[dict]: dictionary of volumes, indexed by the volume id.  the value corresponding to each id is the same as the polygon id
+    :param polygon_points (list): list of query results from the annotations points table or the polygon sequence table
+
+    :return polygons[dict]: dictionary polygons indexed by the polygon id, those are annotation points entry without a volume_id column
+    :return volumes[dict]: dictionary of volumes, indexed by the volume id.  the value corresponding to each id is the same as the polygon id
     """
-#    TODO  This function seems to rely on the fact that points are ordered by the ordering column in the database.  This need to be improved to resolve potential bugs
+
     polygons = {}
     volumes = {}
     for pointi in polygon_points:
@@ -92,7 +98,8 @@ def sort_polygon_points_and_get_coordinates(polygon_points):
     return [[i.x, i.y, i.z] for i in polygon_points]
 
 def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,parent_id = None,description = None):
-    """create the json entry for a parent annotation.  The parent annotation need to have a specific id and the list of id for all the children
+    """create the json entry for a parent annotation.  The parent annotation need to have a 
+    specific id and the list of id for all the children
 
     Args:
         npoints (int): number of points in this parent annotation
@@ -104,6 +111,7 @@ def create_parent_annotation_json(npoints, id, source, _type, child_ids=None,par
     Returns:
         _type_: _description_
     """
+
     parent_annotation = {}
     if child_ids is None:
         child_ids = [random_string() for _ in range(npoints)]
@@ -128,7 +136,8 @@ def create_polygon_json(polygon_id, polygon_points,parent_id = None):
 
     Returns:
         dict: the neuroglancer json for the polygon in python dictionary form
-    """   
+    """
+
     polygon_json = []
     npoints = len(polygon_points)
     parent_annotation, child_ids = create_parent_annotation_json(npoints, polygon_id, polygon_points[0], _type='polygon',parent_id=parent_id)
@@ -153,15 +162,15 @@ def create_polygon_json(polygon_id, polygon_points,parent_id = None):
     return polygon_json
 
 def interpolate2d(points:list, new_len:int) -> list:
-    '''
-    Interpolates a list of tuples to the specified length. The points param
+    """Interpolates a list of tuples to the specified length. The points param
     must be a list of tuples in 2d
+    
     :param points: list of floats
-    :param new_len: integer you want to interpolate to. This will be the new
-    length of the array
+    :param new_len: integer you want to interpolate to. This will be the new length of the array
     There can't be any consecutive identical points or an error will be thrown
     unique_rows = np.unique(original_array, axis=0)
-    '''
+    """
+
     points = np.array(points)
     lastcolumn = np.round(points[:, -1])
     z = mode(lastcolumn)
@@ -181,14 +190,12 @@ def interpolate2d(points:list, new_len:int) -> list:
  
  
 def onSegment(p:tuple, q:tuple, r:tuple) -> bool:
-    '''
-    # Given three collinear points p, q, r, 
-    # the function checks if point q lies
-    # on line segment 'pr' 
+    """Given three collinear points p, q, r, the function checks if point q lies on line segment 'pr' 
+    
     :param p:
     :param q:
     :param r:
-    '''
+    """
      
     if ((q[0] <= max(p[0], r[0])) & 
         (q[0] >= min(p[0], r[0])) & 
@@ -200,8 +207,7 @@ def onSegment(p:tuple, q:tuple, r:tuple) -> bool:
 
  
 def orientation(p:tuple, q:tuple, r:tuple) -> int:
-    '''
-    # To find orientation of ordered triplet (p, q, r).
+    """To find orientation of ordered triplet (p, q, r).
     # The function returns following values
     # 0 --> p, q and r are collinear
     # 1 --> Clockwise
@@ -210,7 +216,7 @@ def orientation(p:tuple, q:tuple, r:tuple) -> int:
     :param p:
     :param q:
     :param r:
-    '''
+    """
      
     val = (((q[1] - p[1]) * 
             (r[0] - q[0])) - 
@@ -226,14 +232,15 @@ def orientation(p:tuple, q:tuple, r:tuple) -> int:
 
  
 def doIntersect(p1, q1, p2, q2):
-    '''
+    """
     # Find the four orientations needed for 
     # general and special cases    
+    
     :param p1:
     :param q1:
     :param p2:
     :param q2:
-    '''
+    """
      
     o1 = orientation(p1, q1, p2)
     o2 = orientation(p1, q1, q2)
@@ -269,11 +276,11 @@ def doIntersect(p1, q1, p2, q2):
 
  
 def is_inside_polygon(points:list) -> bool:
-    '''
-    # Returns true if the point p lies 
+    """Returns true if the point p lies 
     # inside the polygon[] with n vertices    
+    
     :param points:
-    '''
+    """
      
     n = len(points)
     coords = np.array(points)
@@ -321,12 +328,13 @@ def is_inside_polygon(points:list) -> bool:
     return (count % 2 == 1)
 
 def sort_from_center(polygon:list) -> list:
-    '''
-    Get the center of the unique points in a polygon and then use math.atan2 to get
+    """Get the center of the unique points in a polygon and then use math.atan2 to get
     the angle from the x-axis to the x,y point. Use that to sort.
     This only works with convex shaped polygons.
+    
     :param polygon:
-    '''
+    """
+
     coords = np.array(polygon)
     coords = np.unique(coords, axis=0)
     center = coords.mean(axis=0)
@@ -337,20 +345,22 @@ def sort_from_center(polygon:list) -> list:
 
 
 def zCrossProduct(a, b, c):
-    '''
-    Used in the in_convex function below
+    """Used in the in_convex function below
+    
     :param a:
     :param b:
     :param c:
-    '''
+    """
+
     return (a[0] - b[0]) * (b[1] - c[1]) - (a[1] - b[1]) * (b[0] - c[0])
 
 
 def is_convex(vertices:list) -> list:
-    '''
-    Tests if a polygon has all convex angles
+    """Tests if a polygon has all convex angles
+    
     :param vertices:
-    '''
+    """
+
     if len(vertices) < 4:
         return True
     signs = [zCrossProduct(a, b, c) > 0 for a, b, c in zip(vertices[2:], vertices[1:], vertices)]
