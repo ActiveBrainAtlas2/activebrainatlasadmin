@@ -111,8 +111,8 @@ class UrlModelAdmin(admin.ModelAdmin):
     def open_neuroglancer(self, obj):
         """This method creates an HTML link that allows the user to access Neuroglancer"""
         host = "https://activebrainatlas.ucsd.edu/ng"
-        if settings.DEBUG:
-            host = "http://localhost:8080"
+        if settings.PREVIEW:
+            host = settings.PREVIEW
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -123,8 +123,8 @@ class UrlModelAdmin(admin.ModelAdmin):
         in multi user mode.
         """
         host = "https://activebrainatlas.ucsd.edu/ng"
-        if settings.DEBUG:
-            host = "http://localhost:8080"
+        if settings.PREVIEW:
+            host = settings.PREVIEW
 
         comments = "Multi-user"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
@@ -501,8 +501,8 @@ class AnnotationSessionAdmin(AtlasAdminModel):
         """
         
         host = "https://activebrainatlas.ucsd.edu/ng"
-        if settings.DEBUG:
-            host = "http://localhost:8080"
+        if settings.PREVIEW:
+            host = settings.PREVIEW
 
         if obj.neuroglancer_model is not None:
             comments = escape(obj.neuroglancer_model.comments)

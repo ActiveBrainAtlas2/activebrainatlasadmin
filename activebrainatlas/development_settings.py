@@ -194,3 +194,5 @@ GRAPH_MODELS = {
   'app_labels': ["brain", "neuroglancer",],
   'group_models': True,
 }
+
+PREVIEW = "http://localhost:8080"
