@@ -21,3 +21,4 @@ insert into marked_cells (source, x, y, z, FK_session_id , FK_cell_type_id)
 select source, x, y, z, FK_session_id , FK_cell_type_id
 from marked_cells_tmp;
 ALTER TABLE marked_cells ADD CONSTRAINT UK_session_xyz UNIQUE (FK_session_id, x, y, z);
+drop table if exists marked_cells_tmp;
