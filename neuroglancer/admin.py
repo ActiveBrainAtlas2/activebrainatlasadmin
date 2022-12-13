@@ -112,8 +112,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         """This method creates an HTML link that allows the user to access Neuroglancer"""
         host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
-            # stop changing this.
-            host = "http://127.0.0.1:8080"
+            host = "http://localhost:8080"
 
         comments = escape(obj.comments)
         links = f'<a target="_blank" href="{host}?id={obj.id}">{comments}</a>'
@@ -125,7 +124,7 @@ class UrlModelAdmin(admin.ModelAdmin):
         """
         host = "https://activebrainatlas.ucsd.edu/ng"
         if settings.DEBUG:
-            host = "http://127.0.0.1:8080"
+            host = "http://localhost:8080"
 
         comments = "Multi-user"
         links = f'<a target="_blank" href="{host}?id={obj.id}&amp;multi=1">{comments}</a>'
@@ -490,12 +489,28 @@ def delete_session(modeladmin, request, queryset):
 class AnnotationSessionAdmin(AtlasAdminModel):
     """Administer the annotation session data.
     """
-    list_display = ['animal',  'annotator', 'label',
+    list_display = ['animal', 'open_neuroglancer', 'annotator', 'label',
                     'show_points', 'annotation_type', 'created', 'updated']
     ordering = ['animal', 'annotation_type', 'created', 'annotator']
     list_filter = ['annotation_type', 'created']
     search_fields = ['animal__prep_id',
                      'annotation_type', 'annotator__first_name']
+
+    def open_neuroglancer(self, obj):
+        """This method creates an HTML link that allows the user to access Neuroglancer
+        """
+        
+        host = "https://activebrainatlas.ucsd.edu/ng"
+        if settings.DEBUG:
+            host = "http://localhost:8080"
+
+        if obj.neuroglancer_model is not None:
+            comments = escape(obj.neuroglancer_model.comments)
+            links = f'<a target="_blank" href="{host}?id={obj.neuroglancer_model.id}">{comments}</a>'
+        else:
+            links = "NA"
+        return format_html(links)
+
 
     def label(self, obj):
         if obj.annotation_type == 'MARKED_CELL':
