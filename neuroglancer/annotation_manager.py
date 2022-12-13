@@ -94,13 +94,14 @@ class AnnotationManager(AnnotationBase):
 
         marked_cells = []
         for annotationi in self.current_layer.annotations:
-            if annotationi.is_com():
-                brain_region = get_region_from_abbreviation(
-                    annotationi.get_description())
-                session = self.get_session(brain_region=brain_region, annotation_type='STRUCTURE_COM')
-                self.add_com(annotationi, session)
+            # marked cells are treated differently than com, polygon and volume
             if annotationi.is_cell():
                 marked_cells.append(annotationi)
+
+            if annotationi.is_com():
+                brain_region = get_region_from_abbreviation(annotationi.get_description())
+                session = self.get_session(brain_region=brain_region, annotation_type='STRUCTURE_COM')
+                self.add_com(annotationi, session)
             if annotationi.is_polygon():
                 brain_region = get_region_from_abbreviation('polygon')
                 session = self.get_session(brain_region=brain_region, annotation_type='POLYGON_SEQUENCE')
@@ -111,6 +112,7 @@ class AnnotationManager(AnnotationBase):
                 self.add_volumes(annotationi, session)
 
         if len(marked_cells) > 0:
+            batch = []
             marked_cells = np.array(marked_cells)
             description_and_cell_types = np.array([f'{i.description}@{i.category}' for i in marked_cells])
             unique_description_and_cell_types = np.unique(description_and_cell_types)
@@ -118,26 +120,31 @@ class AnnotationManager(AnnotationBase):
             for description_cell_type in unique_description_and_cell_types:
                 in_category = description_and_cell_types == description_cell_type
                 cells = marked_cells[in_category]
-                _,cell_type = description_cell_type.split('@')
+                _, cell_type = description_cell_type.split('@')
                 if cells[0].description =='positive':
                     source = 'HUMAN_POSITIVE'
                 elif cells[0].description =='negative':
                     source = 'HUMAN_NEGATIVE'
                 else:
                     source = UNMARKED
+                
                 session = self.get_session(brain_region=brain_region,
                                                annotation_type='MARKED_CELL', cell_type=cell_type, 
                                                source=source)
                 for annotationi in cells:
                     if cell_type == UNMARKED:
                         brain_region = get_region_from_abbreviation('point')
-                        self.add_marked_cells(annotationi, session, None, source)
+                        marked_cell = self.create_marked_cell(annotationi, session, None, source)
                     else:
                         cell_type = CellType.objects.filter(
                             cell_type=cell_type).first()
                         if cell_type is not None:
                             brain_region = get_region_from_abbreviation('point')
-                            self.add_marked_cells(annotationi, session, cell_type, source)
+                            marked_cell = self.create_marked_cell(annotationi, session, cell_type, source)
+                    
+                    batch.append(marked_cell)
+            MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+
         if session is not None:
             session.neuroglancer_model = self.neuroglancer_model
             session.save()
@@ -180,7 +187,6 @@ class AnnotationManager(AnnotationBase):
                 input['archive'] = self.get_archive(annotation_session)
                 batch.append(AnnotationPointArchive(**input))
             AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-            rows.delete()
 
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a COM to the bulk manager.
@@ -192,19 +198,20 @@ class AnnotationManager(AnnotationBase):
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                                        source='MANUAL', x=x, y=y, z=z))
 
-    def add_marked_cells(self, annotationi: Annotation, annotation_session: AnnotationSession, 
-        cell_type, source):
-        """Helper method to add a marked cell to the bulk manager.
+    def create_marked_cell(self, annotationi: Annotation, annotation_session: AnnotationSession, 
+        cell_type, source) -> MarkedCell:
+        """Helper method to create a MarkedCell object.
 
         :param annotationi: A COM annotation
         :param annotation_session: session object
         :param cell_type: the cell type of the marked cell
         :param source: the MARKED/UNMARKED source
+        :return: MarkedCell object
         """
 
         x, y, z = np.floor(annotationi.coord) * self.scales
-        self.bulk_mgr.add(MarkedCell(annotation_session=annotation_session,
-                          source=source, x=x, y=y, z=z, cell_type=cell_type))
+        return MarkedCell(annotation_session=annotation_session,
+                          source=source, x=x, y=y, z=z, cell_type=cell_type)
 
     def add_polygons(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a polygon to the bulk manager.
