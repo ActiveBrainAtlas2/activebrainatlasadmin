@@ -57,7 +57,7 @@ def background_archive_and_insert_annotations(layeri, url_id):
     :param layeri: the active layer in Neuroglancer we are working on
     :param url_id: the primary key of the Neuroglancer state
     """
-
+    
     nobackground_archive_and_insert_annotations(layeri, url_id)
 
 def nobackground_archive_and_insert_annotations(layeri, url_id):
