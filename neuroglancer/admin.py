@@ -244,8 +244,7 @@ class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
     was also called a structure.
     """
 
-    list_display = ('abbreviation', 'description', 'color',
-                    'show_hexadecimal', 'active', 'created_display')
+    list_display = ('abbreviation', 'description', 'active', 'created_display')
     ordering = ['abbreviation']
     readonly_fields = ['created']
     list_filter = ['created', 'active']
@@ -255,11 +254,6 @@ class BrainRegionAdmin(AtlasAdminModel, ExportCsvMixin):
         """Formats the date nicely."""
         return datetime_format(obj.created)
     created_display.short_description = 'Created'
-
-    def show_hexadecimal(self, obj):
-        """Formats the hexadecimal nicely."""
-        return format_html('<div style="background:{}">{}</div>', obj.hexadecimal, obj.hexadecimal)
-    show_hexadecimal.short_description = 'Hexadecimal'
 
 
 @admin.register(CellType)

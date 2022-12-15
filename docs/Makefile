@@ -18,5 +18,9 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 # Run command below to create the ERD diagram
-# You might need this on your system: libgraphviz-dev
-# python ../manage.py graph_models -X exclude.models.txt -o source/_static/brain.neuroglancer.png
+# You'll need this on your system: libgraphviz-dev
+graph:
+	python ../manage.py graph_models -X exclude.models.txt -o source/_static/brain.neuroglancer.png
+
+publish:
+	rsync -auv --delete build/html/* webdev:/var/www/html/docs/activebrainatlas/
