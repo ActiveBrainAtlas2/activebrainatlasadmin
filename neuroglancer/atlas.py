@@ -123,8 +123,8 @@ def umeyama(src, dst, with_scaling=True):
     :param dst: List of data points.
     :param with_scaling: A boolean determining if we should scale or not.
     """
-    src = np.array(src)
-    dst = np.array(dst)
+    src = (np.array(src)).astype(np.float64)
+    dst = (np.array(dst)).astype(np.float64)
     assert src.shape == dst.shape
     assert len(src.shape) == 2
     m, n = src.shape
