@@ -6,6 +6,7 @@ in the models document for the database table model.
 """
 
 import pandas as pd
+from decimal import Decimal
 from django.db import models
 from django.db.models import Count
 import json
@@ -406,9 +407,12 @@ class StructureComAdmin(admin.ModelAdmin):
             Annotator: {com.annotator}"
         scanrun = ScanRun.objects.filter(prep_id=com.animal).first()
         df = {}
-        df['x'] = [int(i.x/scanrun.resolution) for i in coms]
-        df['y'] = [int(i.y/scanrun.resolution) for i in coms]
-        df['z'] = [int(i.z/scanrun.zresolution) for i in coms]
+        xy_resolution = Decimal(scanrun.resolution)
+        z_resolution = Decimal(scanrun.zresolution)
+
+        df['x'] = [int(i.x/xy_resolution) for i in coms]
+        df['y'] = [int(i.y/xy_resolution) for i in coms]
+        df['z'] = [int(i.z/z_resolution) for i in coms]
         df['source'] = [i.source for i in coms]
         df = pd.DataFrame(df)
         result = 'No data'
@@ -561,10 +565,12 @@ class AnnotationSessionAdmin(AtlasAdminModel):
                 Annotator: {session.annotator.first_name} structure: {session.brain_region.abbreviation}"
         scanrun = ScanRun.objects.filter(
             prep_id=session.animal.prep_id).first()
+        xy_resolution = Decimal(scanrun.resolution)
+        z_resolution = Decimal(scanrun.zresolution)
         df = {}
-        df['x'] = [int(i.x/scanrun.resolution) for i in points]
-        df['y'] = [int(i.y/scanrun.resolution) for i in points]
-        df['z'] = [int(i.z/scanrun.zresolution) for i in points]
+        df['x'] = [int(i.x/xy_resolution) for i in points]
+        df['y'] = [int(i.y/xy_resolution) for i in points]
+        df['z'] = [int(i.z/z_resolution) for i in points]
         df['source'] = [i.source for i in points]
         df = pd.DataFrame(df)
         result = 'No data'
