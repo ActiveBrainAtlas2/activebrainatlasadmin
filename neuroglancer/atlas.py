@@ -79,14 +79,13 @@ def get_annotation_dict(prep_id, annotator_id,source):
 
 def get_scales(prep_id):
     """A generic method to safely query and return resolutions.
+    Note, since prep_id is a varchar, you can't use objects.get, you must use objects.filter
 
     :param prep_id: varchar of the primary key of the animal
     """
 
-    try:
-        query_set = ScanRun.objects.filter(prep_id=prep_id)
-    except ScanRun.DoesNotExist:
-        scan_run = None
+    query_set = ScanRun.objects.filter(prep_id=prep_id)
+
     if query_set is not None and len(query_set) > 0:
         scan_run = query_set[0]
         scale_xy = scan_run.resolution

@@ -100,22 +100,6 @@ class TestSetUp(TestCase):
                 annotation_type=self.annotation_type
                 )
         
-        # annotation session brain
-        query_set = AnnotationSession.objects \
-            .filter(animal=self.animal)\
-            .filter(brain_region=self.brain_region)\
-            .filter(annotator=self.annotator)\
-            .filter(annotation_type=self.annotation_type)
-
-        if query_set is not None and len(query_set) > 0:
-            self.annotation_session = query_set[0]
-        else:
-            self.annotation_session = AnnotationSession.objects.create(\
-                animal=self.animal,
-                brain_region=self.brain_region,
-                annotator=self.lauren,
-                annotation_type=self.annotation_type
-                )
 
         # annotation session polygon sequence
         query_set = AnnotationSession.objects \
@@ -156,6 +140,7 @@ class TestTransformation(TestSetUp):
         """
         response = self.client.get(f"/rotations")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data), 0)
 
     def test_get_rotation(self):
         """Test the API that returns the list of available transformations
@@ -168,7 +153,6 @@ class TestTransformation(TestSetUp):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_rotation_is_not_identity(response)
 
-    '''
     def test_get_rotation_inverse(self):
         """Test the API that returns the list of available transformations
 
@@ -212,7 +196,7 @@ class TestTransformation(TestSetUp):
         s = np.sum(translation)
         self.assertEqual(s, 0, msg="Translation is equal to zero")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    '''
+
 class TestAnnotations(TestSetUp):
     """A class for testing the annotations
     """
@@ -274,7 +258,6 @@ class TestAnnotations(TestSetUp):
         response = self.client.get(f"/get_com_list")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    '''
     def test_get_marked_cell_list(self):
         """Test the API that returns the list of marked cell
 
@@ -283,7 +266,7 @@ class TestAnnotations(TestSetUp):
         """
         response = self.client.get(f"/get_marked_cell_list")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    '''
+
 class TestNeuroglancer(TestSetUp):
     """URLs taken from neuroglancer/urls.py. 
     We should have one test per url.    
@@ -310,7 +293,7 @@ class TestNeuroglancer(TestSetUp):
     '''
     def test_contour_to_segmentation(self):
         """Test the API that returns contour to segmentation
-        TODO fix. 
+        TODO fix. This is for slurm
         """
         response = self.client.get(f"/contour_to_segmentation/454/cff612b8206221f6e54098d9bd9061d1fdf5c2b8")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
