@@ -244,7 +244,7 @@ class TestAnnotations(TestSetUp):
         session = AnnotationSession(animal=self.animal,
             brain_region=self.brain_region,
             annotator=self.annotator,
-            annotation_type='MARKED_CELL', parent=0)
+            annotation_type='MARKED_CELL')
         session.save()
         id = session.id
         cell = MarkedCell(annotation_session=session,
