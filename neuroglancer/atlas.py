@@ -1,5 +1,6 @@
 """Some important static methods used throughout the Django project.
 """
+import decimal
 import numpy as np
 from neuroglancer.models import BrainRegion, StructureCom
 from brain.models import Animal, ScanRun
@@ -93,7 +94,7 @@ def get_scales(prep_id):
     else:
         scale_xy = 1
         z_scale = 1
-    return scale_xy, z_scale
+    return decimal.Decimal(scale_xy), decimal.Decimal(z_scale)
 
 
 

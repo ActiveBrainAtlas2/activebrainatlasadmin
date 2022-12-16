@@ -4,6 +4,7 @@ is the 'V' in the MVC framework for the Neuroglancer app
 portion of the portal.
 """
 
+import decimal
 import numpy as np
 from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
@@ -49,7 +50,7 @@ def apply_scales_to_annotation_rows(rows, prep_id):
     for row in rows:
         row.x = row.x / scale_xy
         row.y = row.y / scale_xy
-        row.z = row.z / z_scale + 0.5
+        row.z = row.z / z_scale + decimal.Decimal(0.5)
 
 
 class GetVolume(AnnotationBase, views.APIView):
