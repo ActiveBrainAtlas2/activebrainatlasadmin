@@ -534,7 +534,7 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
             exporter method.
     """
     indexCounter = -1
-    list_display = ('tif','section_number', 'slide','scene', 'scene_index', 'histogram', 'image_tag')
+    list_display = ('czi_file', 'tif','section_number', 'slide','scene', 'scene_index', 'histogram', 'image_tag')
     ordering = ['prep_id', 'channel']
     list_filter = []
     list_display_links = None
