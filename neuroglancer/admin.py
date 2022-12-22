@@ -305,7 +305,7 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
     These are points are entered by an anatomist and are solely for marked cells (premotor, starter etc) 
     """
 
-    list_filter = ('cell_type',)
+    list_filter = ('cell_type', 'annotation_session__created', 'annotation_session__updated')
     search_fields = ['annotation_session__animal__prep_id', 'annotation_session__annotator__username']
 
     change_list_template = 'markedcell_change_list.html'
@@ -323,6 +323,7 @@ class MarkedCellWorkflowAdmin(admin.ModelAdmin):
         response.context_data['summary'] = list(
             qs
             .values('annotation_session__animal__prep_id', 'cell_type__cell_type', 'annotation_session__annotator__username', 'source')
+            .filter(annotation_session__active=True)
             .annotate(**metrics)
             .order_by('annotation_session__animal__prep_id', 'cell_type__cell_type', 'annotation_session__annotator__username', 'source')
         )
@@ -484,7 +485,7 @@ class AnnotationSessionAdmin(AtlasAdminModel):
     list_display = ['animal', 'open_neuroglancer', 'annotator', 'label',
                     'show_points', 'annotation_type', 'created', 'updated']
     ordering = ['animal', 'annotation_type', 'created', 'annotator']
-    list_filter = ['annotation_type', 'created']
+    list_filter = ['annotation_type', 'created', 'updated']
     search_fields = ['animal__prep_id',
                      'annotation_type', 'annotator__first_name']
 
