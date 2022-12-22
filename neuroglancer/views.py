@@ -202,7 +202,8 @@ class GetMarkedCellList(views.APIView):
         This will get the layer_data for the marked cell requested
         """
         data = []
-        rows = MarkedCell.objects.order_by('annotation_session__animal', 
+        rows = MarkedCell.objects.filter(annotation_session__active=True)\
+            .order_by('annotation_session__animal', 
             'annotation_session__annotator__username')\
             .values('annotation_session__id',
             'annotation_session__animal', 
