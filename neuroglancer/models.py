@@ -95,9 +95,6 @@ class UrlModel(models.Model):
                     df['Description'] = structures
                     df = df[['Layer', 'Description', 'X', 'Y', 'Section']]
                     df = df.drop_duplicates()
-                    print(df.info())
-                    print(df.describe())
-                    print(df.shape)
                     dfs.append(df)
             if len(dfs) == 0:
                 result = None
