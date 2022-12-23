@@ -34,6 +34,7 @@ the dropdown menu. Once the user clicks 'Go', these events take place:
 
 from django.http import Http404
 import numpy as np
+from decimal import Decimal
 from statistics import mode
 from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, ArchiveSet, BrainRegion, \
     PolygonSequence, StructureCom, PolygonSequence, MarkedCell, UrlModel, get_region_from_abbreviation
@@ -54,10 +55,10 @@ class AnnotationManager(AnnotationBase):
     def __init__(self, neuroglancerModel):
         """iniatiate the class starting from a perticular url
 
-        Args:
-            neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
+        :param neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
-        self.debug = False
+
+        self.debug = True
         self.neuroglancer_model = neuroglancerModel
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
@@ -73,9 +74,9 @@ class AnnotationManager(AnnotationBase):
            The incoming neuroglancer json state is parsed by a custom class named AnnotationLayer that 
            groups points according to it's membership to a polygon seqence or volume
 
-        
         :param state_layer (dict): neuroglancer json state component of an annotation layer in dictionary form
         """
+
         assert 'name' in state_layer
         self.label = str(state_layer['name']).strip()
         self.current_layer = AnnotationLayer(state_layer)
@@ -87,6 +88,7 @@ class AnnotationManager(AnnotationBase):
         inserts data into the bulk manager. At the end of the loop, all data is in the bulk
         manager and it gets inserted. We also save the session to update the updated column.
         """
+
         session = None
 
         if self.animal is None or self.annotator is None:
@@ -143,6 +145,7 @@ class AnnotationManager(AnnotationBase):
                             marked_cell = self.create_marked_cell(annotationi, session, cell_type, source)
                     
                     batch.append(marked_cell)
+            print(f'len of batch of marked cells is {len(batch)}')
             MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
 
         if session is not None:
@@ -174,6 +177,7 @@ class AnnotationManager(AnnotationBase):
         
         :param annotation_session: annotation session object
         """
+
         data_model = annotation_session.get_session_model()
         rows = data_model.objects.filter(
             annotation_session__id=annotation_session.id)
@@ -187,6 +191,7 @@ class AnnotationManager(AnnotationBase):
                 input['archive'] = self.get_archive(annotation_session)
                 batch.append(AnnotationPointArchive(**input))
             AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+            rows.delete()
 
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a COM to the bulk manager.
@@ -194,7 +199,8 @@ class AnnotationManager(AnnotationBase):
         :param annotationi: A COM annotation
         :param annotation_session: session object
         """
-        x, y, z = np.floor(annotationi.coord) * self.scales
+
+        x, y, z = np.floor(annotationi.coord) * (self.scales).astype(np.float64)
         self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
                                        source='MANUAL', x=x, y=y, z=z))
 
@@ -209,7 +215,7 @@ class AnnotationManager(AnnotationBase):
         :return: MarkedCell object
         """
 
-        x, y, z = np.floor(annotationi.coord) * self.scales
+        x, y, z = np.floor(annotationi.coord) * (self.scales).astype(np.float64)
         return MarkedCell(annotation_session=annotation_session,
                           source=source, x=x, y=y, z=z, cell_type=cell_type)
 
@@ -220,11 +226,11 @@ class AnnotationManager(AnnotationBase):
         :param annotation_session: session object
         """
 
-        z = mode([int(np.floor(pointi.coord_start[2]) * self.z_scale)
+        z = mode([int(np.floor(pointi.coord_start[2]) * float(self.z_scale))
                  for pointi in annotationi.childs])
         ordering = 1
         for pointi in annotationi.childs:
-            xa, ya, _ = pointi.coord_start * self.scales
+            xa, ya, _ = pointi.coord_start * (self.scales).astype(np.float64)
             self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,
                               x=xa, y=ya, z=z, point_order=ordering, polygon_index=1))
             ordering += 1
@@ -239,10 +245,10 @@ class AnnotationManager(AnnotationBase):
         polygon_index = 1
         for polygoni in annotationi.childs:
             ordering = 1
-            z = mode([int(np.floor(coord.coord_start[2]) * self.z_scale)
+            z = mode([int(np.floor(coord.coord_start[2]) * float(self.z_scale))
                      for coord in polygoni.childs])
             for childi in polygoni.childs:
-                xa, ya, _ = childi.coord_start * self.scales
+                xa, ya, _ = childi.coord_start * (self.scales).astype(np.float64)
                 self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,
                                                   x=xa, y=ya, z=z, point_order=ordering, polygon_index=polygon_index))
                 ordering += 1

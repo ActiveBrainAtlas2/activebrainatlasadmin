@@ -43,3 +43,5 @@ class BulkCreateManager(object):
         for model_name, objs in self._create_queues.items():
             if len(objs) > 0:
                 self._commit(apps.get_model(model_name))
+
+    
