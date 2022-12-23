@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 import re
 import json
 import pandas as pd
+import numpy as np
 from django.template.defaultfilters import truncatechars
 from brain.models import AtlasModel, Animal
 from django_mysql.models import EnumField
@@ -93,6 +94,10 @@ class UrlModel(models.Model):
                         structures = ['' for row in annotation if 'point' in row and 'pointA' not in row]
                     df['Description'] = structures
                     df = df[['Layer', 'Description', 'X', 'Y', 'Section']]
+                    df = df.drop_duplicates()
+                    print(df.info())
+                    print(df.describe())
+                    print(df.shape)
                     dfs.append(df)
             if len(dfs) == 0:
                 result = None
