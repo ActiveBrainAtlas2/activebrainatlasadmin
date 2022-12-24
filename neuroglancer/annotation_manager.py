@@ -145,7 +145,6 @@ class AnnotationManager(AnnotationBase):
                             marked_cell = self.create_marked_cell(annotationi, session, cell_type, source)
                     
                     batch.append(marked_cell)
-            print(f'len of batch of marked cells is {len(batch)}')
             MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
 
         if session is not None:
@@ -181,14 +180,14 @@ class AnnotationManager(AnnotationBase):
         data_model = annotation_session.get_session_model()
         rows = data_model.objects.filter(
             annotation_session__id=annotation_session.id)
-        field_names = [
-            f.name for f in data_model._meta.get_fields() if not f.name == 'id']
+        field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
         if rows is not None and len(rows) > 0:
             batch = []
+            archive = self.get_archive(annotation_session)
             for row in rows:
                 fields = [getattr(row, field_name) for field_name in field_names if hasattr(row, field_name)]
                 input = dict(zip(field_names, fields))
-                input['archive'] = self.get_archive(annotation_session)
+                input['archive'] = archive
                 batch.append(AnnotationPointArchive(**input))
             AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
             rows.delete()
