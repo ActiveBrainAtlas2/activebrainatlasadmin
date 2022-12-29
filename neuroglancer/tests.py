@@ -305,7 +305,7 @@ class TestNeuroglancer(TestSetUp):
         URL = /save_annotations/<int:url_id>/<str:annotation_layer_name>
 
         """
-        response = self.client.get("/save_annotations/494/cell")
+        response = self.client.get("/save_annotations/774/Unaided [152, 156, 171, 175, 236]")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_save_annotations_377(self):

@@ -93,7 +93,6 @@ class AnnotationManager(AnnotationBase):
 
         if self.animal is None or self.annotator is None:
             raise Http404
-
         marked_cells = []
         for annotationi in self.current_layer.annotations:
             # marked cells are treated differently than com, polygon and volume
@@ -123,29 +122,22 @@ class AnnotationManager(AnnotationBase):
                 in_category = description_and_cell_types == description_cell_type
                 cells = marked_cells[in_category]
                 _, cell_type = description_cell_type.split('@')
-                if cells[0].description =='positive':
+                if cells[0].description == 'positive':
                     source = 'HUMAN_POSITIVE'
-                elif cells[0].description =='negative':
+                elif cells[0].description == 'negative':
                     source = 'HUMAN_NEGATIVE'
                 else:
                     source = UNMARKED
                 
-                session = self.get_session(brain_region=brain_region,
-                                               annotation_type='MARKED_CELL', cell_type=cell_type, 
-                                               source=source)
+                session = self.get_session(brain_region=brain_region, annotation_type='MARKED_CELL')
                 for annotationi in cells:
-                    if cell_type == UNMARKED:
-                        brain_region = get_region_from_abbreviation('point')
-                        marked_cell = self.create_marked_cell(annotationi, session, None, source)
-                    else:
-                        cell_type = CellType.objects.filter(
-                            cell_type=cell_type).first()
-                        if cell_type is not None:
-                            brain_region = get_region_from_abbreviation('point')
-                            marked_cell = self.create_marked_cell(annotationi, session, cell_type, source)
-                    
+                    cell_type_object = CellType.objects.filter(cell_type=cell_type).first()
+                    marked_cell = self.create_marked_cell(annotationi, session, cell_type_object, source)
                     batch.append(marked_cell)
+                    
             MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+            if self.debug:
+                print(f'Adding {len(batch)} rows to marked cells.')
 
         if session is not None:
             session.neuroglancer_model = self.neuroglancer_model
@@ -190,6 +182,9 @@ class AnnotationManager(AnnotationBase):
                 input['archive'] = archive
                 batch.append(AnnotationPointArchive(**input))
             AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+            if self.debug:
+                print(f'Adding {len(batch)} rows of annotation points archive with session={archive._meta}')
+                print(f'Deleting {len(rows)} rows of {data_model._meta} with session={annotation_session}')
             rows.delete()
 
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
@@ -209,7 +204,7 @@ class AnnotationManager(AnnotationBase):
 
         :param annotationi: A COM annotation
         :param annotation_session: session object
-        :param cell_type: the cell type of the marked cell
+        :param cell_type: the cell type object of the marked cell
         :param source: the MARKED/UNMARKED source
         :return: MarkedCell object
         """
@@ -254,15 +249,13 @@ class AnnotationManager(AnnotationBase):
             polygon_index += 1
 
 
-    def get_session(self, brain_region, annotation_type, 
-            cell_type = None, source = None):
+    def get_session(self, brain_region, annotation_type):
         """Gets either the existing session or creates a new one.
         We first try by trying to get the exact UrlModel (AKA, neuroglancer state). 
         If that doesn't succeed, we try without the state ID
 
         :param brain_region: brain region object AKA structure
         :param annotation_type: either marked cell or polygon or COM
-        :param source: the MARKED/UNMARKED source
         """
 
         annotation_session = AnnotationSession.objects.filter(active=True)\
