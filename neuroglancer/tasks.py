@@ -5,8 +5,6 @@ They also cannot accept objects as arguments.
 **Note: If you modify the tasks.py file, you must restart supervisord on the web server!!!**
 ``sudo systemctl restart supervisord.service``
 """
-
-from django.http import Http404
 from background_task import background
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, UrlModel
 from neuroglancer.annotation_manager import AnnotationManager
@@ -71,7 +69,7 @@ def nobackground_archive_and_insert_annotations(layeri, url_id):
 
     urlModel = UrlModel.objects.get(pk=url_id)
     manager = AnnotationManager(urlModel)
-    manager.set_current_layer(layeri)
+    manager.set_current_layer(layeri) # This takes a LONG time for polygons/volumes!
 
     assert manager.animal is not None
     assert manager.annotator is not None

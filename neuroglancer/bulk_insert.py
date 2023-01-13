@@ -44,4 +44,5 @@ class BulkCreateManager(object):
             if len(objs) > 0:
                 self._commit(apps.get_model(model_name))
 
+
     
