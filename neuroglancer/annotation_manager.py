@@ -34,15 +34,15 @@ the dropdown menu. Once the user clicks 'Go', these events take place:
 
 from django.http import Http404
 import numpy as np
-from decimal import Decimal
 from statistics import mode
 from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, ArchiveSet, BrainRegion, \
-    PolygonSequence, StructureCom, PolygonSequence, MarkedCell, UrlModel, get_region_from_abbreviation
-from neuroglancer.bulk_insert import BulkCreateManager
+    PolygonSequence, StructureCom, PolygonSequence, MarkedCell, get_region_from_abbreviation
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType, UNMARKED
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
+
+from timeit import default_timer as timer
 
 class AnnotationManager(AnnotationBase):
     """This class handles the management of annotations into the three tables: 
@@ -58,7 +58,7 @@ class AnnotationManager(AnnotationBase):
         :param neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
 
-        self.debug = False
+        self.debug = True
         self.neuroglancer_model = neuroglancerModel
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
@@ -67,7 +67,6 @@ class AnnotationManager(AnnotationBase):
         self.scale_xy, self.z_scale = get_scales(self.animal.prep_id)
         self.scales = np.array([self.scale_xy, self.scale_xy, self.z_scale])
         self.batch_size = 50
-        self.bulk_mgr = BulkCreateManager(chunk_size=self.batch_size)
 
     def set_current_layer(self, state_layer):
         """set the current layer attribute from a layer component of neuroglancer json state.
@@ -94,6 +93,8 @@ class AnnotationManager(AnnotationBase):
         if self.animal is None or self.annotator is None:
             raise Http404
         marked_cells = []
+        print()
+        print(f'Number of current layer annotations={len(self.current_layer.annotations)}')
         for annotationi in self.current_layer.annotations:
             # marked cells are treated differently than com, polygon and volume
             if annotationi.is_cell():
@@ -112,12 +113,14 @@ class AnnotationManager(AnnotationBase):
                 session = self.get_session(brain_region=brain_region, annotation_type='POLYGON_SEQUENCE')
                 self.add_volumes(annotationi, session)
 
+
         if len(marked_cells) > 0:
             batch = []
             marked_cells = np.array(marked_cells)
             description_and_cell_types = np.array([f'{i.description}@{i.category}' for i in marked_cells])
             unique_description_and_cell_types = np.unique(description_and_cell_types)
             brain_region = get_region_from_abbreviation('point')
+            session = self.get_session(brain_region=brain_region, annotation_type='MARKED_CELL')
             for description_cell_type in unique_description_and_cell_types:
                 in_category = description_and_cell_types == description_cell_type
                 cells = marked_cells[in_category]
@@ -129,7 +132,6 @@ class AnnotationManager(AnnotationBase):
                 else:
                     source = UNMARKED
                 
-                session = self.get_session(brain_region=brain_region, annotation_type='MARKED_CELL')
                 for annotationi in cells:
                     cell_type_object = CellType.objects.filter(cell_type=cell_type).first()
                     marked_cell = self.create_marked_cell(annotationi, session, cell_type_object, source)
@@ -137,29 +139,13 @@ class AnnotationManager(AnnotationBase):
                     
             MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
             if self.debug:
-                print(f'Adding {len(batch)} rows to marked cells.')
+                print(f'Adding {len(batch)} rows to marked cells with session ID={session.id}')
 
         if session is not None:
             session.neuroglancer_model = self.neuroglancer_model
             session.save()
-        self.bulk_mgr.done()
 
-    def is_structure_com(self, annotationi: Annotation):
-        """Determines if a point annotation is a structure COM.
-        A point annotation is a COM if the description corresponds to a structure 
-        existing in the database.
-        
-        :param annotationi (Annotation): the annotation object 
-        :return boolean: True or False
-        """
 
-        assert annotationi.is_point()
-        description = annotationi.get_description()
-        if description is not None:
-            description = str(description).replace('\n', '').strip()
-            return bool(BrainRegion.objects.filter(abbreviation=description).first())
-        else:
-            return False
 
     def archive_annotations(self, annotation_session: AnnotationSession):
         """Move the existing annotations into the archive. First, we get the existing
@@ -187,6 +173,23 @@ class AnnotationManager(AnnotationBase):
                 print(f'Deleting {len(rows)} rows of {data_model._meta} with session={annotation_session}')
             rows.delete()
 
+    def is_structure_com(self, annotationi: Annotation):
+        """Determines if a point annotation is a structure COM.
+        A point annotation is a COM if the description corresponds to a structure 
+        existing in the database.
+        
+        :param annotationi (Annotation): the annotation object 
+        :return boolean: True or False
+        """
+
+        assert annotationi.is_point()
+        description = annotationi.get_description()
+        if description is not None:
+            description = str(description).replace('\n', '').strip()
+            return bool(BrainRegion.objects.filter(abbreviation=description).first())
+        else:
+            return False
+
     def add_com(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a COM to the bulk manager.
 
@@ -195,8 +198,8 @@ class AnnotationManager(AnnotationBase):
         """
 
         x, y, z = np.floor(annotationi.coord) * (self.scales).astype(np.float64)
-        self.bulk_mgr.add(StructureCom(annotation_session=annotation_session,
-                                       source='MANUAL', x=x, y=y, z=z))
+        com = StructureCom(annotation_session=annotation_session, source='MANUAL', x=x, y=y, z=z)
+        com.save()
 
     def create_marked_cell(self, annotationi: Annotation, annotation_session: AnnotationSession, 
         cell_type, source) -> MarkedCell:
@@ -223,11 +226,13 @@ class AnnotationManager(AnnotationBase):
         z = mode([int(np.floor(pointi.coord_start[2]) * float(self.z_scale))
                  for pointi in annotationi.childs])
         ordering = 1
+        batch = []
         for pointi in annotationi.childs:
             xa, ya, _ = pointi.coord_start * (self.scales).astype(np.float64)
-            self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,
-                              x=xa, y=ya, z=z, point_order=ordering, polygon_index=1))
+            polygon_sequence = PolygonSequence(annotation_session=annotation_session, x=xa, y=ya, z=z, point_order=ordering, polygon_index=1)
+            batch.append(polygon_sequence)
             ordering += 1
+        PolygonSequence.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
 
     def add_volumes(self, annotationi: Annotation, annotation_session: AnnotationSession):
         """Helper method to add a volume to the bulk manager.
@@ -235,7 +240,9 @@ class AnnotationManager(AnnotationBase):
         :param annotationi: A COM annotation
         :param annotation_session: session object
         """
+        start_time = timer()
 
+        batch = []
         polygon_index = 1
         for polygoni in annotationi.childs:
             ordering = 1
@@ -243,10 +250,16 @@ class AnnotationManager(AnnotationBase):
                      for coord in polygoni.childs])
             for childi in polygoni.childs:
                 xa, ya, _ = childi.coord_start * (self.scales).astype(np.float64)
-                self.bulk_mgr.add(PolygonSequence(annotation_session=annotation_session,
-                                                  x=xa, y=ya, z=z, point_order=ordering, polygon_index=polygon_index))
+                polygon_sequence = PolygonSequence(annotation_session=annotation_session, x=xa, y=ya, z=z, point_order=ordering, polygon_index=polygon_index)
                 ordering += 1
+                batch.append(polygon_sequence)
             polygon_index += 1
+        PolygonSequence.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
+        end_time = timer()
+        total_elapsed_time = round((end_time - start_time),2)
+        print(f'Inserting {len(batch)} points to {annotationi.get_description()} took {total_elapsed_time} seconds.')
+
+
 
 
     def get_session(self, brain_region, annotation_type):
@@ -257,7 +270,7 @@ class AnnotationManager(AnnotationBase):
         :param brain_region: brain region object AKA structure
         :param annotation_type: either marked cell or polygon or COM
         """
-
+        
         annotation_session = AnnotationSession.objects.filter(active=True)\
             .filter(annotation_type=annotation_type)\
             .filter(animal=self.animal)\

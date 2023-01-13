@@ -3,6 +3,7 @@ import random
 import numpy as np
 from django.http.response import Http404
 from neuroglancer.models import UNMARKED
+
 default_annotation_layer = dict(
     type='annotation', annotations=[], name='annotation', source='')
 
@@ -131,8 +132,7 @@ class AnnotationLayer:
             if annotationi._type == _type:
                 annotationi.childs = []
                 for childid in annotationi.child_ids:
-                    annotationi.childs.append(
-                        self.get_annotation_with_id(childid))
+                    annotationi.childs.append(self.get_annotation_with_id(childid))
                     self.delete_annotation_with_id(childid)
                 annotationi.childs = np.array(annotationi.childs)
 
@@ -181,9 +181,10 @@ class AnnotationLayer:
 
     def delete_annotation_with_id(self, id):
         '''
-        Delete annoatation with a set id from the list of annotations
+        Delete annotation with a set id from the list of annotations
         :param id:UUID string assigned by neuroglancer
         '''
+
         search_result = self.search_annotation_with_id(id)
         self.annotations = self.annotations[np.logical_not(search_result)]
 
