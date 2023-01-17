@@ -20,7 +20,7 @@ help:
 # Run command below to create the ERD diagram
 # You'll need this on your system: libgraphviz-dev
 graph:
-	python ../manage.py graph_models -X exclude.models.txt -o source/_static/brain.neuroglancer.png
+	python ../manage.py graph_models -X exclude.models.txt -o build/html/_static/brain.neuroglancer.png
 
 publish:
 	rsync -auv --delete build/html/* webdev:/var/www/html/docs/activebrainatlas/
