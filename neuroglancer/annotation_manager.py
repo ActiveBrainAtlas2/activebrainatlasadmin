@@ -41,7 +41,7 @@ from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType, UNMARKED
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
-
+DEBUG = False # setting this to true will provide more logging BUT, it will not send jobs to the background process!
 from timeit import default_timer as timer
 
 class AnnotationManager(AnnotationBase):
@@ -58,7 +58,6 @@ class AnnotationManager(AnnotationBase):
         :param neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
         """
 
-        self.debug = True
         self.neuroglancer_model = neuroglancerModel
         self.owner_id = neuroglancerModel.owner.id
         self.MODELS = ['MarkedCell', 'PolygonSequence', 'StructureCom']
@@ -93,8 +92,6 @@ class AnnotationManager(AnnotationBase):
         if self.animal is None or self.annotator is None:
             raise Http404
         marked_cells = []
-        print()
-        print(f'Number of current layer annotations={len(self.current_layer.annotations)}')
         for annotationi in self.current_layer.annotations:
             # marked cells are treated differently than com, polygon and volume
             if annotationi.is_cell():
@@ -138,7 +135,7 @@ class AnnotationManager(AnnotationBase):
                     batch.append(marked_cell)
                     
             MarkedCell.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-            if self.debug:
+            if DEBUG:
                 print(f'Adding {len(batch)} rows to marked cells with session ID={session.id}')
 
         if session is not None:
@@ -168,7 +165,7 @@ class AnnotationManager(AnnotationBase):
                 input['archive'] = archive
                 batch.append(AnnotationPointArchive(**input))
             AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-            if self.debug:
+            if DEBUG:
                 print(f'Adding {len(batch)} rows of annotation points archive with session={archive._meta}')
                 print(f'Deleting {len(rows)} rows of {data_model._meta} with session={annotation_session}')
             rows.delete()
@@ -255,9 +252,10 @@ class AnnotationManager(AnnotationBase):
                 batch.append(polygon_sequence)
             polygon_index += 1
         PolygonSequence.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-        end_time = timer()
-        total_elapsed_time = round((end_time - start_time),2)
-        print(f'Inserting {len(batch)} points to {annotationi.get_description()} took {total_elapsed_time} seconds.')
+        if DEBUG:
+            end_time = timer()
+            total_elapsed_time = round((end_time - start_time),2)
+            print(f'Inserting {len(batch)} points to {annotationi.get_description()} took {total_elapsed_time} seconds.')
 
 
 

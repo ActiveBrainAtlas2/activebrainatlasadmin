@@ -356,6 +356,7 @@ class PolygonSequence(AnnotationAbstract):
         db_table = 'polygon_sequences'
         verbose_name = 'Polygon sequence'
         verbose_name_plural = 'Polygon sequences'
+        constraints = [models.UniqueConstraint(fields=['source', 'annotation_session', 'x', 'y', 'z', 'polygon_index', 'point_order'], name='unique polygon')]        
 
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
@@ -381,6 +382,7 @@ class StructureCom(AnnotationAbstract):
         db_table = 'structure_com'
         verbose_name = 'Structure COM'
         verbose_name_plural = 'Structure COMs'
+        constraints = [models.UniqueConstraint(fields=['source', 'annotation_session', 'x', 'y', 'z'], name='unique COM')]        
 
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
@@ -420,9 +422,7 @@ class AnnotationPointArchive(AnnotationAbstract):
         db_table = 'annotations_point_archive'
         verbose_name = 'Annotation Point Archive'
         verbose_name_plural = 'Annotation Points Archive'
-        constraints = [
-                models.UniqueConstraint(fields=['annotation_session', 'x', 'y', 'z'], name='unique backup')
-            ]        
+        constraints = [models.UniqueConstraint(fields=['annotation_session', 'x', 'y', 'z'], name='unique backup')]        
     
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)

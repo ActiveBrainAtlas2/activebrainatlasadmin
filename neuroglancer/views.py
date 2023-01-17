@@ -5,7 +5,6 @@ portion of the portal.
 """
 
 import decimal
-import numpy as np
 from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
 from django.http import JsonResponse
@@ -13,7 +12,7 @@ from rest_framework.response import Response
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import random_string, create_point_annotation
-from neuroglancer.annotation_manager import AnnotationManager
+from neuroglancer.annotation_manager import DEBUG
 from neuroglancer.atlas import align_atlas, get_scales
 from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, PolygonSequence, \
     UrlModel, BrainRegion, StructureCom, CellType
@@ -313,20 +312,19 @@ class SaveAnnotation(views.APIView):
         state_json = urlModel.url
         layers = state_json['layers']
         found = False
-        manager = AnnotationManager(urlModel)
+        start_time = timer()
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
-                manager.set_current_layer(layeri)
-                start_time = timer()
 
-                if manager.debug:
+                if DEBUG:
                     nobackground_archive_and_insert_annotations(layeri, url_id)
                 else:
                     background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
                 found = True
-                end_time = timer()
-                total_elapsed_time = round((end_time - start_time),2)
-                print(f'Parsing {annotation_layer_name} layer took {total_elapsed_time} seconds.')
+
+        end_time = timer()
+        total_elapsed_time = round((end_time - start_time),2)
+        print(f'Running whole thing took {total_elapsed_time} seconds.')
 
         if found:
             return Response('success')
