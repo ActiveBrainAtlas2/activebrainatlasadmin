@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 from subprocess import check_output
 import os
 from time import sleep
-from timeit import default_timer as timer
 
 class UrlViewSet(viewsets.ModelViewSet):
     """API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -312,7 +311,6 @@ class SaveAnnotation(views.APIView):
         state_json = urlModel.url
         layers = state_json['layers']
         found = False
-        start_time = timer()
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
 
@@ -321,10 +319,6 @@ class SaveAnnotation(views.APIView):
                 else:
                     background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
                 found = True
-
-        end_time = timer()
-        total_elapsed_time = round((end_time - start_time),2)
-        print(f'Running whole thing took {total_elapsed_time} seconds.')
 
         if found:
             return Response('success')
