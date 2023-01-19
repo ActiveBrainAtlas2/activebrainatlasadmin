@@ -102,7 +102,7 @@ class UrlSerializer(serializers.ModelSerializer):
             obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
-    def updateXXX(self, obj, validated_data):
+    def update(self, obj, validated_data):
         """This gets called when a user clicks Save in Neuroglancer
         """
         obj.url = validated_data.get('url', obj.url)
@@ -110,11 +110,10 @@ class UrlSerializer(serializers.ModelSerializer):
         obj.comments = validated_data.get('comments', obj.comments)
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            print('printing owner id', owner.id)
             self.save_neuroglancer_state(obj, owner)
         return obj
 
-    def update(self, obj, validated_data):
+    def update_in_background(self, obj, validated_data):
         """This gets called when a user clicks Save in Neuroglancer
         """
         obj.url = validated_data.get('url', obj.url)
