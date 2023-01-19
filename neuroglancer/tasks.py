@@ -8,6 +8,7 @@ They also cannot accept objects as arguments.
 from background_task import background
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, UrlModel
 from neuroglancer.annotation_manager import AnnotationManager
+from django.contrib.auth.models import User
 
 
 def restore_annotations(archiveSet):
@@ -45,7 +46,7 @@ def restore_annotations(archiveSet):
     data_model.objects.bulk_create(batch, 50)
     
 
-@background(schedule=0)
+@background(schedule=10)
 def background_archive_and_insert_annotations(layeri, url_id):
     """The main function that updates the database with annotations in the current_layer attribute
         This function loops each annotation in the curent layer and inserts/archive points in the 
@@ -75,3 +76,19 @@ def nobackground_archive_and_insert_annotations(layeri, url_id):
     assert manager.annotator is not None
 
     manager.archive_and_insert_annotations()
+
+
+@background(schedule=0)
+def save_neuroglancer_state_background(url_id, neuroglancer_state, owner_id):
+    """This method takes care of tasks that are in both create and update
+    
+    :param obj: the neuroglancerModel object
+    :param owner: the owner object from the validated_data
+    
+    """
+    urlModel = UrlModel.objects.get(pk=url_id)
+    urlModel.url = neuroglancer_state
+    owner = User.objects.get(pk=owner_id)
+    urlModel.owner = owner
+    urlModel.save()
+
