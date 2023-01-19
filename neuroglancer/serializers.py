@@ -5,7 +5,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
 from neuroglancer.models import BrainRegion, UrlModel
-from neuroglancer.tasks import save_neuroglancer_state_background
 from django.contrib.auth.models import User
 
 logging.basicConfig()
@@ -104,24 +103,17 @@ class UrlSerializer(serializers.ModelSerializer):
 
     def update(self, obj, validated_data):
         """This gets called when a user clicks Save in Neuroglancer
+        This is a very fast method. Even with a large set of polygons, 
+        it only took around 0.25 seconds on a home computer.
         """
+        
         obj.url = validated_data.get('url', obj.url)
+        
         obj.user_date = validated_data.get('user_date', obj.user_date)
         obj.comments = validated_data.get('comments', obj.comments)
         if 'owner' in validated_data:
             owner = validated_data['owner']
             self.save_neuroglancer_state(obj, owner)
-        return obj
-
-    def update_in_background(self, obj, validated_data):
-        """This gets called when a user clicks Save in Neuroglancer
-        """
-        obj.url = validated_data.get('url', obj.url)
-        obj.user_date = validated_data.get('user_date', obj.user_date)
-        obj.comments = validated_data.get('comments', obj.comments)
-        if 'owner' in validated_data:
-            owner = validated_data['owner']
-            save_neuroglancer_state_background(obj.id, obj.url, owner.id, verbose_name="Update neuroglancer state", creator=owner)
         return obj
 
     def save_neuroglancer_state(self, obj, owner):
@@ -142,22 +134,3 @@ class UrlSerializer(serializers.ModelSerializer):
             logger.error('Could not save Neuroglancer model')
         obj.url = None
         return
-
-    def save_neuroglancer_stateORIG(self, obj, owner):
-        """This method takes care of tasks that are in both create and update
-        
-        :param obj: the neuroglancerModel object
-        :param owner: the owner object from the validated_data
-        
-        """
-        try:
-            # authUser = User.objects.get(pk=owner)
-            obj.owner = owner
-        except User.DoesNotExist:
-            logger.error('Owner was not in validated data')
-        try:
-            obj.save()
-        except APIException:
-            logger.error('Could not save Neuroglancer model')
-        obj.url = None
-        return obj

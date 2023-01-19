@@ -77,18 +77,3 @@ def nobackground_archive_and_insert_annotations(layeri, url_id):
 
     manager.archive_and_insert_annotations()
 
-
-@background(schedule=0)
-def save_neuroglancer_state_background(url_id, neuroglancer_state, owner_id):
-    """This method takes care of tasks that are in both create and update
-    
-    :param obj: the neuroglancerModel object
-    :param owner: the owner object from the validated_data
-    
-    """
-    urlModel = UrlModel.objects.get(pk=url_id)
-    urlModel.url = neuroglancer_state
-    owner = User.objects.get(pk=owner_id)
-    urlModel.owner = owner
-    urlModel.save()
-
