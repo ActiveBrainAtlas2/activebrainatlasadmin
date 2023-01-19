@@ -318,6 +318,7 @@ class SaveAnnotation(views.APIView):
                     nobackground_archive_and_insert_annotations(layeri, url_id)
                 else:
                     background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
+                    
                 found = True
 
         if found:
