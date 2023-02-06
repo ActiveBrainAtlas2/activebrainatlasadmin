@@ -33,7 +33,32 @@ marked_cell_related_urls = [
     path('cell_types',views.GetCellTypes.as_view(),name = 'cell_types'),
 ]
 
-general_annotations=['annotations', views.GetMarkedCellList.as_view(),
+general_annotations = ['annotations', views.GetMarkedCellList.as_view(),
                      'annotation', views.GetMarkedCellList.as_view()]
 
-urlpatterns = general_urls+transformation_relate_urls+volume_related_urls+com_related_urls+marked_cell_related_urls
+mouselight_urls = [
+        path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/soma/<str:brain_region1>',
+        views.MouseLightNeuron.as_view()),
+
+    path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/soma/<str:brain_region1>/soma/<str:brain_region2>',
+        views.MouseLightNeuron.as_view()),
+    path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/<str:filter_type1>/<str:brain_region1>/<str:operator_type1>/<int:thresh1>',
+        views.MouseLightNeuron.as_view()),
+
+    path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/<str:filter_type1>/<str:brain_region1>/<str:operator_type1>/<int:thresh1>/soma/<str:brain_region2>',
+        views.MouseLightNeuron.as_view()),
+
+    path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/soma/<str:brain_region1>/<str:filter_type2>/<str:brain_region2>/<str:operator_type2>/<int:thresh2>',
+        views.MouseLightNeuron.as_view(),name='test'),
+
+    path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/<str:filter_type1>/<str:brain_region1>/<str:operator_type1>/<int:thresh1>/<str:filter_type2>/<str:brain_region2>/<str:operator_type2>/<int:thresh2>',
+        views.MouseLightNeuron.as_view()),
+
+    path('anatomical_regions/<str:atlas_name>',views.AnatomicalRegions.as_view()),
+
+    path('tracing_annotations/<str:virus_timepoint>/<str:primary_inj_site>',
+        views.TracingAnnotation.as_view()),
+
+]
+
+urlpatterns = general_urls+transformation_relate_urls+volume_related_urls+com_related_urls+marked_cell_related_urls + mouselight_urls
