@@ -98,7 +98,7 @@ class UrlSerializer(serializers.ModelSerializer):
         )
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            obj = self.save_neuroglancer_state(obj, owner)
+            self.save_neuroglancer_state(obj, owner)
         return obj
 
     def update(self, obj, validated_data):
