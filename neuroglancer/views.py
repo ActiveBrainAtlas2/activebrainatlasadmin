@@ -179,14 +179,16 @@ class GetPolygonList(views.APIView):
         """
         data = []
         rows = AnnotationSession.objects.filter(
-            active=True).filter(annotation_type='POLYGON_SEQUENCE').all()
+            active=True).filter(annotation_type='POLYGON_SEQUENCE')\
+                    .order_by('animal', 'annotator', 'brain_region', '-updated')\
+                    .all()
         for row in rows:
             data.append({
                 'session_id': row.id,
                 "prep_id": row.animal.prep_id,
                 "annotator": row.annotator.username,
                 "brain_region": row.brain_region.abbreviation,
-                "source": 'NA'
+                "source": row.updated
             })
         serializer = PolygonListSerializer(data, many=True)
         return Response(serializer.data)

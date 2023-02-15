@@ -59,7 +59,7 @@ class PolygonListSerializer(serializers.Serializer):
     session_id = serializers.CharField()
     prep_id = serializers.CharField()
     annotator = serializers.CharField()
-    source = serializers.CharField()
+    source = serializers.CharField(required=False)
     brain_region = serializers.CharField()
 
 class BrainRegionSerializer(serializers.ModelSerializer):
