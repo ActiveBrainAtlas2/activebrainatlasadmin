@@ -1,11 +1,15 @@
 """Some important static methods used throughout the Django project.
 """
 import decimal
+import json
 import numpy as np
+import os
 from neuroglancer.models import BrainRegion, StructureCom
 from brain.models import Animal, ScanRun
 import logging
 from neuroglancer.annotation_base import AnnotationBase
+from django.conf import settings
+from brain_atlas_toolkit import graph_tools
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 MANUAL = 1
@@ -152,4 +156,25 @@ def umeyama(src, dst, with_scaling=True):
     t = dst_mean - r @ src_mean
 
     return r, t
+
+
+def make_ontology_graph_CCFv3():
+    """
+    Load the allen CCFv3 ontology into a graph object
+    """
+    allen_ontology_file = os.path.join(settings.STATIC_ROOT,'neuroglancer/allen.json')
+    with open(allen_ontology_file,'r') as infile:
+        ontology_dict = json.load(infile)
+    graph = graph_tools.Graph(ontology_dict)
+    return graph
+
+def make_ontology_graph_pma():
+    """
+    Load the Princeton Mouse Atlas ontology into a graph object
+    """
+    pma_ontology_file = os.path.join(settings.STATIC_ROOT,'neuroglancer/pma.json')
+    with open(pma_ontology_file,'r') as infile:
+        ontology_dict = json.load(infile)
+    graph = graph_tools.Graph(ontology_dict)
+    return graph
 

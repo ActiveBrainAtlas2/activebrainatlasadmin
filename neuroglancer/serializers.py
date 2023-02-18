@@ -134,3 +134,27 @@ class UrlSerializer(serializers.ModelSerializer):
             logger.error('Could not save Neuroglancer model')
         obj.url = None
         return
+
+class NeuronSerializer(serializers.Serializer):
+    """
+    Serializes a list of brain atlas segment Ids
+    Used for the Mouselight data
+    """
+    segmentId = serializers.ListField()
+
+class AnatomicalRegionSerializer(serializers.Serializer):
+    """
+    Serializes a list of brain atlas region names
+    Used for the Mouselight data
+    """
+    segment_names = serializers.ListField()
+
+class ViralTracingSerializer(serializers.Serializer):
+    """
+    Serializes a list of tracing brain urls
+    Used for the Mouselight data
+    """
+    brain_names = serializers.ListField()
+    frac_injections = serializers.ListField()
+    primary_inj_sites = serializers.ListField()
+    brain_urls = serializers.ListField()
