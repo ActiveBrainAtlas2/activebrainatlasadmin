@@ -5,7 +5,7 @@ autobahn==22.5.1
 Automat==20.2.0
 Babel==2.10.3
 Brotli==1.0.9
-certifi==2022.6.15
+certifi==2022.12.7
 cffi==1.15.1
 channels==2.4.0
 charset-normalizer==2.1.0
