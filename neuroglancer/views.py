@@ -9,6 +9,10 @@ from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
 from django.http import JsonResponse
 from rest_framework.response import Response
+from subprocess import check_output
+import os
+from time import sleep
+
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import random_string, create_point_annotation
@@ -21,12 +25,10 @@ from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
     PolygonSerializer, RotationSerializer, UrlSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations, \
     nobackground_archive_and_insert_annotations
+
 import logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-from subprocess import check_output
-import os
-from time import sleep
 
 class UrlViewSet(viewsets.ModelViewSet):
     """API endpoint that allows the neuroglancer urls to be viewed or edited.
@@ -55,7 +57,6 @@ def apply_scales_to_annotation_rows(rows, prep_id):
 class GetVolume(AnnotationBase, views.APIView):
     """A view that returns the volume annotation for a session in neuroglancer json format
     """
-
     def get(self, request, session_id, format=None):
         try:
             session = AnnotationSession.objects.get(pk=session_id)
@@ -63,11 +64,12 @@ class GetVolume(AnnotationBase, views.APIView):
                 annotation_session__pk=session_id)
         except:
             print('bad query')
+        
         apply_scales_to_annotation_rows(rows, session.animal.prep_id)
         polygon_data = self.create_polygon_and_volume_uuids(rows)
         polygons = create_polygons(
             polygon_data, description=session.brain_region.abbreviation)
-        serializer = PolygonSerializer(polygons, many=True)
+        serializer = PolygonSerializer(polygons, many=True)        
         return Response(serializer.data)
 
     def create_polygon_and_volume_uuids(self, rows):
@@ -182,6 +184,7 @@ class GetPolygonList(views.APIView):
             active=True).filter(annotation_type='POLYGON_SEQUENCE')\
                     .order_by('animal', 'annotator', 'brain_region', '-updated')\
                     .all()
+        print(rows.query)
         for row in rows:
             data.append({
                 'session_id': row.id,
