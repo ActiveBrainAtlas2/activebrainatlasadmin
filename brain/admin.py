@@ -229,7 +229,7 @@ class ScanRunAdmin(AtlasAdminModel, ExportCsvMixin):
         :ExportCsvMixin: The class with standard features and CSV 
             exporter method.
     """
-    list_display = ('prep_id', 'performance_center', 'machine','comments', 'created')
+    list_display = ('prep_id', 'performance_center', 'machine', 'rescan_number', 'comments', 'created')
     search_fields = ('prep__prep_id',)
     ordering = ['prep_id', 'performance_center', 'machine','comments', 'created']
 
@@ -385,7 +385,7 @@ class SlideAdmin(AtlasAdminModel, ExportCsvMixin):
         :return: HTML of the fields
         """
         count = self.scene_count(obj)
-        fields = ['file_name', 'scan_run', 'slide_physical_id', 'slide_status', 'rescan_number',
+        fields = ['file_name', 'scan_run', 'slide_physical_id', 'slide_status',
                   'insert_before_one', 'scene_qc_1',
                   'insert_between_one_two', 'scene_qc_2']
 

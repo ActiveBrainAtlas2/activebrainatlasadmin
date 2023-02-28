@@ -205,6 +205,7 @@ class ScanRun(AtlasModel):
     
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
+    rescan_number = models.IntegerField()
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     machine = EnumField(choices=['Axioscan I', 'Axioscan II'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
@@ -230,7 +231,7 @@ class ScanRun(AtlasModel):
     comments = models.TextField(max_length=2001, blank=True, null=True)
 
     def __str__(self):
-        return "{} Scan ID: {}".format(self.prep.prep_id, self.id)
+        return "{} Scan ID: {}, rescan: {}".format(self.prep.prep_id, self.id, self.rescan_number)
 
     class Meta:
         managed = False
@@ -245,7 +246,6 @@ class Slide(AtlasModel):
     id = models.AutoField(primary_key=True)
     scan_run = models.ForeignKey(ScanRun, models.CASCADE)
     slide_physical_id = models.IntegerField()
-    rescan_number = EnumField(choices=['1','2','3'], blank=False, null=False, default='1')
     slide_status = EnumField(choices=['Bad','Good'], blank=False, null=False)
     scenes = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(6)])
     insert_before_one = models.IntegerField(blank=False, null=False, default=0,

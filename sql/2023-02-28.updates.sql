@@ -1,0 +1,10 @@
+alter table scan_run add column rescan_number tinyint(4) not null default 0 after prep_id; 
+update scan_run set slide_folder_path = 'czi' where iteration = 0;
+alter table scan_run drop column converted_folder_path;
+alter table slide drop column rescan_number;
+alter table slide drop column scene_rotation_1;
+alter table slide drop column scene_rotation_2;
+alter table slide drop column scene_rotation_3;
+alter table slide drop column scene_rotation_4;
+alter table slide drop column scene_rotation_5;
+alter table slide drop column scene_rotation_6;
