@@ -339,6 +339,7 @@ class Section(AtlasModel):
     
     id = models.AutoField(primary_key=True)
     prep_id = models.CharField(max_length=20)
+    rescan_number = models.IntegerField(null=False, verbose_name='Rescan')
     czi_file = models.CharField(max_length=200)
     slide_physical_id = models.IntegerField(null=False, verbose_name='Slide')
     file_name = models.CharField(max_length=200)

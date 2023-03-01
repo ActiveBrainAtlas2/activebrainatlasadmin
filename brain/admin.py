@@ -588,10 +588,14 @@ class SectionAdmin(AtlasAdminModel, ExportCsvMixin):
                 orderby = histology.side_sectioned_first
 
             if orderby == 'DESC':
-                sections =  Section.objects.filter(prep_id__exact=prep_id).filter(channel=1)\
+                sections =  Section.objects.filter(prep_id__exact=prep_id)\
+                    .filter(channel=1)\
+                    .filter(rescan_number=0)\
                     .order_by('-slide_physical_id', '-scene_number')
             else:
-                sections = Section.objects.filter(prep_id__exact=prep_id).filter(channel=1)\
+                sections = Section.objects.filter(prep_id__exact=prep_id)\
+                    .filter(channel=1)\
+                    .filter(rescan_number=0)\
                     .order_by('slide_physical_id', 'scene_number')
 
         return sections
