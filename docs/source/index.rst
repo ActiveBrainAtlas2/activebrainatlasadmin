@@ -46,7 +46,6 @@ Use the side navigation panel to view different classes and methods within each 
    Neuroglancer tests <modules/neuroglancer/tests.rst>
    Neuroglancer tasks <modules/neuroglancer/tasks.rst>
    REST API endpoints <modules/neuroglancer/views.rst>
-   Bulk annotation inserts <modules/neuroglancer/bulk_insert.rst>
    Align atlas tools <modules/neuroglancer/atlas.rst>
 
 .. toctree::
