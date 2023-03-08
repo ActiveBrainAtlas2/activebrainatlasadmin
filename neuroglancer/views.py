@@ -184,7 +184,6 @@ class GetPolygonList(views.APIView):
             active=True).filter(annotation_type='POLYGON_SEQUENCE')\
                     .order_by('animal', 'annotator', 'brain_region', '-updated')\
                     .all()
-        print(rows.query)
         for row in rows:
             data.append({
                 'session_id': row.id,
