@@ -5,7 +5,6 @@ They also cannot accept objects as arguments.
 **Note: If you modify the tasks.py file, you must restart supervisord on the web server!!!**
 ``sudo systemctl restart supervisord.service``
 """
-from background_task import background
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, UrlModel
 from neuroglancer.annotation_manager import AnnotationManager
 from django.contrib.auth.models import User
@@ -46,7 +45,6 @@ def restore_annotations(archiveSet):
     data_model.objects.bulk_create(batch, 50)
     
 
-@background(schedule=10)
 def background_archive_and_insert_annotations(layeri, url_id):
     """The main function that updates the database with annotations in the current_layer attribute
         This function loops each annotation in the curent layer and inserts/archive points in the 

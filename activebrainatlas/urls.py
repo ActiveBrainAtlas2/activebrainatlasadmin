@@ -20,17 +20,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from activebrainatlas.views import SessionVarView
-from workflow.gantt_view import gantt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(r'graph', gantt),
-    path(r'gantt', TemplateView.as_view(template_name='gantt.html')),
     path(r'session', SessionVarView.as_view(), name='session-var'),
-    path('django_plotly_dash/', include('django_plotly_dash.urls')),
     path('', include('brain.urls')),
     path('', include('neuroglancer.urls')),
-    path('', include('workflow.urls')),
 ]
 
 urlpatterns +=  static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

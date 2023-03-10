@@ -30,8 +30,6 @@ from neuroglancer.models import AnnotationSession, ArchiveSet, MarkedCellWorkflo
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 from neuroglancer.tasks import restore_annotations
-from background_task.models import Task
-from background_task.models import CompletedTask
 
 
 def datetime_format(dtime):
@@ -638,59 +636,3 @@ class ArchiveSetAdmin(AtlasAdminModel):
         """
         return False
 
-'''
-@admin.register(AnnotationPointArchive)
-class AnnotationArchiveAdmin(admin.ModelAdmin):
-    """A class to admin the archived annotations. 
-    It inherits from the AnnotationSessionAdmin
-    This should show annotations that are inactive.
-    """
-    
-    list_display = ['animal', 'annotation_type', 'annotator', 'created']
-    ordering = ['animal__prep_id'] 
-    search_fields = ['animal__prep_id', 'annotation_type']
-    
-
-    def get_queryset(self, request):
-        distinct = AnnotationPointArchive.objects.values_list('annotation_session_id', flat=True).distinct()
-        qs = AnnotationSession.objects.filter(pk__in=[id for id in distinct])
-        return qs
-'''
-##### The code below is for the tasks. It doesn't really belong in the neuroglancer category
-##### but we had to put it somewhere
-
-admin.site.unregister(Task)
-admin.site.unregister(CompletedTask)
-
-
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin):
-    """This admin class is for taking care of the tasks associated with the pre-processing """
-    display_filter = ['task_name']
-    search_fields = ['task_name', 'task_params', ]
-    list_display = ['task_name', 'run_at', 'priority', 'attempts',
-                    'has_error', 'locked_by', 'locked_by_pid_running', 'creator']
-
-    def has_add_permission(self, request, obj=None):
-        """Returns false as this data comes in from the pre-processing """
-        return False
-
-
-@admin.register(CompletedTask)
-class CompletedTaskAdmin(admin.ModelAdmin):
-    """This class is used to admin the completed tasks. These are tasks that are long running
-    and take to long for an HTTP request. They get sent to the supervisord daemon to be run
-    outside the scope of the HTTP request."""
-
-    display_filter = ['task_name']
-    list_display = ['task_name', 'run_at', 'attempts',
-                    'has_error',  'creator']
-    list_filter = ['run_at', ]
-
-    def has_add_permission(self, request):
-        """Returns false as it is added by another process."""
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        """Returns false as it is added by another process."""
-        return False
