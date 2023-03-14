@@ -720,7 +720,6 @@ CREATE TABLE `virus` (
   `titer` double NOT NULL,
   `lot_number` varchar(20) DEFAULT NULL,
   `label` enum('YFP','GFP','RFP','histo-tag') DEFAULT NULL,
-  `label2` varchar(200) DEFAULT NULL,
   `excitation_1p_wavelength` int(11) NOT NULL,
   `excitation_1p_range` int(11) NOT NULL,
   `excitation_2p_wavelength` int(11) NOT NULL,
