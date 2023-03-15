@@ -491,7 +491,7 @@ CREATE TABLE `injection` (
   `transport_days` int(11) NOT NULL,
   `virus_count` int(11) NOT NULL,
   `comments` longtext DEFAULT NULL,
-  `injection_volume_ul` varchar(20) DEFAULT NULL,
+  `injection_volume` varchar(20) DEFAULT NULL,
   `FK_prep_id` varchar(20) NOT NULL,
   `FK_performance_center_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
