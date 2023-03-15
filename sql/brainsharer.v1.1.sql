@@ -38,6 +38,7 @@ DROP TABLE IF EXISTS `animal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `animal` (
+  id int(11) NOT NULL auto_increment,
   `prep_id` varchar(20) NOT NULL COMMENT 'Name for lab mouse/rat, max 20 chars',
   `performance_center` enum('CSHL','Salk','UCSD','HHMI','Duke') DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL COMMENT 'the mouse''s date of birth',
@@ -54,8 +55,10 @@ CREATE TABLE `animal` (
   `alias` varchar(100) DEFAULT NULL COMMENT 'names given by others',
   `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`prep_id`)
+  created datetime(6),
+  `updated` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__prep_id` (`prep_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -582,7 +585,7 @@ CREATE TABLE `neuroglancer_state` (
   `neuroglancer_state` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`neuroglancer_state`)),
   `created` datetime(6) NOT NULL,
   `updated` datetime(6) NOT NULL,
-  `user_date` varchar(25) NOT NULL,
+  `user_date` varchar(25),
   `comments` varchar(255) NOT NULL,
   `FK_user_id` int(11) DEFAULT NULL,
   `readonly` tinyint(1) NOT NULL,
@@ -613,7 +616,7 @@ CREATE TABLE `polygon_sequences` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_ps_session_xyz_index` (`FK_session_id`,`x`,`y`,`z`,`polygon_index`,`point_order`),
   KEY `FK_session_id` (`FK_session_id`),
-  CONSTRAINT `polygon_sequences_ibfk_1` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
+  CONSTRAINT `FK_polygon_sequences_annotation_session` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -651,7 +654,7 @@ CREATE TABLE `scan_run` (
   `flip` enum('none','flip','flop') NOT NULL DEFAULT 'none',
   `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
   `active` tinyint(4) NOT NULL DEFAULT 1,
-  `created` timestamp NULL DEFAULT current_timestamp(),
+  `created` datetime(6) NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
   KEY `FK__scan_run_FK_prep_id` (`FK_prep_id`),
   CONSTRAINT `FK__scan_run_FK_prep_id` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`)
@@ -675,7 +678,7 @@ CREATE TABLE `structure_com` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_sc_session_xyz` (`source`,`x`,`y`,`z`,`FK_session_id`),
   KEY `FK_session_id` (`FK_session_id`),
-  CONSTRAINT `structure_com_ibfk_1` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
+  CONSTRAINT `FK__structure_com_annotation_session` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 --
