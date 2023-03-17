@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from brain.models import ScanRun
-from neuroglancer.models import UrlModel
+from neuroglancer.models import NeuroglancerState
 
 def dash_scatter_view(request, template_name="dash_point_table.html", **kwargs):
     'Example view that inserts content into the dash context passed to the dash application'
@@ -8,16 +8,16 @@ def dash_scatter_view(request, template_name="dash_point_table.html", **kwargs):
     pk = kwargs['pk']
     dash_context = request.session.get("django_plotly_dash", dict())
     dash_context['pk'] = pk
-    urlModel = UrlModel.objects.get(pk=pk)
-    animal = urlModel.animal
+    neuroglancerState = NeuroglancerState.objects.get(pk=pk)
+    animal = neuroglancerState.animal
     scanRun = ScanRun.objects.get(prep_id__exact=animal)
-    df = urlModel.points
+    df = neuroglancerState.points
     df = df[(df.Layer == 'PM nucleus') | (df.Layer == 'premotor')]
     df.reset_index(inplace=True)
     dash_context['img_width'] = scanRun.width
     dash_context['img_height'] = scanRun.height
     dash_context['animal'] = animal
-    dash_context['comments'] = urlModel.comments
+    dash_context['comments'] = neuroglancerState.comments
     dash_context['df'] = df.to_json()
     dash_context['points'] = []
     dash_context['section'] = str(df['Section'].min())

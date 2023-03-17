@@ -4,8 +4,8 @@
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
-from neuroglancer.models import BrainRegion, UrlModel
-from django.contrib.auth.models import User
+from neuroglancer.models import BrainRegion, NeuroglancerState
+from authentication.models import User
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -79,19 +79,19 @@ class RotationSerializer(serializers.Serializer):
 
 class UrlSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
-    The url *probably* can't be in the UrlModel when it is returned
+    The url *probably* can't be in the NeuroglancerState when it is returned
     to neuroglancer as it crashes neuroglancer.
     """
 
     class Meta:
-        model = UrlModel
+        model = NeuroglancerState
         fields = '__all__'
         ordering = ['-created']
 
     def create(self, validated_data):
         """This method gets called when a user clicks New in Neuroglancer
         """
-        obj = UrlModel(
+        obj = NeuroglancerState(
             url=validated_data['url'],
             user_date=validated_data['user_date'],
             comments=validated_data['comments'],

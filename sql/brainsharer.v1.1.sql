@@ -38,9 +38,8 @@ DROP TABLE IF EXISTS `animal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `animal` (
-  id int(11) NOT NULL auto_increment,
   `prep_id` varchar(20) NOT NULL COMMENT 'Name for lab mouse/rat, max 20 chars',
-  `performance_center` enum('CSHL','Salk','UCSD','HHMI','Duke') DEFAULT NULL,
+  `FK_lab_id` int(11) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL COMMENT 'the mouse''s date of birth',
   `species` enum('mouse','rat') DEFAULT NULL,
   `strain` varchar(50) DEFAULT NULL,
@@ -57,8 +56,9 @@ CREATE TABLE `animal` (
   `active` tinyint(1) NOT NULL DEFAULT 1,
   created datetime(6),
   `updated` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `UK__prep_id` (`prep_id`)
+  PRIMARY KEY (`prep_id`),
+  KEY `K__animal_lab` (`FK_lab_id`),
+  CONSTRAINT `FK__animal_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -180,7 +180,7 @@ CREATE TABLE `auth_user` (
   `is_staff` tinyint(1) NOT NULL,
   `is_active` tinyint(1) NOT NULL,
   `date_joined` datetime(6) NOT NULL,
-  `FK_performance_lab` int(11) DEFAULT NULL,
+  `FK_lab_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK__auth_user_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -471,6 +471,50 @@ CREATE TABLE `django_site` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+--
+-- Table structure for table `histology`
+--
+
+DROP TABLE IF EXISTS `histology`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `histology` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `prep_id` varchar(20) NOT NULL,
+  `virus_id` int(11) DEFAULT NULL,
+  `performance_center` enum('CSHL','Salk','UCSD','HHMI') DEFAULT NULL COMMENT 'default population is from Injection',
+  `anesthesia` enum('ketamine','isoflurane','pentobarbital','fatal plus') DEFAULT NULL,
+  `perfusion_age_in_days` tinyint(3) unsigned NOT NULL DEFAULT 0,
+  `perfusion_date` date DEFAULT NULL,
+  `exsangination_method` enum('PBS','aCSF','Ringers') DEFAULT NULL,
+  `fixative_method` enum('Para','Glut','Post fix') DEFAULT NULL,
+  `special_perfusion_notes` varchar(200) DEFAULT NULL,
+  `post_fixation_period` tinyint(3) unsigned NOT NULL DEFAULT 0 COMMENT '(days)',
+  `whole_brain` enum('Y','N') DEFAULT NULL,
+  `block` varchar(200) DEFAULT NULL COMMENT 'if applicable',
+  `date_sectioned` date DEFAULT NULL,
+  `side_sectioned_first` enum('ASC','DESC') NOT NULL DEFAULT 'ASC',
+  `sectioning_method` enum('cryoJane','cryostat','vibratome','optical','sliding microtiome') DEFAULT NULL,
+  `section_thickness` tinyint(3) unsigned NOT NULL DEFAULT 20 COMMENT '(µm)',
+  `orientation` enum('coronal','horizontal','sagittal','oblique') DEFAULT NULL,
+  `oblique_notes` varchar(200) DEFAULT NULL,
+  `mounting` enum('every section','2nd','3rd','4th','5ft','6th') DEFAULT NULL COMMENT 'used to automatically populate Placeholder',
+  `counterstain` enum('thionin','NtB','NtFR','DAPI','Giemsa','Syto41') DEFAULT NULL,
+  `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
+  `created` timestamp NOT NULL DEFAULT current_timestamp(),
+  `active` tinyint(4) NOT NULL DEFAULT 1,
+  `scene_order` enum('ASC','DESC') DEFAULT 'ASC',
+  PRIMARY KEY (`id`),
+  KEY `K__histology_virus_id` (`virus_id`),
+  KEY `K__histology_prep_id` (`prep_id`),
+  CONSTRAINT `FK__histology_prep_id` FOREIGN KEY (`prep_id`) REFERENCES `animal` (`prep_id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK__histology_virus_id` FOREIGN KEY (`virus_id`) REFERENCES `virus` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+
 --
 -- Table structure for table `injection`
 --
@@ -496,12 +540,12 @@ CREATE TABLE `injection` (
   `comments` longtext DEFAULT NULL,
   `injection_volume` varchar(20) DEFAULT NULL,
   `FK_prep_id` varchar(20) NOT NULL,
-  `FK_performance_center_id` int(11) DEFAULT NULL,
+  `FK_lab_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `K__injection_FK_prep_id` (`FK_prep_id`),
-  KEY `K__injection_FK_performance_center` (`FK_performance_center_id`),
-  CONSTRAINT `FK__injection_FK_prep_id` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`),
-  CONSTRAINT `FK__injection_FK_performance_center` FOREIGN KEY (`FK_performance_center_id`) REFERENCES `auth_lab` (`id`)
+  KEY `K__injection_FK_lab_id` (`FK_lab_id`),
+  CONSTRAINT `FK__injection_animal` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`),
+  CONSTRAINT `FK__injection_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 --
@@ -621,6 +665,70 @@ CREATE TABLE `polygon_sequences` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `slide`
+--
+
+DROP TABLE IF EXISTS `slide`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `slide` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `FK_scan_run_id` int(11) NOT NULL,
+  `slide_physical_id` int(11) NOT NULL COMMENT 'one per slide',
+  `slide_status` enum('Bad','Good') NOT NULL DEFAULT 'Good',
+  `scenes` int(11) DEFAULT NULL,
+  `insert_before_one` tinyint(4) NOT NULL DEFAULT 0,
+  `insert_between_one_two` tinyint(4) NOT NULL DEFAULT 0,
+  `insert_between_two_three` tinyint(4) NOT NULL DEFAULT 0,
+  `insert_between_three_four` tinyint(4) NOT NULL DEFAULT 0,
+  `insert_between_four_five` tinyint(4) NOT NULL DEFAULT 0,
+  `insert_between_five_six` tinyint(4) NOT NULL DEFAULT 0,
+  `file_name` varchar(200) NOT NULL,
+  `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
+  `active` tinyint(4) NOT NULL DEFAULT 1,
+  `created` timestamp NULL DEFAULT current_timestamp(),
+  `file_size` float NOT NULL DEFAULT 0,
+  `processing_duration` float NOT NULL DEFAULT 0,
+  `processed` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_1` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_2` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_3` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_4` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_5` tinyint(4) NOT NULL DEFAULT 0,
+  `scene_qc_6` tinyint(4) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `K__slide_scan_run` (`FK_scan_run_id`),
+  CONSTRAINT `FK__slide_scan_run` FOREIGN KEY (`FK_scan_run_id`) REFERENCES `scan_run` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `slide_czi_to_tif`
+--
+
+DROP TABLE IF EXISTS `slide_czi_to_tif`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `slide_czi_to_tif` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `FK_slide_id` int(11) NOT NULL,
+  `file_name` varchar(200) NOT NULL,
+  `scene_number` tinyint(4) NOT NULL,
+  `channel` tinyint(4) NOT NULL,
+  `width` int(11) NOT NULL DEFAULT 0,
+  `height` int(11) NOT NULL DEFAULT 0,
+  `comments` varchar(2000) DEFAULT NULL COMMENT 'assessment',
+  `active` tinyint(4) NOT NULL DEFAULT 1,
+  `created` timestamp NULL DEFAULT current_timestamp(),
+  `file_size` float NOT NULL DEFAULT 0,
+  `scene_index` int(11) NOT NULL DEFAULT 0,
+  `processing_duration` float NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `K__slide_id` (`FK_slide_id`),
+  CONSTRAINT `FK__slide_id` FOREIGN KEY (`FK_slide_id`) REFERENCES `slide` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
 -- Table structure for table `scan_run`
 --
 
@@ -736,6 +844,38 @@ CREATE TABLE `virus` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+
+DROP VIEW IF EXISTS sections;
+
+CREATE VIEW `sections` AS
+SELECT
+	`sc`.`id` AS `id`,
+	`a`.`prep_id` AS `prep_id`,
+	`sr`.`rescan_number` AS `rescan_number`,
+	`s`.`file_name` AS `czi_file`,
+	`s`.`slide_physical_id` AS `slide_physical_id`,
+	`s`.`id` AS `FK_slide_id`,
+	`sc`.`file_name` AS `file_name`,
+	`sc`.`id` AS `tif_id`,
+	`sc`.`scene_number` AS `scene_number`,
+	`sc`.`scene_index` AS `scene_index`,
+	`sc`.`channel` AS `channel`,
+	`sc`.`channel` - 1 AS `channel_index`,
+	`sc`.`active` AS `active`,
+	`sc`.`created` AS `created`
+FROM
+	(((`animal` `a`
+JOIN `scan_run` `sr` ON
+	(`a`.`prep_id` = `sr`.`FK_prep_id`))
+JOIN `slide` `s` ON
+	(`sr`.`id` = `s`.`FK_scan_run_id`))
+JOIN `slide_czi_to_tif` `sc` ON
+	(`s`.`id` = `sc`.`FK_slide_id`))
+WHERE
+	`s`.`slide_status` = 'Good'
+	AND `sc`.`active` = 1;
+
 
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

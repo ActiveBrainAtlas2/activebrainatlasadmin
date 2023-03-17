@@ -11,11 +11,14 @@ from django.utils.safestring import mark_safe
 from django.core.validators import MaxValueValidator, MinValueValidator
 import os
 
+from authentication.models import Lab
+
 
 class AtlasModel(models.Model):
     """This is the base model that is inherited by most of the other classes (models).
     It includes common fields that all the models need.
     """
+
     active = models.BooleanField(default = True, db_column='active')
     created = models.DateTimeField(auto_now_add=True, db_column='created')
 
@@ -28,24 +31,20 @@ class Animal(AtlasModel):
     """
 
     prep_id = models.CharField(primary_key=True, max_length=20, db_column='prep_id')
-    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True, db_column='performance_center')
+    #performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True, db_column='performance_center')
+    performance_center = models.ForeignKey(Lab, models.CASCADE, null=True, blank=True, db_column="FK_lab_id", verbose_name="Performance Center")
     date_of_birth = models.DateField(blank=True, null=True, db_column='date_of_birth')
     species = EnumField(choices=['mouse','rat'], blank=True, null=True, db_column='species')
     strain = models.CharField(max_length=15, blank=True, null=True, db_column='strain')
     sex = EnumField(choices=['M','F'], blank=True, null=True, db_column='sex')
     genotype = models.CharField(max_length=100, blank=True, null=True, db_column='genotype')
-    breeder_line = models.CharField(max_length=100, blank=True, null=True, db_column='breeder_line')
     vender = EnumField(choices=['Jackson','Charles River','Harlan','NIH','Taconic'], blank=True, null=True, db_column='vender')
     stock_number = models.CharField(max_length=100, blank=True, null=True, db_column='stock_number')
     tissue_source = EnumField(choices=['animal','brain','slides'], blank=True, null=True, db_column='tissue_source')
     ship_date = models.DateField(blank=True, null=True, db_column='ship_date')
     shipper = EnumField(choices=['FedEx','UPS'], blank=True, null=True, db_column='shipper')
     tracking_number = models.CharField(max_length=100, blank=True, null=True, db_column='tracking_number')
-    aliases_1 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_1')
-    aliases_2 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_2')
-    aliases_3 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_3')
-    aliases_4 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_4')
-    aliases_5 = models.CharField(max_length=100, blank=True, null=True, db_column='aliases_5')
+    alias = models.CharField(max_length=100, blank=True, null=True, db_column='alias')
     comments = models.TextField(max_length=2001, blank=True, null=True, db_column='comments')
 
     class Meta:
@@ -81,7 +80,6 @@ class Histology(AtlasModel):
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE)
     virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True)
-    label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     anesthesia = EnumField(choices=['ketamine','isoflurane','pentobarbital','fatal plus'], blank=True, null=True)
     perfusion_age_in_days = models.PositiveIntegerField()
@@ -124,9 +122,8 @@ class Injection(AtlasModel):
     """
     
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.CASCADE)
-    label = models.ForeignKey('OrganicLabel', models.CASCADE, blank=True, null=True)
-    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True)
+    prep = models.ForeignKey(Animal, models.CASCADE, db_column='FK_prep_id')
+    performance_center = models.ForeignKey(Lab, models.CASCADE, null=True, blank=True, db_column="FK_lab_id", verbose_name="Performance Center")
     anesthesia = EnumField(choices=['ketamine','isoflurane'], blank=True, null=True)
     method = EnumField(choices=['iontophoresis','pressure','volume'], blank=True, null=True)
     injection_volume = models.FloatField()
@@ -157,45 +154,14 @@ class InjectionVirus(AtlasModel):
     """
     
     id = models.AutoField(primary_key=True)
-    injection = models.ForeignKey(Injection, models.CASCADE)
-    virus = models.ForeignKey('Virus', models.CASCADE)
+    injection = models.ForeignKey(Injection, models.CASCADE, db_column='FK_injection_id')
+    virus = models.ForeignKey('Virus', models.CASCADE, db_column='FK_virus_id')
 
     class Meta:
         managed = False
         db_table = 'injection_virus'
         verbose_name = 'Injection Virus'
         verbose_name_plural = 'Injection Viruses'
-
-class OrganicLabel(AtlasModel):
-    """This class holds the organic label metadata.
-    """
-    
-    id = models.AutoField(primary_key=True)
-    label_id = models.CharField(max_length=20)
-    label_type = EnumField(choices=['Cascade Blue','Chicago Blue','Alexa405','Alexa488','Alexa647','Cy2','Cy3','Cy5','Cy5.5','Cy7','Fluorescein','Rhodamine B','Rhodamine 6G','Texas Red','TMR'], blank=True, null=True)
-    type_lot_number = models.CharField(max_length=20, blank=True, null=True)
-    type_tracer = EnumField(choices=['BDA','Dextran','FluoroGold','DiI','DiO'], blank=True, null=True)
-    type_details = models.CharField(max_length=500, blank=True, null=True)
-    concentration = models.FloatField()
-    excitation_1p_wavelength = models.IntegerField()
-    excitation_1p_range = models.IntegerField()
-    excitation_2p_wavelength = models.IntegerField()
-    excitation_2p_range = models.IntegerField()
-    lp_dichroic_cut = models.IntegerField()
-    emission_wavelength = models.IntegerField()
-    emission_range = models.IntegerField()
-    label_source = EnumField(choices=['Invitrogen','Sigma','Thermo-Fisher'], blank=True, null=True)
-    source_details = models.CharField(max_length=100, blank=True, null=True)
-    comments = models.TextField(max_length=2000, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'organic_label'
-        verbose_name = 'Organic Label'
-        verbose_name_plural = 'Organic Labels'
-
-    def __str__(self):
-        return "{} {}".format(self.label_id, self.label_type)
 
 class ScanRun(AtlasModel):
     """This class describes the blueprint of a scan. Each animal will usually 
@@ -204,7 +170,7 @@ class ScanRun(AtlasModel):
     """
     
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.CASCADE)
+    prep = models.ForeignKey(Animal, models.CASCADE, db_column='FK_prep_id')
     performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
     machine = EnumField(choices=['Axioscan I', 'Axioscan II'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
@@ -243,9 +209,8 @@ class Slide(AtlasModel):
     """
 
     id = models.AutoField(primary_key=True)
-    scan_run = models.ForeignKey(ScanRun, models.CASCADE)
+    scan_run = models.ForeignKey(ScanRun, models.CASCADE, db_column='FK_scan_run_id')
     slide_physical_id = models.IntegerField()
-    rescan_number = EnumField(choices=['1','2','3'], blank=False, null=False, default='1')
     slide_status = EnumField(choices=['Bad','Good'], blank=False, null=False)
     scenes = models.IntegerField(validators=[MinValueValidator(0),MaxValueValidator(6)])
     insert_before_one = models.IntegerField(blank=False, null=False, default=0,
@@ -412,7 +377,6 @@ class Virus(AtlasModel):
     titer = models.FloatField()
     lot_number = models.CharField(max_length=20, blank=True, null=True)
     label = EnumField(choices=['YFP','GFP','RFP','histo-tag'], blank=True, null=True)
-    label2 = models.CharField(max_length=200, blank=True, null=True)
     excitation_1p_wavelength = models.IntegerField()
     excitation_1p_range = models.IntegerField()
     excitation_2p_wavelength = models.IntegerField()

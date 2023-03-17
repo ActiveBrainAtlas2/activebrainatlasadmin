@@ -1,19 +1,19 @@
 from django import forms
 from django.forms import ModelChoiceField
 
-from neuroglancer.models import UrlModel
+from neuroglancer.models import NeuroglancerState
 
 class AnimalChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.prep_id
 
 class LayerForm(forms.ModelForm):
-    urlModels = ModelChoiceField(label='Annotation Layer',
-                            queryset=UrlModel.objects.filter(readonly=True).all().order_by('comments'),
+    neuroglancerStates = ModelChoiceField(label='Annotation Layer',
+                            queryset=NeuroglancerState.objects.filter(readonly=True).all().order_by('comments'),
                             required=True,
                             widget=forms.Select(attrs={'onchange': 'layerdata_form.submit();', 'class': 'form-control'}))
     class Meta:
-        model = UrlModel
+        model = NeuroglancerState
         exclude = ['prep','structure','person','url','transformation','input_type',
             'x', 'y', 'section', 'active']
 

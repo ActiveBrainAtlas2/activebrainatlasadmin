@@ -20,15 +20,15 @@ LINE_ID = 53
 POLYGON_ID = 54
 UNMARKED = 'UNMARKED'
 
-class UrlModel(models.Model):
-    """Model corresponding to the neuroglancer json states stored in the neuroglancer_url table.
+class NeuroglancerState(models.Model):
+    """Model corresponding to the neuroglancer json states stored in the neuroglancer_state table.
     This name was used as the original verion of Neuroglancer stored all the data in the URL.
     """
     
     id = models.BigAutoField(primary_key=True)
-    url = models.JSONField(verbose_name="Neuroglancer State")
+    neuroglancer_state = models.JSONField(verbose_name="Neuroglancer State")
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, null=False,
-                              blank=False, db_column="person_id",
+                              blank=False, db_column="FK_user_id",
                                verbose_name="User")
     public = models.BooleanField(default = True, db_column='active')
     readonly = models.BooleanField(default = False, verbose_name='Read only')
@@ -39,11 +39,11 @@ class UrlModel(models.Model):
 
     @property
     def short_description(self):
-        return truncatechars(self.url, 50)
+        return truncatechars(self.neuroglancer_state, 50)
 
     @property
     def escape_url(self):
-        return escape(self.url)
+        return escape(self.neuroglancer_state)
 
     @property
     def animal(self):
@@ -53,8 +53,8 @@ class UrlModel(models.Model):
         :return: the first match if found, otherwise NA
         """
         animal = "NA"
-        match = re.search('data/(.+?)/neuroglancer_data', str(self.url))
-        neuroglancer_json = self.url
+        match = re.search('data/(.+?)/neuroglancer_data', str(self.neuroglancer_state))
+        neuroglancer_json = self.neuroglancer_state
         image_layers = [layer for layer in neuroglancer_json['layers'] if layer['type'] == 'image']
         if len(image_layers) >0:
             first_image_layer = json.dumps(image_layers[0])
@@ -66,8 +66,8 @@ class UrlModel(models.Model):
     @property
     def point_frame(self):
         df = None
-        if self.url is not None:
-            point_data = self.find_values('annotations', self.url)
+        if self.neuroglancer_state is not None:
+            point_data = self.find_values('annotations', self.neuroglancer_state)
             if len(point_data) > 0:
                 d = [row['point'] for row in point_data[0]]
                 df = pd.DataFrame(d, columns=['X', 'Y', 'Section'])
@@ -78,8 +78,8 @@ class UrlModel(models.Model):
     def points(self):
         result = None
         dfs = []
-        if self.url is not None:
-            json_txt = self.url
+        if self.neuroglancer_state is not None:
+            json_txt = self.neuroglancer_state
             layers = json_txt['layers']
             for layer in layers:
                 if 'annotations' in layer:
@@ -107,8 +107,8 @@ class UrlModel(models.Model):
     @property
     def layers(self):
         layer_list = []
-        if self.url is not None:
-            json_txt = self.url
+        if self.neuroglancer_state is not None:
+            json_txt = self.neuroglancer_state
             layers = json_txt['layers']
             for layer in layers:
                 if 'annotations' in layer:
@@ -121,7 +121,7 @@ class UrlModel(models.Model):
         verbose_name = "Neuroglancer state"
         verbose_name_plural = "Neuroglancer states"
         ordering = ('comments', 'created')
-        db_table = 'neuroglancer_urls'
+        db_table = 'neuroglancer_state'
 
     def __str__(self):
         return u'{}'.format(self.comments)
@@ -150,7 +150,7 @@ class UrlModel(models.Model):
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
 
-class Points(UrlModel):
+class Points(NeuroglancerState):
     """Model corresponding to the annotation points table in the database
     """
     
@@ -184,12 +184,10 @@ class BrainRegion(AtlasModel):
     id = models.BigAutoField(primary_key=True)
     abbreviation = models.CharField(max_length=200)
     description = models.TextField(max_length=2001, blank=False, null=False)
-    color = models.PositiveIntegerField()
-    hexadecimal = models.CharField(max_length=7)
 
     class Meta:
         managed = False
-        db_table = 'structure'
+        db_table = 'brain_region'
         verbose_name = 'Brain region'
         verbose_name_plural = 'Brain regions'
 
@@ -203,10 +201,10 @@ class AnnotationSession(AtlasModel):
     """This model describes a user session in Neuroglancer."""
     id = models.BigAutoField(primary_key=True)
     animal = models.ForeignKey(Animal, models.CASCADE, null=True, db_column="FK_prep_id", verbose_name="Animal")
-    neuroglancer_model = models.ForeignKey(UrlModel, models.CASCADE, null=True, db_column="FK_state_id", verbose_name="Neuroglancer state")
-    brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_structure_id",
+    neuroglancer_model = models.ForeignKey(NeuroglancerState, models.CASCADE, null=True, db_column="FK_state_id", verbose_name="Neuroglancer state")
+    brain_region = models.ForeignKey(BrainRegion, models.CASCADE, null=True, db_column="FK_brain_region_id",
                                verbose_name="Brain region")
-    annotator = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_annotator_id",
+    annotator = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE, db_column="FK_user_id",
                                verbose_name="Annotator", blank=False, null=False)
     annotation_type = EnumField(choices=['POLYGON_SEQUENCE', 'MARKED_CELL', 'STRUCTURE_COM'], blank=False, null=False)
     updated = models.DateTimeField(auto_now=True)

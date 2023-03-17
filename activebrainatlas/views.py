@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.generic import TemplateView
 from django.conf import settings
-from django.contrib.auth.models import User
+from authentication.models import User
 
 
 class SessionVarView(TemplateView):

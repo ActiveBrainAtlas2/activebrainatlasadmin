@@ -4,6 +4,7 @@ Place it at activebrainatlas/activebrainatlas/settings.py
 """
 
 import os
+import datetime
 from activebrainatlas.local_settings import SECRET_KEY, DATABASES
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -29,16 +30,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
     'dpd_static_support',
-    'background_task',
-#    'channels',
- #   'bootstrap4',
+    'authentication',
     'brain',
-    'workflow',
     'neuroglancer',
     'rest_framework',
     'corsheaders',
     'debug_toolbar',
-    'django_extensions',
 ]
 
 
@@ -139,36 +136,30 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
 }
-
-LOGS_ROOT = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOGS_ROOT, exist_ok=True)
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'fileInfo': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_ROOT, "info.log"),
-        },
-        'fileDebug': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_ROOT, "debug.log")
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'fileInfo', 'fileDebug'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=100),
+    'ROTATE_REFRESH_TOKENS': True,
 }
+
+AUTH_USER_MODEL = 'authentication.User'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'
+]
+
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+
 # dash/plotly stuff
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 CHANNEL_LAYERS = {

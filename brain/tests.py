@@ -2,7 +2,8 @@ import datetime, random
 from django import forms
 from django.contrib.admin.options import ModelAdmin
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import User
+from authentication.models import User
+
 from django.test import SimpleTestCase, TestCase, TransactionTestCase
 from brain.models import Animal, ScanRun, Slide, SlideCziToTif
 from brain.forms import save_slide_model

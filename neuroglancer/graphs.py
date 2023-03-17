@@ -1,7 +1,7 @@
 from ipywidgets import widgets
 import plotly.graph_objects as go
 from ipywidgets.embed import embed_data
-from neuroglancer.models import UrlModel
+from neuroglancer.models import NeuroglancerState
 
 def create_2DgraphXXX():
 
@@ -10,8 +10,8 @@ def create_2DgraphXXX():
     img_height = 36000
 
     id = 200
-    urlModel = UrlModel.objects.get(pk=id)
-    df = urlModel.points
+    neuroglancerState = NeuroglancerState.objects.get(pk=id)
+    df = neuroglancerState.points
     df.reset_index(inplace=True)
     df['ID'] = df.index
     cols = ['ID', 'Layer', 'X', 'Y', 'Section']
@@ -100,8 +100,8 @@ def create_2Dgraph(animal, section):
     img_height = 36000
 
     id = 200
-    urlModel = UrlModel.objects.get(pk=id)
-    df = urlModel.points
+    neuroglancerState = NeuroglancerState.objects.get(pk=id)
+    df = neuroglancerState.points
     df.reset_index(inplace=True)
     df['ID'] = df.index
 

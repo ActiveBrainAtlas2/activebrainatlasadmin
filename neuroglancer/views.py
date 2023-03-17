@@ -16,7 +16,7 @@ from neuroglancer.annotation_layer import random_string, create_point_annotation
 from neuroglancer.annotation_manager import DEBUG
 from neuroglancer.atlas import align_atlas, get_scales, make_ontology_graph_CCFv3, make_ontology_graph_pma
 from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, PolygonSequence, \
-    UrlModel, BrainRegion, StructureCom, CellType, MouselightNeuron,ViralTracingLayer 
+    NeuroglancerState, BrainRegion, StructureCom, CellType, MouselightNeuron,ViralTracingLayer 
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
     MarkedCellListSerializer, PolygonListSerializer, \
     PolygonSerializer, RotationSerializer, UrlSerializer, \
@@ -35,7 +35,7 @@ class UrlViewSet(viewsets.ModelViewSet):
     """API endpoint that allows the neuroglancer urls to be viewed or edited.
     """
     
-    queryset = UrlModel.objects.all()
+    queryset = NeuroglancerState.objects.all()
     serializer_class = UrlSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -309,18 +309,18 @@ class SaveAnnotation(views.APIView):
     to complete.
     """
     
-    def get(self, request, url_id, annotation_layer_name):
-        urlModel = UrlModel.objects.get(pk=url_id)
-        state_json = urlModel.url
+    def get(self, request, neuroglancer_state_id, annotation_layer_name):
+        neuroglancerState = NeuroglancerState.objects.get(pk=neuroglancer_state_id)
+        state_json = neuroglancerState.neuroglancer_state
         layers = state_json['layers']
         found = False
         for layeri in layers:
             if layeri['type'] == 'annotation' and layeri['name'] == annotation_layer_name:
 
                 if DEBUG:
-                    nobackground_archive_and_insert_annotations(layeri, url_id)
+                    nobackground_archive_and_insert_annotations(layeri, neuroglancer_state_id)
                 else:
-                    background_archive_and_insert_annotations(layeri, url_id, verbose_name="Insert annotations", creator=urlModel.owner)
+                    background_archive_and_insert_annotations(layeri, neuroglancer_state_id)
                     
                 found = True
 

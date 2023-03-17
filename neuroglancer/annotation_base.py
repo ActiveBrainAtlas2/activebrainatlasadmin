@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from authentication.models import User
 from brain.models import Animal
 import logging
 logging.basicConfig()

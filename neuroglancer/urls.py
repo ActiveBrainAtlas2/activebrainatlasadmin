@@ -16,12 +16,12 @@ transformation_relate_urls = [
 volume_related_urls = [
     path('get_volume/<str:session_id>', views.GetVolume.as_view()),
     path('get_volume_list', views.GetPolygonList.as_view()),
-    path('contour_to_segmentation/<int:url_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
+    path('contour_to_segmentation/<int:neuroglancer_state_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
 ]
 general_urls = [
     path('', include(router.urls)),
     path('landmark_list',views.LandmarkList.as_view()),
-    path('save_annotations/<int:url_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),]
+    path('save_annotations/<int:neuroglancer_state_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),]
 
 com_related_urls = [
     path('get_com/<str:prep_id>/<str:annotator_id>/<str:source>', views.GetCOM.as_view()),

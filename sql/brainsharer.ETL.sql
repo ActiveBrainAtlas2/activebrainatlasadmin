@@ -59,16 +59,20 @@ DELETE FROM animal;
 
 -- inserting data for table `animal`
 
-INSERT INTO brainsharer.animal (prep_id, performance_center, date_of_birth, species, strain, sex, genotype, vender, stock_number, 
+INSERT INTO brainsharer.animal (prep_id, FK_lab_id, date_of_birth, species, strain, sex, genotype, vender, stock_number, 
 tissue_source, ship_date, shipper, tracking_number, alias, comments, active, created)
-SELECT prep_id, performance_center, date_of_birth, species, strain, sex, genotype, vender, stock_number, 
-tissue_source, ship_date, shipper, tracking_number, aliases_1, comments, active, created
-FROM active_atlas_production.animal
-ORDER BY prep_id, created;
-
+SELECT prep_id, 
+(CASE WHEN A.performance_center IS NULL THEN 2 ELSE AL.id END) as FK_lab_id, 
+date_of_birth, species, strain, sex, genotype, vender, stock_number, 
+tissue_source, ship_date, shipper, tracking_number, aliases_1, comments, A.active, A.created
+FROM active_atlas_production.animal AS A
+LEFT join brainsharer_aws.auth_lab AS AL on A.performance_center = AL.lab_name 
+ORDER BY prep_id, A.created;
 
 
 INSERT INTO brainsharer.available_neuroglancer_data SELECT * FROM brainsharer_aws.available_neuroglancer_data;
+
+
 INSERT INTO brainsharer.brain_atlas SELECT * FROM brainsharer_aws.brain_atlas;
 -- brain region needs a full select
 INSERT INTO brainsharer.brain_region (id,active,created,abbreviation,description,FK_ref_atlas_id)
@@ -76,16 +80,70 @@ select id, active , created , abbreviation , description, 1 as FK_ref_atlas_id
 FROM active_atlas_production.structure; 
 
 
+INSERT INTO brainsharer.histology 
+(id,
+prep_id,
+virus_id,
+performance_center,
+anesthesia,
+perfusion_age_in_days,
+perfusion_date,
+exsangination_method,
+fixative_method,
+special_perfusion_notes,
+post_fixation_period,
+whole_brain,
+block,
+date_sectioned,
+side_sectioned_first,
+sectioning_method,
+section_thickness,
+orientation,
+oblique_notes,
+mounting,
+counterstain,
+comments,
+created,
+active,
+scene_order)
+SELECT id,
+prep_id,
+virus_id,
+performance_center,
+anesthesia,
+perfusion_age_in_days,
+perfusion_date,
+exsangination_method,
+fixative_method,
+special_perfusion_notes,
+post_fixation_period,
+whole_brain,
+block,
+date_sectioned,
+side_sectioned_first,
+sectioning_method,
+section_thickness,
+orientation,
+oblique_notes,
+mounting,
+counterstain,
+comments,
+created,
+active,
+scene_order
+FROM active_atlas_production.histology;
+
+
 INSERT INTO brainsharer.cell_type SELECT * FROM active_atlas_production.cell_type;
 -- injection needs full insert
 INSERT INTO brainsharer.injection (id,active,created,
 anesthesia, method, pipet, location, angle,
 brain_location_dv, brain_location_ml, brain_location_ap, injection_date, transport_days,
-virus_count, comments, injection_volume, FK_prep_id, FK_performance_center_id)
+virus_count, comments, injection_volume, FK_prep_id, FK_lab_id)
 SELECT inj.id, inj.active , inj.created ,  
 anesthesia, method, pipet, location, angle,
 brain_location_dv, brain_location_ml, brain_location_ap, injection_date, transport_days,
-virus_count, inj.comments, injection_volume, a.prep_id as FK_prep_id, 2 as FK_performance_center_id
+virus_count, inj.comments, injection_volume, a.prep_id as FK_prep_id, 3 as FK_lab_id
 FROM active_atlas_production.injection inj
 INNER JOIN active_atlas_production.animal a on inj.prep_id = a.prep_id;
 
@@ -141,3 +199,12 @@ WHERE FK_session_id IN (SELECT id FROM brainsharer.annotation_session);
 INSERT INTO brainsharer.structure_com 
 SELECT * FROM active_atlas_production.structure_com
 WHERE FK_session_id IN (SELECT id FROM brainsharer.annotation_session);
+
+INSERT INTO brainsharer.slide 
+SELECT * FROM active_atlas_production.slide;
+
+INSERT INTO brainsharer.slide_czi_to_tif
+SELECT * FROM active_atlas_production.slide_czi_to_tif;
+
+INSERT INTO brainsharer.django_migrations
+SELECT * FROM active_atlas_production.django_migrations;

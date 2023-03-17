@@ -35,7 +35,7 @@ the dropdown menu. Once the user clicks 'Go', these events take place:
 from django.http import Http404
 import numpy as np
 from statistics import mode
-from neuroglancer.models import AnnotationSession,  AnnotationPointArchive, ArchiveSet, BrainRegion, \
+from neuroglancer.models import AnnotationSession, BrainRegion, \
     PolygonSequence, StructureCom, PolygonSequence, MarkedCell, get_region_from_abbreviation
 from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType, UNMARKED
@@ -55,7 +55,8 @@ class AnnotationManager(AnnotationBase):
     def __init__(self, neuroglancerModel):
         """iniatiate the class starting from a perticular url
 
-        :param neuroglancerModel (UrlModel): query result from the django ORM of the neuroglancer_url table
+        :param neuroglancerModel (NeuroglancerState): query result from the 
+        django ORM of the neuroglancer_state table
         """
 
         self.neuroglancer_model = neuroglancerModel
@@ -144,32 +145,6 @@ class AnnotationManager(AnnotationBase):
 
 
 
-    def archive_annotations(self, annotation_session: AnnotationSession):
-        """Move the existing annotations into the archive. First, we get the existing
-        rows and then we insert those into the archive table. This is a background
-        task.
-        
-        :param annotation_session: annotation session object
-        """
-
-        data_model = annotation_session.get_session_model()
-        rows = data_model.objects.filter(
-            annotation_session__id=annotation_session.id)
-        field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
-        if rows is not None and len(rows) > 0:
-            batch = []
-            archive = self.get_archive(annotation_session)
-            for row in rows:
-                fields = [getattr(row, field_name) for field_name in field_names if hasattr(row, field_name)]
-                input = dict(zip(field_names, fields))
-                input['archive'] = archive
-                batch.append(AnnotationPointArchive(**input))
-            AnnotationPointArchive.objects.bulk_create(batch, self.batch_size, ignore_conflicts=True)
-            if DEBUG:
-                print(f'Adding {len(batch)} rows of annotation points archive with session={archive._meta}')
-                print(f'Deleting {len(rows)} rows of {data_model._meta} with session={annotation_session}')
-            rows.delete()
-
     def is_structure_com(self, annotationi: Annotation):
         """Determines if a point annotation is a structure COM.
         A point annotation is a COM if the description corresponds to a structure 
@@ -257,12 +232,9 @@ class AnnotationManager(AnnotationBase):
             total_elapsed_time = round((end_time - start_time),2)
             print(f'Inserting {len(batch)} points to {annotationi.get_description()} took {total_elapsed_time} seconds.')
 
-
-
-
     def get_session(self, brain_region, annotation_type):
         """Gets either the existing session or creates a new one.
-        We first try by trying to get the exact UrlModel (AKA, neuroglancer state). 
+        We first try by trying to get the exact NeuroglancerState (AKA, neuroglancer state). 
         If that doesn't succeed, we try without the state ID
 
         :param brain_region: brain region object AKA structure
@@ -287,8 +259,6 @@ class AnnotationManager(AnnotationBase):
 
         if annotation_session is None:
             annotation_session = self.create_new_session(brain_region, annotation_type)
-        else:
-            self.archive_annotations(annotation_session)
             
         return annotation_session
 
@@ -308,28 +278,3 @@ class AnnotationManager(AnnotationBase):
             active=True)
         return annotation_session
 
-
-    def get_archive(self, annotation_session):
-        """Gets either the existing archive or creates a new one.
-
-        :param annotation_session: session object
-        """
-
-        queryset = ArchiveSet.objects.filter(active=True)\
-            .filter(annotation_session=annotation_session)\
-
-        if len(queryset) == 1:
-            archive = queryset[0]
-        else:
-            archive = self.create_new_archive(annotation_session)
-            
-        return archive
-
-    def create_new_archive(self, annotation_session):
-        """Helper method to create a new session
-        
-        :param annotation_session: session object
-        """
-
-        archive = ArchiveSet.objects.create(annotation_session=annotation_session, active=True)
-        return archive
