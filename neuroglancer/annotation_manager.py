@@ -81,7 +81,7 @@ class AnnotationManager(AnnotationBase):
         self.current_layer = AnnotationLayer(state_layer)
 
 
-    def archive_and_insert_annotations(self):
+    def insert_annotations(self):
         """The main function that updates the database with annotations in the current_layer 
         attribute. This function loops each annotation in the current layer and 
         inserts data into the bulk manager. At the end of the loop, all data is in the bulk

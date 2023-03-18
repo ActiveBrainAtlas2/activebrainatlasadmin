@@ -31,68 +31,6 @@ DROP TABLE IF EXISTS `structure`;
 DROP TABLE IF EXISTS `neuroglancer_urls`;
 
 --
--- Table structure for table `animal`
---
-
-DROP TABLE IF EXISTS `animal`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `animal` (
-  `prep_id` varchar(20) NOT NULL COMMENT 'Name for lab mouse/rat, max 20 chars',
-  `FK_lab_id` int(11) DEFAULT NULL,
-  `date_of_birth` date DEFAULT NULL COMMENT 'the mouse''s date of birth',
-  `species` enum('mouse','rat') DEFAULT NULL,
-  `strain` varchar(50) DEFAULT NULL,
-  `sex` enum('M','F') DEFAULT NULL COMMENT '(M/F) either ''M'' for male, ''F'' for female',
-  `genotype` varchar(100) DEFAULT NULL COMMENT 'transgenic description, usually "C57"; We will need a genotype table',
-  `vender` enum('Jackson','Charles River','Harlan','NIH','Taconic') DEFAULT NULL,
-  `stock_number` varchar(100) DEFAULT NULL COMMENT 'if not from a performance center',
-  `tissue_source` enum('animal','brain','slides') DEFAULT NULL,
-  `ship_date` date DEFAULT NULL,
-  `shipper` enum('FedEx','UPS') DEFAULT NULL,
-  `tracking_number` varchar(100) DEFAULT NULL,
-  `alias` varchar(100) DEFAULT NULL COMMENT 'names given by others',
-  `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  created datetime(6),
-  `updated` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`prep_id`),
-  KEY `K__animal_lab` (`FK_lab_id`),
-  CONSTRAINT `FK__animal_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `annotation_session`
---
-
-DROP TABLE IF EXISTS `annotation_session`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `annotation_session` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `annotation_type` enum('POLYGON_SEQUENCE','MARKED_CELL','STRUCTURE_COM') DEFAULT NULL,
-  `FK_user_id` int(11) NOT NULL,
-  `FK_prep_id` varchar(20) NOT NULL,
-  `FK_state_id` int(11) DEFAULT NULL,
-  `FK_brain_region_id` int(11) NOT NULL COMMENT 'TABLE brain_region SHOULD ONLY CONTAIN BIOLOGICAL STRUCTURES',
-  `active` tinyint(1) NOT NULL DEFAULT 0,
-  `created` datetime(6) NOT NULL,
-  `updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `K__annotation_session_FK)user_id` (`FK_user_id`),
-  KEY `K__annotation_session_FK_prep_id` (`FK_prep_id`),
-  KEY `K__annotation_session_FK_brain_region_id` (`FK_brain_region_id`),
-  KEY `K__annotation_session_annotation_type_active` (`active`,`annotation_type`),
-  CONSTRAINT `FK__annotation_session_annotator` FOREIGN KEY (`FK_user_id`) REFERENCES `auth_user` (`id`),
-  CONSTRAINT `FK__annotation_session_animal` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`),
-  CONSTRAINT `FK__annotation_session_brain_region` FOREIGN KEY (`FK_brain_region_id`) REFERENCES `brain_region` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
-
---
 -- Table structure for table `auth_group`
 --
 
@@ -245,101 +183,8 @@ CREATE TABLE `auth_user_user_permissions` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
---
--- Table structure for table `available_neuroglancer_data`
---
-
-DROP TABLE IF EXISTS `available_neuroglancer_data`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `available_neuroglancer_data` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `group_name` varchar(50) NOT NULL,
-  `FK_lab_id` int(11) NOT NULL,
-  `layer_name` varchar(255) NOT NULL,
-  `description` varchar(2001) DEFAULT NULL,
-  `url` varchar(2001) DEFAULT NULL,
-  `thumbnail_url` varchar(2001) DEFAULT NULL,
-  `layer_type` varchar(25) NOT NULL,
-  `cross_section_orientation` varchar(255) DEFAULT NULL,
-  `resolution` float NOT NULL DEFAULT 0,
-  `zresolution` float NOT NULL DEFAULT 0,
-  `width` int(11) NOT NULL DEFAULT 60000,
-  `height` int(11) NOT NULL DEFAULT 30000,
-  `depth` int(11) NOT NULL DEFAULT 450,
-  `max_range` int(11) NOT NULL DEFAULT 5000,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created` datetime NOT NULL,
-  `updated` timestamp NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `K__available_nd_lab_id` (`FK_lab_id`),
-  KEY `K__AND_group_name` (`group_name`),
-  CONSTRAINT `FK__available_nd_lab_id` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `brain_atlas`
---
-
-DROP TABLE IF EXISTS `brain_atlas`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `brain_atlas` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `active` tinyint(1) NOT NULL,
-  `created` datetime(6) NOT NULL,
-  `atlas_name` varchar(64) NOT NULL,
-  `description` longtext DEFAULT NULL,
-  `FK_lab_id` int(11) NOT NULL,
-  `resolution` double NOT NULL,
-  `url` longtext NOT NULL,
-  `zresolution` double NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `K__brain_atlas_FK_lab_id` (`FK_lab_id`),
-  CONSTRAINT `FK__brain_atlas_auth_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
---
--- Table structure for table `brain_region`
--- this table replaces structure
-
-DROP TABLE IF EXISTS `brain_region`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `brain_region` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `active` tinyint(1) NOT NULL,
-  `created` datetime(6) NOT NULL,
-  `abbreviation` varchar(200) NOT NULL,
-  `description` longtext DEFAULT NULL,
-  `FK_ref_atlas_id` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `K__brain_region_FK_ref_atlas_id` (`FK_ref_atlas_id`),
-  CONSTRAINT `FK__brain_region_brain_atlas` FOREIGN KEY (`FK_ref_atlas_id`) REFERENCES `brain_atlas` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
-
---
--- Table structure for table `cell_type`
---
-
-DROP TABLE IF EXISTS `cell_type`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `cell_type` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `cell_type` varchar(50) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created` datetime(6) NOT NULL DEFAULT current_timestamp(6),
-  PRIMARY KEY (`id`),
-  KEY `K__CT_INID` (`cell_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- end auth user stuff
+-- start django admin stuff
 --
 -- Table structure for table `django_admin_log`
 --
@@ -471,6 +316,164 @@ CREATE TABLE `django_site` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+-- end django admin stuff
+-- start in house stuff
+
+--
+-- Table structure for table `animal`
+--
+
+DROP TABLE IF EXISTS `animal`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `animal` (
+  `prep_id` varchar(20) NOT NULL COMMENT 'Name for lab mouse/rat, max 20 chars',
+  `FK_lab_id` int(11) DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL COMMENT 'the mouse''s date of birth',
+  `species` enum('mouse','rat') DEFAULT NULL,
+  `strain` varchar(50) DEFAULT NULL,
+  `sex` enum('M','F') DEFAULT NULL COMMENT '(M/F) either ''M'' for male, ''F'' for female',
+  `genotype` varchar(100) DEFAULT NULL COMMENT 'transgenic description, usually "C57"; We will need a genotype table',
+  `vender` enum('Jackson','Charles River','Harlan','NIH','Taconic') DEFAULT NULL,
+  `stock_number` varchar(100) DEFAULT NULL COMMENT 'if not from a performance center',
+  `tissue_source` enum('animal','brain','slides') DEFAULT NULL,
+  `ship_date` date DEFAULT NULL,
+  `shipper` enum('FedEx','UPS') DEFAULT NULL,
+  `tracking_number` varchar(100) DEFAULT NULL,
+  `alias` varchar(100) DEFAULT NULL COMMENT 'names given by others',
+  `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  created datetime(6),
+  `updated` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`prep_id`),
+  KEY `K__animal_lab` (`FK_lab_id`),
+  CONSTRAINT `FK__animal_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `annotation_session`
+--
+
+DROP TABLE IF EXISTS `annotation_session`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `annotation_session` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `annotation_type` enum('POLYGON_SEQUENCE','MARKED_CELL','STRUCTURE_COM') DEFAULT NULL,
+  `FK_user_id` int(11) NOT NULL,
+  `FK_prep_id` varchar(20) NOT NULL,
+  `FK_state_id` int(11) DEFAULT NULL,
+  `FK_brain_region_id` int(11) NOT NULL COMMENT 'TABLE brain_region SHOULD ONLY CONTAIN BIOLOGICAL STRUCTURES',
+  `active` tinyint(1) NOT NULL DEFAULT 0,
+  `created` datetime(6) NOT NULL,
+  `updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `K__annotation_session_FK_user_id` (`FK_user_id`),
+  KEY `K__annotation_session_FK_prep_id` (`FK_prep_id`),
+  KEY `K__annotation_session_FK_brain_region_id` (`FK_brain_region_id`),
+  KEY `K__annotation_session_annotation_type_active` (`active`,`annotation_type`),
+  CONSTRAINT `FK__annotation_session_annotator` FOREIGN KEY (`FK_user_id`) REFERENCES `auth_user` (`id`),
+  CONSTRAINT `FK__annotation_session_animal` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`),
+  CONSTRAINT `FK__annotation_session_brain_region` FOREIGN KEY (`FK_brain_region_id`) REFERENCES `brain_region` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `available_neuroglancer_data`
+--
+
+DROP TABLE IF EXISTS `available_neuroglancer_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `available_neuroglancer_data` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `group_name` varchar(50) NOT NULL,
+  `FK_lab_id` int(11) NOT NULL,
+  `layer_name` varchar(255) NOT NULL,
+  `description` varchar(2001) DEFAULT NULL,
+  `url` varchar(2001) DEFAULT NULL,
+  `thumbnail_url` varchar(2001) DEFAULT NULL,
+  `layer_type` varchar(25) NOT NULL,
+  `cross_section_orientation` varchar(255) DEFAULT NULL,
+  `resolution` float NOT NULL DEFAULT 0,
+  `zresolution` float NOT NULL DEFAULT 0,
+  `width` int(11) NOT NULL DEFAULT 60000,
+  `height` int(11) NOT NULL DEFAULT 30000,
+  `depth` int(11) NOT NULL DEFAULT 450,
+  `max_range` int(11) NOT NULL DEFAULT 5000,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `created` datetime NOT NULL,
+  `updated` timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `K__available_neuroglancer_data_FK_lab_id` (`FK_lab_id`),
+  KEY `K__AND_group_name` (`group_name`),
+  CONSTRAINT `FK__available_neuroglancer_data_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `brain_atlas`
+--
+
+DROP TABLE IF EXISTS `brain_atlas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `brain_atlas` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `active` tinyint(1) NOT NULL,
+  `created` datetime(6) NOT NULL,
+  `atlas_name` varchar(64) NOT NULL,
+  `description` longtext DEFAULT NULL,
+  `FK_lab_id` int(11) NOT NULL,
+  `resolution` double NOT NULL,
+  `url` longtext NOT NULL,
+  `zresolution` double NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `K__brain_atlas_FK_lab_id` (`FK_lab_id`),
+  CONSTRAINT `FK__brain_atlas_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `brain_region`
+-- this table replaces structure
+
+DROP TABLE IF EXISTS `brain_region`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `brain_region` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `active` tinyint(1) NOT NULL,
+  `created` datetime(6) NOT NULL,
+  `abbreviation` varchar(200) NOT NULL,
+  `description` longtext DEFAULT NULL,
+  `FK_ref_atlas_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `K__brain_region_FK_ref_atlas_id` (`FK_ref_atlas_id`),
+  CONSTRAINT `FK__brain_region_brain_atlas` FOREIGN KEY (`FK_ref_atlas_id`) REFERENCES `brain_atlas` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `cell_type`
+--
+
+DROP TABLE IF EXISTS `cell_type`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `cell_type` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `cell_type` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `created` datetime(6) NOT NULL DEFAULT current_timestamp(6),
+  PRIMARY KEY (`id`),
+  KEY `K__cell_type_cell_type` (`cell_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `histology`
@@ -481,9 +484,9 @@ DROP TABLE IF EXISTS `histology`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `histology` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `prep_id` varchar(20) NOT NULL,
-  `virus_id` int(11) DEFAULT NULL,
-  `performance_center` enum('CSHL','Salk','UCSD','HHMI') DEFAULT NULL COMMENT 'default population is from Injection',
+  `FK_prep_id` varchar(20) NOT NULL,
+  `FK_virus_id` int(11) DEFAULT NULL,
+  `FK_lab_id` int(11) DEFAULT NULL,
   `anesthesia` enum('ketamine','isoflurane','pentobarbital','fatal plus') DEFAULT NULL,
   `perfusion_age_in_days` tinyint(3) unsigned NOT NULL DEFAULT 0,
   `perfusion_date` date DEFAULT NULL,
@@ -506,14 +509,14 @@ CREATE TABLE `histology` (
   `active` tinyint(4) NOT NULL DEFAULT 1,
   `scene_order` enum('ASC','DESC') DEFAULT 'ASC',
   PRIMARY KEY (`id`),
-  KEY `K__histology_virus_id` (`virus_id`),
-  KEY `K__histology_prep_id` (`prep_id`),
-  CONSTRAINT `FK__histology_prep_id` FOREIGN KEY (`prep_id`) REFERENCES `animal` (`prep_id`) ON UPDATE CASCADE,
-  CONSTRAINT `FK__histology_virus_id` FOREIGN KEY (`virus_id`) REFERENCES `virus` (`id`) ON UPDATE CASCADE
+  KEY `K__histology_FK_virus_id` (`FK_virus_id`),
+  KEY `K__histology_FK_prep_id` (`FK_prep_id`),
+  KEY `K__histology_FK_lab_id` (`FK_lab_id`),
+  CONSTRAINT `FK__histology_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`),  
+  CONSTRAINT `FK__histology_animal` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`) ON UPDATE CASCADE,
+  CONSTRAINT `FK__histology_virus` FOREIGN KEY (`FK_virus_id`) REFERENCES `virus` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
 
 --
 -- Table structure for table `injection`
@@ -524,8 +527,8 @@ DROP TABLE IF EXISTS `injection`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `injection` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `active` tinyint(1) NOT NULL,
-  `created` datetime(6) NOT NULL,
+  `FK_prep_id` varchar(20) NOT NULL,
+  `FK_lab_id` int(11) DEFAULT NULL,
   `anesthesia` enum('ketamine','isoflurane') DEFAULT NULL,
   `method` enum('iontophoresis','pressure','volume') DEFAULT NULL,
   `pipet` enum('glass','quartz','Hamilton','syringe needle') DEFAULT NULL,
@@ -539,8 +542,8 @@ CREATE TABLE `injection` (
   `virus_count` int(11) NOT NULL,
   `comments` longtext DEFAULT NULL,
   `injection_volume` varchar(20) DEFAULT NULL,
-  `FK_prep_id` varchar(20) NOT NULL,
-  `FK_lab_id` int(11) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL,
+  `created` datetime(6) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `K__injection_FK_prep_id` (`FK_prep_id`),
   KEY `K__injection_FK_lab_id` (`FK_lab_id`),
@@ -548,6 +551,7 @@ CREATE TABLE `injection` (
   CONSTRAINT `FK__injection_lab` FOREIGN KEY (`FK_lab_id`) REFERENCES `auth_lab` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
 --
 -- Table structure for table `injection_virus`
 --
@@ -557,15 +561,15 @@ DROP TABLE IF EXISTS `injection_virus`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `injection_virus` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `active` tinyint(1) NOT NULL,
-  `created` datetime(6) NOT NULL,
   `FK_injection_id` int(11) NOT NULL,
   `FK_virus_id` int(11) NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  `created` datetime(6) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `K__injection_virus_FK_injection_id` (`FK_injection_id`),
   KEY `K__injection_virus_FK_virus_id` (`FK_virus_id`),
-  CONSTRAINT `FK__injection_virus_FK_injection_id` FOREIGN KEY (`FK_injection_id`) REFERENCES `injection` (`id`),
-  CONSTRAINT `FK__injection_virus_FK_virus_id` FOREIGN KEY (`FK_virus_id`) REFERENCES `virus` (`id`)
+  CONSTRAINT `FK__injection_virus_injection` FOREIGN KEY (`FK_injection_id`) REFERENCES `injection` (`id`),
+  CONSTRAINT `FK__injection_virus_virus` FOREIGN KEY (`FK_virus_id`) REFERENCES `virus` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -586,8 +590,8 @@ CREATE TABLE `marked_cells` (
   `FK_cell_type_id` int(11) DEFAULT NULL COMMENT 'cell type of the cell ',
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK__marked_cells_session_xyz` (`FK_session_id`,`x`,`y`,`z`),
-  KEY `K__marked_cells_session_id` (`FK_session_id`),
-  KEY `K__marked_cells_cell_type_id` (`FK_cell_type_id`),
+  KEY `K__marked_cells_FK_session_id` (`FK_session_id`),
+  KEY `K__marked_cells_FK_cell_type_id` (`FK_cell_type_id`),
   CONSTRAINT `FK__marked_cells_annotation_session` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`),
   CONSTRAINT `FK__marked_cells_cell_type` FOREIGN KEY (`FK_cell_type_id`) REFERENCES `cell_type` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -659,7 +663,7 @@ CREATE TABLE `polygon_sequences` (
   `FK_session_id` int(11) NOT NULL COMMENT 'CREATOR/EDITOR',
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_ps_session_xyz_index` (`FK_session_id`,`x`,`y`,`z`,`polygon_index`,`point_order`),
-  KEY `FK_session_id` (`FK_session_id`),
+  KEY `FK_polygon_sequences_FK_session_id` (`FK_session_id`),
   CONSTRAINT `FK_polygon_sequences_annotation_session` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -697,7 +701,7 @@ CREATE TABLE `slide` (
   `scene_qc_5` tinyint(4) NOT NULL DEFAULT 0,
   `scene_qc_6` tinyint(4) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `K__slide_scan_run` (`FK_scan_run_id`),
+  KEY `K__slide_FK_scan_run_id` (`FK_scan_run_id`),
   CONSTRAINT `FK__slide_scan_run` FOREIGN KEY (`FK_scan_run_id`) REFERENCES `scan_run` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -739,7 +743,7 @@ CREATE TABLE `scan_run` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `FK_prep_id` varchar(20) NOT NULL,
   `rescan_number` tinyint(4) NOT NULL DEFAULT 0,
-  `performance_center` enum('CSHL','Salk','UCSD','HHMI') DEFAULT NULL COMMENT 'default population is from Histology',
+  `FK_lab_id` int(11) DEFAULT NULL,
   `machine` enum('Axioscan I','Axioscan II') DEFAULT NULL,
   `objective` enum('60X','40X','20X','10X') DEFAULT NULL,
   `resolution` float NOT NULL DEFAULT 0 COMMENT '(µm) lateral resolution if available',
@@ -761,13 +765,12 @@ CREATE TABLE `scan_run` (
   `rotation` int(11) NOT NULL DEFAULT 0,
   `flip` enum('none','flip','flop') NOT NULL DEFAULT 'none',
   `comments` varchar(2001) DEFAULT NULL COMMENT 'assessment',
-  `active` tinyint(4) NOT NULL DEFAULT 1,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
   `created` datetime(6) NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`),
-  KEY `FK__scan_run_FK_prep_id` (`FK_prep_id`),
+  KEY `K__scan_run_FK_prep_id` (`FK_prep_id`),
   CONSTRAINT `FK__scan_run_FK_prep_id` FOREIGN KEY (`FK_prep_id`) REFERENCES `animal` (`prep_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 --
 -- Table structure for table `structure_com`
@@ -785,7 +788,7 @@ CREATE TABLE `structure_com` (
   `FK_session_id` int(11) NOT NULL COMMENT 'CREATOR/EDITOR',
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_sc_session_xyz` (`source`,`x`,`y`,`z`,`FK_session_id`),
-  KEY `FK_session_id` (`FK_session_id`),
+  KEY `K__structure_com_FK_session_id` (`FK_session_id`),
   CONSTRAINT `FK__structure_com_annotation_session` FOREIGN KEY (`FK_session_id`) REFERENCES `annotation_session` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;

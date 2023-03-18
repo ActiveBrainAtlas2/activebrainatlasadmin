@@ -31,7 +31,6 @@ class Animal(AtlasModel):
     """
 
     prep_id = models.CharField(primary_key=True, max_length=20, db_column='prep_id')
-    #performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI','Duke'], blank=True, null=True, db_column='performance_center')
     performance_center = models.ForeignKey(Lab, models.CASCADE, null=True, blank=True, db_column="FK_lab_id", verbose_name="Performance Center")
     date_of_birth = models.DateField(blank=True, null=True, db_column='date_of_birth')
     species = EnumField(choices=['mouse','rat'], blank=True, null=True, db_column='species')
@@ -78,9 +77,9 @@ class Histology(AtlasModel):
     """
     
     id = models.AutoField(primary_key=True)
-    prep = models.ForeignKey(Animal, models.CASCADE)
-    virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True)
-    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
+    prep = models.ForeignKey(Animal, models.CASCADE, db_column='FK_prep_id')
+    virus = models.ForeignKey('Virus', models.CASCADE, blank=True, null=True, db_column='FK_virus_id')
+    performance_center = models.ForeignKey(Lab, models.CASCADE, null=True, blank=True, db_column="FK_lab_id", verbose_name="Performance Center")
     anesthesia = EnumField(choices=['ketamine','isoflurane','pentobarbital','fatal plus'], blank=True, null=True)
     perfusion_age_in_days = models.PositiveIntegerField()
     perfusion_date = models.DateField(blank=True, null=True)
@@ -171,7 +170,7 @@ class ScanRun(AtlasModel):
     
     id = models.AutoField(primary_key=True)
     prep = models.ForeignKey(Animal, models.CASCADE, db_column='FK_prep_id')
-    performance_center = EnumField(choices=['CSHL','Salk','UCSD','HHMI'], blank=True, null=True)
+    performance_center = models.ForeignKey(Lab, models.CASCADE, null=True, blank=True, db_column="FK_lab_id", verbose_name="Performance Center")
     machine = EnumField(choices=['Axioscan I', 'Axioscan II'], blank=True, null=True)
     objective = EnumField(choices=['60X','40X','20X','10X'], blank=True, null=True)
     resolution = models.FloatField(verbose_name="XY Resolution (um)")

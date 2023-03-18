@@ -82,9 +82,9 @@ FROM active_atlas_production.structure;
 
 INSERT INTO brainsharer.histology 
 (id,
-prep_id,
-virus_id,
-performance_center,
+FK_prep_id,
+FK_virus_id,
+FK_lab_id,
 anesthesia,
 perfusion_age_in_days,
 perfusion_date,
@@ -106,10 +106,12 @@ comments,
 created,
 active,
 scene_order)
-SELECT id,
-prep_id,
-virus_id,
-performance_center,
+SELECT h.id,
+h.prep_id AS FK_prep_id,
+h.virus_id AS FK_virus_id,
+
+(CASE WHEN h.performance_center IS NULL THEN 2 ELSE AL.id END) as FK_lab_id, 
+
 anesthesia,
 perfusion_age_in_days,
 perfusion_date,
@@ -127,11 +129,13 @@ orientation,
 oblique_notes,
 mounting,
 counterstain,
-comments,
-created,
-active,
+h.comments,
+h.created,
+h.active,
 scene_order
-FROM active_atlas_production.histology;
+FROM active_atlas_production.histology h
+LEFT join brainsharer_aws.auth_lab AS AL on h.performance_center = AL.lab_name;
+
 
 
 INSERT INTO brainsharer.cell_type SELECT * FROM active_atlas_production.cell_type;

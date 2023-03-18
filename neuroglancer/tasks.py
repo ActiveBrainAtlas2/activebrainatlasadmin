@@ -73,5 +73,5 @@ def nobackground_archive_and_insert_annotations(layeri, neuroglancer_state_id):
     assert manager.animal is not None
     assert manager.annotator is not None
 
-    manager.archive_and_insert_annotations()
+    manager.insert_annotations()
 
