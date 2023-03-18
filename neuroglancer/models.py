@@ -388,6 +388,7 @@ class StructureCom(AnnotationAbstract):
 
 class ArchiveSet(AtlasModel):
     """This class model is for set of archives. It gets used by the AnnotationPointArchive.
+    Not being used at the moment.
     """
     
     id = models.BigAutoField(primary_key=True)
@@ -405,6 +406,7 @@ class ArchiveSet(AtlasModel):
 
 class AnnotationPointArchive(AnnotationAbstract):
     """This class is for an archive of annotation points
+    Not being used at the moment.
     """
     
     polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)

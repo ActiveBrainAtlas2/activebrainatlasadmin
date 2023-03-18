@@ -63,11 +63,12 @@ class TestSetUp(TestCase):
             self.animal = Animal.objects.get(pk=self.prep_id)
         except Animal.DoesNotExist:
             self.animal = Animal.objects.create(prep_id=self.prep_id)
-            
+
+        # scan_run    
         try:
-            query_set = ScanRun.objects.filter(prep_id=self.prep_id)
+            query_set = ScanRun.objects.filter(prep=self.animal)
         except ScanRun.DoesNotExist:
-            self.scan_run = ScanRun.objects.create(prep_id=self.prep_id, 
+            self.scan_run = ScanRun.objects.create(prep=self.animal, 
                                                    resolution=0.325, zresolution=20,
                                                    number_of_slides=100)
         if query_set is not None and len(query_set) > 0:
