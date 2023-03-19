@@ -29,6 +29,14 @@ INSERT INTO brainsharer.django_plotly_dash_statelessapp SELECT * FROM active_atl
 INSERT INTO brainsharer.django_session SELECT * FROM active_atlas_production.django_session;
 INSERT INTO brainsharer.django_site SELECT * FROM active_atlas_production.django_site;
 
+INSERT INTO brainsharer.account_emailaddress SELECT * FROM brainsharer_aws.account_emailaddress;
+INSERT INTO brainsharer.account_emailconfirmation SELECT * FROM brainsharer_aws.account_emailconfirmation;
+INSERT INTO brainsharer.socialaccount_socialaccount SELECT * FROM brainsharer_aws.socialaccount_socialaccount;
+INSERT INTO brainsharer.socialaccount_socialapp SELECT * FROM brainsharer_aws.socialaccount_socialapp;
+INSERT INTO brainsharer.socialaccount_socialapp_sites SELECT * FROM brainsharer_aws.socialaccount_socialapp_sites;
+INSERT INTO brainsharer.socialaccount_socialtoken SELECT * FROM brainsharer_aws.socialaccount_socialtoken;
+
+
 -- NOw do the data that has been created by us.
 -- truncate/delete tables so you can run this sql as often as you like
 -- you need access to the active_atlas_production database

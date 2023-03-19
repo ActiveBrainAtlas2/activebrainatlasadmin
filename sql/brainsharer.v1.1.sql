@@ -16,8 +16,7 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 
--- make sure we are in the correct database!!!
-use brainsharer;
+-- make sure we are in the correct database. This is determined by the command line!!!
 
 -- here are list of all the tables that are not being used, they
 -- are either deprecated, or not necessary or not being used
@@ -879,6 +878,127 @@ WHERE
 	`s`.`slide_status` = 'Good'
 	AND `sc`.`active` = 1;
 
+
+-- social account login stuff
+
+--
+-- Table structure for table `account_emailaddress`
+--
+
+DROP TABLE IF EXISTS `account_emailaddress`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_emailaddress` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `email` varchar(254) NOT NULL,
+  `verified` tinyint(1) NOT NULL,
+  `primary` tinyint(1) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__account_emailaddress_email` (`email`),
+  KEY `K__account_emailaddress_user_id` (`user_id`),
+  CONSTRAINT `FK__account_emailaddress_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `account_emailconfirmation`
+--
+
+DROP TABLE IF EXISTS `account_emailconfirmation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `account_emailconfirmation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created` datetime(6) NOT NULL,
+  `sent` datetime(6) DEFAULT NULL,
+  `key` varchar(64) NOT NULL,
+  `email_address_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__account_emailconfirmation_key` (`key`),
+  KEY `K__account_emailconfirmation_email_address_id` (`email_address_id`),
+  CONSTRAINT `FK__account_emailconfirmation_email_address_id` FOREIGN KEY (`email_address_id`) REFERENCES `account_emailaddress` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+--
+-- Table structure for table `socialaccount_socialaccount`
+--
+
+DROP TABLE IF EXISTS `socialaccount_socialaccount`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `socialaccount_socialaccount` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `provider` varchar(30) NOT NULL,
+  `uid` varchar(191) NOT NULL,
+  `last_login` datetime(6) NOT NULL,
+  `date_joined` datetime(6) NOT NULL,
+  `extra_data` longtext NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__socialaccount_socialaccount_provider` (`provider`,`uid`),
+  KEY `K__socialaccount_socialacount_user_id` (`user_id`),
+  CONSTRAINT `FK__socialaccount_socialaccount_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `socialaccount_socialapp`
+--
+
+DROP TABLE IF EXISTS `socialaccount_socialapp`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `socialaccount_socialapp` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `provider` varchar(30) NOT NULL,
+  `name` varchar(40) NOT NULL,
+  `client_id` varchar(191) NOT NULL,
+  `secret` varchar(191) NOT NULL,
+  `key` varchar(191) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+--
+-- Table structure for table `socialaccount_socialapp_sites`
+--
+
+DROP TABLE IF EXISTS `socialaccount_socialapp_sites`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `socialaccount_socialapp_sites` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `socialapp_id` int(11) NOT NULL,
+  `site_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__socialaccount_socialapp_sites_socialapp_id_site_id` (`socialapp_id`,`site_id`),
+  KEY `K__socialaccount_socialapp_sites_site_id` (`site_id`),
+  CONSTRAINT `FK__socialaccount_socialapp_sites_socialappid` FOREIGN KEY (`socialapp_id`) REFERENCES `socialaccount_socialapp` (`id`),
+  CONSTRAINT `FK__socialaccount_socialapp_sites_site_id` FOREIGN KEY (`site_id`) REFERENCES `django_site` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+--
+-- Table structure for table `socialaccount_socialtoken`
+--
+
+DROP TABLE IF EXISTS `socialaccount_socialtoken`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `socialaccount_socialtoken` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `token` longtext NOT NULL,
+  `token_secret` longtext NOT NULL,
+  `expires_at` datetime(6) DEFAULT NULL,
+  `account_id` int(11) NOT NULL,
+  `app_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK__socialaccount_socialtoken_app_id_account_id` (`app_id`,`account_id`),
+  KEY `K__socialaccount_socialtoken_account_id` (`account_id`),
+  CONSTRAINT `FK__socialaccount_socialtoken_account_id` FOREIGN KEY (`account_id`) REFERENCES `socialaccount_socialaccount` (`id`),
+  CONSTRAINT `FK__socialaccount_socialtoken_app_id` FOREIGN KEY (`app_id`) REFERENCES `socialaccount_socialapp` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
