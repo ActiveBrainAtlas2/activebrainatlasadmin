@@ -218,5 +218,11 @@ SELECT * FROM active_atlas_production.slide;
 INSERT INTO brainsharer.slide_czi_to_tif
 SELECT * FROM active_atlas_production.slide_czi_to_tif;
 
-INSERT INTO brainsharer.django_migrations
-SELECT * FROM active_atlas_production.django_migrations;
+TRUNCATE brainsharer.django_migrations;
+INSERT INTO brainsharer.django_migrations (app, name, applied)
+SELECT app, name, NOW() AS applied
+FROM active_atlas_production.django_migrations
+UNION
+SELECT app, name, NOW() AS applied 
+FROM brainsharer_aws.django_migrations;
+

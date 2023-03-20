@@ -35,6 +35,10 @@ INSTALLED_APPS = [
     'neuroglancer',
     'rest_framework',
     'corsheaders',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'debug_toolbar',
 ]
 
