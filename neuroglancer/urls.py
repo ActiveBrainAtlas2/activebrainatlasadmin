@@ -1,10 +1,23 @@
 from django.urls import path, include
 from neuroglancer import views
+from neuroglancer.create_state_views import fetch_layers
+
 from rest_framework import routers
 app_name = 'neuroglancer'
 
 router = routers.DefaultRouter(trailing_slash=False)
-router.register(r'neuroglancer', views.UrlViewSet, basename='neuroglancer')
+router.register(r'neuroglancer', views.NeuroglancerViewSet, basename='neuroglancer')
+router.register(r'states', views.NeuroglancerAvailableData, basename='states')
+
+general_urls = [
+    path('', include(router.urls)),
+    path('landmark_list',views.LandmarkList.as_view()),
+    path('save_annotations/<int:neuroglancer_state_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),
+    path('groups', views.NeuroglancerGroupAvailableData.as_view()),
+    path('landmark_list',views.LandmarkList.as_view()),
+    path('createstate', views.create_state),
+    path('fetch_layers/<int:animal_id>', fetch_layers, name='fetch_layers')
+]
 
 transformation_relate_urls = [ 
     path('rotation/<str:prep_id>/<int:annotator_id>/<str:source>/', views.Rotation.as_view()),
@@ -18,10 +31,6 @@ volume_related_urls = [
     path('get_volume_list', views.GetPolygonList.as_view()),
     path('contour_to_segmentation/<int:neuroglancer_state_id>/<str:volume_id>',views.ContoursToVolume.as_view(),name = 'contour_to_segmentation'),
 ]
-general_urls = [
-    path('', include(router.urls)),
-    path('landmark_list',views.LandmarkList.as_view()),
-    path('save_annotations/<int:neuroglancer_state_id>/<str:annotation_layer_name>',views.SaveAnnotation.as_view(),name = 'save_annotations'),]
 
 com_related_urls = [
     path('get_com/<str:prep_id>/<str:annotator_id>/<str:source>', views.GetCOM.as_view()),

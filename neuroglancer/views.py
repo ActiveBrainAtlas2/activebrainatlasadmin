@@ -31,7 +31,7 @@ from subprocess import check_output
 import os
 from time import sleep
 
-class UrlViewSet(viewsets.ModelViewSet):
+class NeuroglancerViewSet(viewsets.ModelViewSet):
     """API endpoint that allows the neuroglancer urls to be viewed or edited.
     """
     
