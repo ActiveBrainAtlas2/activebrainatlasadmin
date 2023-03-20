@@ -23,7 +23,7 @@ from brainsharer.views import SessionVarView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(r'session', SessionVarView.as_view(), name='session-var'),
+    path('', include('authentication.urls')),
     path('', include('brain.urls')),
     path('', include('neuroglancer.urls')),
 ]

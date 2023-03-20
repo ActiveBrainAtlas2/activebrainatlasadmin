@@ -29,12 +29,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
-    'dpd_static_support',
+    'django.contrib.sites',
     'authentication',
     'brain',
     'neuroglancer',
     'rest_framework',
     'corsheaders',
+    'oauth_app',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -150,6 +151,10 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend'
 ]
+
+SITE_ID = 3999
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 
 SOCIALACCOUNT_PROVIDERS = {
