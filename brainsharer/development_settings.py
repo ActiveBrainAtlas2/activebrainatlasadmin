@@ -1,11 +1,11 @@
 """
 This is a pre cvat settings file for use on a development machine
-Place it at activebrainatlas/activebrainatlas/settings.py
+Place it at brainsharer/settings.py
 """
 
 import os
 import datetime
-from activebrainatlas.local_settings import SECRET_KEY, DATABASES
+from brainsharer.local_settings import SECRET_KEY, DATABASES
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -57,7 +57,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-ROOT_URLCONF = 'activebrainatlas.urls'
+ROOT_URLCONF = 'brainsharer.urls'
 
 TEMPLATES = [
     {
@@ -75,8 +75,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'activebrainatlas.wsgi.application'
-ASGI_APPLICATION = 'activebrainatlas.asgi.application'
+WSGI_APPLICATION = 'brainsharer.wsgi.application'
+ASGI_APPLICATION = 'brainsharer.asgi.application'
 
 
 

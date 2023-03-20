@@ -1,4 +1,4 @@
-"""activebrainatlas URL Configuration
+"""brainsharer URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 
-from activebrainatlas.views import SessionVarView
+from brainsharer.views import SessionVarView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
