@@ -4,7 +4,7 @@ import requests
 import os
 from brain.models import Animal
 from authentication.models import User
-from neuroglancer.models import NeuroglancerModel
+from neuroglancer.models import NeuroglancerState
 from datetime import datetime
 
 def fetch_layers(request, animal_id):

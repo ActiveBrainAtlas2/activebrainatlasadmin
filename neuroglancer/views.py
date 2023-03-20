@@ -10,16 +10,20 @@ from rest_framework import viewsets, views, permissions, status
 from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
+
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import random_string, create_point_annotation
 from neuroglancer.annotation_manager import DEBUG
 from neuroglancer.atlas import align_atlas, get_scales, make_ontology_graph_CCFv3, make_ontology_graph_pma
-from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, PolygonSequence, \
+from neuroglancer.create_state_views import create_layer, create_neuroglancer_model, prepare_bottom_attributes, prepare_top_attributes
+from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, NeuroglancerView, PolygonSequence, \
     NeuroglancerState, BrainRegion, StructureCom, CellType, MouselightNeuron,ViralTracingLayer 
 from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
-    MarkedCellListSerializer, PolygonListSerializer, \
-    PolygonSerializer, RotationSerializer, UrlSerializer, \
+    MarkedCellListSerializer, NeuroglancerViewSerializer, NeuroglancerGroupViewSerializer, PolygonListSerializer, \
+    PolygonSerializer, RotationSerializer, NeuroglancerStateSerializer, \
     NeuronSerializer, AnatomicalRegionSerializer, \
     ViralTracingSerializer 
 from neuroglancer.tasks import background_archive_and_insert_annotations, \
@@ -31,13 +35,6 @@ from subprocess import check_output
 import os
 from time import sleep
 
-class NeuroglancerViewSet(viewsets.ModelViewSet):
-    """API endpoint that allows the neuroglancer urls to be viewed or edited.
-    """
-    
-    queryset = NeuroglancerState.objects.all()
-    serializer_class = UrlSerializer
-    permission_classes = [permissions.AllowAny]
 
 def apply_scales_to_annotation_rows(rows, prep_id):
     """To fetch the scan resolution of an animal from the database and apply it to a 
@@ -53,6 +50,48 @@ def apply_scales_to_annotation_rows(rows, prep_id):
         row.x = row.x / scale_xy
         row.y = row.y / scale_xy
         row.z = row.z / z_scale + decimal.Decimal(0.5)
+
+
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 500
+
+
+class NeuroglancerViewSet(viewsets.ModelViewSet):
+    """API endpoint that allows the neuroglancer urls to be viewed or edited.
+    """
+    
+    queryset = NeuroglancerState.objects.all()
+    serializer_class = NeuroglancerStateSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class NeuroglancerAvailableData(viewsets.ModelViewSet):
+    """
+    API endpoint that allows the available neuroglancer data on the server
+    to be viewed.
+    """
+    queryset = NeuroglancerView.objects.all()
+    serializer_class = NeuroglancerViewSerializer
+    pagination_class = LargeResultsSetPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned purchases to a given animal,
+        by filtering against a `animal` query parameter in the URL.
+        """
+        queryset = NeuroglancerView.objects.all()
+        animal = self.request.query_params.get('animal')
+        lab = self.request.query_params.get('lab')
+        layer_type = self.request.query_params.get('layer_type')
+        if animal is not None:
+            queryset = queryset.filter(group_name__icontains=animal)
+        if lab is not None and int(lab) > 0:
+            queryset = queryset.filter(lab=lab)
+        if layer_type is not None and layer_type != '':
+            queryset = queryset.filter(layer_type=layer_type)
+
+        return queryset
 
 
 class GetVolume(AnnotationBase, views.APIView):
@@ -527,3 +566,45 @@ class TracingAnnotation(views.APIView):
 
         return Response(serializer.data)
 
+
+
+class NeuroglancerGroupAvailableData(views.APIView):
+    """
+    API endpoint that allows the available neuroglancer data on the server
+    to be viewed.
+    """
+    queryset = NeuroglancerView.objects.all()
+    serializer_class = NeuroglancerGroupViewSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        """
+        Just getting distinct group_name and layer_type
+        for the frontend create-view page
+        """
+        data = NeuroglancerView.objects.order_by('group_name', 'layer_type').values('group_name', 'layer_type').distinct()
+        serializer = NeuroglancerGroupViewSerializer(data, many=True)
+        return Response(serializer.data)
+
+
+
+@api_view(['POST'])
+def create_state(request):
+    if request.method == "POST":
+        data = request.data
+        layers = []
+        data = [i for i in data if not (i['id'] == 0)]
+        titles = []
+        state = prepare_top_attributes(data[0])
+        for d in data:
+            id = int(d['id'])
+            if id > 0:
+                layer = create_layer(d)
+                layers.append(layer)
+                title = f"{d['group_name']} {d['layer_name']}" 
+                titles.append(title)
+        state['layers'] = layers
+        bottom = prepare_bottom_attributes()
+        state.update(bottom)
+        state_id = create_neuroglancer_model(state, titles)
+        return JsonResponse(state_id, safe=False)

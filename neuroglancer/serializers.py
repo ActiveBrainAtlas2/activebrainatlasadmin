@@ -4,7 +4,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import APIException
 import logging
-from neuroglancer.models import BrainRegion, NeuroglancerState
+from neuroglancer.models import BrainRegion, NeuroglancerState, NeuroglancerView
 from authentication.models import User
 
 logging.basicConfig()
@@ -77,7 +77,7 @@ class RotationSerializer(serializers.Serializer):
     label = serializers.CharField()
     source = serializers.CharField()
 
-class UrlSerializer(serializers.ModelSerializer):
+class NeuroglancerStateSerializer(serializers.ModelSerializer):
     """Override method of entering a url into the DB.
     The url *probably* can't be in the NeuroglancerState when it is returned
     to neuroglancer as it crashes neuroglancer.
@@ -134,6 +134,28 @@ class UrlSerializer(serializers.ModelSerializer):
             logger.error('Could not save Neuroglancer model')
         obj.url = None
         return
+
+
+class NeuroglancerGroupViewSerializer(serializers.ModelSerializer):
+    '''
+    This is to form the groups with just distinct group_name
+    and layer_type
+    '''
+
+    class Meta:
+        model = NeuroglancerView
+        fields = ['group_name', 'layer_type']
+        ordering = ['group_name', 'layer_type']
+
+
+class NeuroglancerViewSerializer(serializers.ModelSerializer):
+    lab_name = serializers.CharField(source='lab.lab_name')
+
+    class Meta:
+        model = NeuroglancerView
+        fields = '__all__'
+        ordering = ['id']
+
 
 class NeuronSerializer(serializers.Serializer):
     """

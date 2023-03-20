@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 from django.template.defaultfilters import truncatechars
+from authentication.models import Lab
 from brain.models import AtlasModel, Animal
 from django_mysql.models import EnumField
 
@@ -149,6 +150,37 @@ class NeuroglancerState(models.Model):
 
         json.loads(json_repr, object_hook=_decode_dict)  # Return value ignored.
         return results
+
+
+class NeuroglancerView(AtlasModel):
+    group_name = models.CharField(max_length=50, verbose_name='Animal/Structure name')
+    lab = models.ForeignKey(Lab, models.CASCADE, null=True, db_column="FK_lab_id", verbose_name='Lab')
+    layer_name = models.CharField(max_length=255, blank=False, null=False)
+    description = models.TextField(max_length=2001, blank=False, null=False)
+    url = models.TextField(max_length=2001, blank=False, null=False)
+    thumbnail_url = models.TextField(max_length=2001, blank=False, null=False, verbose_name='Thumbnail name')
+    layer_type = EnumField(choices=['annotation', 'image','segmentation'], blank=False, null=False, default='image')
+    cross_section_orientation = models.CharField(max_length=255, blank=True, null=True, verbose_name='Cross section orientation (4 numbers seperated by comma)')
+    resolution = models.FloatField(verbose_name="XY Resolution (um)")
+    zresolution = models.FloatField(verbose_name="Z Resolution (um)")
+    width = models.IntegerField(null=False, blank=False, default=60000, verbose_name="Width (pixels)")
+    height = models.IntegerField(null=False, blank=False, default=30000, verbose_name="Height (pixels)")
+    depth = models.IntegerField(null=False, blank=False, default=450, verbose_name="Depth (pixels, sections)")
+    max_range = models.IntegerField(null=False, blank=False, default=5000, verbose_name="Intensity range (INT8=0,255, INT16=0,65535)")
+    updated = models.DateTimeField(auto_now=True, editable=False, null=False, blank=False)
+
+    class Meta:
+        managed = False
+        db_table = 'available_neuroglancer_data'
+        verbose_name = 'Available Neuroglancer data'
+        verbose_name_plural = 'Available Neuroglancer data'
+        ordering = ['lab', 'group_name', 'layer_name']
+
+
+    def __str__(self):
+        return u'{} {}'.format(self.group_name, self.description)
+
+
 
 class Points(NeuroglancerState):
     """Model corresponding to the annotation points table in the database
