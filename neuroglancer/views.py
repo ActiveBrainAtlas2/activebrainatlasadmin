@@ -52,47 +52,6 @@ def apply_scales_to_annotation_rows(rows, prep_id):
         row.z = row.z / z_scale + decimal.Decimal(0.5)
 
 
-class LargeResultsSetPagination(PageNumberPagination):
-    page_size = 500
-
-
-class NeuroglancerViewSet(viewsets.ModelViewSet):
-    """API endpoint that allows the neuroglancer urls to be viewed or edited.
-    """
-    
-    queryset = NeuroglancerState.objects.all()
-    serializer_class = NeuroglancerStateSerializer
-    permission_classes = [permissions.AllowAny]
-
-
-class NeuroglancerAvailableData(viewsets.ModelViewSet):
-    """
-    API endpoint that allows the available neuroglancer data on the server
-    to be viewed.
-    """
-    queryset = NeuroglancerView.objects.all()
-    serializer_class = NeuroglancerViewSerializer
-    pagination_class = LargeResultsSetPagination
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        """
-        Optionally restricts the returned purchases to a given animal,
-        by filtering against a `animal` query parameter in the URL.
-        """
-        queryset = NeuroglancerView.objects.all()
-        animal = self.request.query_params.get('animal')
-        lab = self.request.query_params.get('lab')
-        layer_type = self.request.query_params.get('layer_type')
-        if animal is not None:
-            queryset = queryset.filter(group_name__icontains=animal)
-        if lab is not None and int(lab) > 0:
-            queryset = queryset.filter(lab=lab)
-        if layer_type is not None and layer_type != '':
-            queryset = queryset.filter(layer_type=layer_type)
-
-        return queryset
-
 
 class GetVolume(AnnotationBase, views.APIView):
     """A view that returns the volume annotation for a session in neuroglancer json format
@@ -566,6 +525,69 @@ class TracingAnnotation(views.APIView):
 
         return Response(serializer.data)
 
+
+##### Below are classes/methods for displaying data on the brainsharer public frontend
+
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 500
+
+class SmallResultsSetPagination(PageNumberPagination):
+    page_size = 50
+
+
+class NeuroglancerAvailableData(viewsets.ModelViewSet):
+    """
+    API endpoint that allows the available neuroglancer data on the server
+    to be viewed.
+    """
+    queryset = NeuroglancerView.objects.all()
+    serializer_class = NeuroglancerViewSerializer
+    pagination_class = SmallResultsSetPagination
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned purchases to a given animal,
+        by filtering against a `animal` query parameter in the URL.
+        """
+        queryset = NeuroglancerView.objects.all()
+        animal = self.request.query_params.get('animal')
+        lab = self.request.query_params.get('lab')
+        layer_type = self.request.query_params.get('layer_type')
+        if animal is not None:
+            queryset = queryset.filter(group_name__icontains=animal)
+        if lab is not None and int(lab) > 0:
+            queryset = queryset.filter(lab=lab)
+        if layer_type is not None and layer_type != '':
+            queryset = queryset.filter(layer_type=layer_type)
+
+        return queryset
+
+
+class NeuroglancerViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows the neuroglancer states to be viewed or edited.
+    Note, the update, and insert methods are over ridden in the serializer.
+    It was more convienent to do them there than here.
+    """
+    serializer_class = NeuroglancerStateSerializer
+    pagination_class = SmallResultsSetPagination
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        """
+        Optionally restricts the returned purchases to a given animal,
+        by filtering against a `animal` query parameter in the URL.
+        """
+        queryset = NeuroglancerState.objects.filter(public=True).order_by('comments')
+        comments = self.request.query_params.get('comments')
+        lab = self.request.query_params.get('lab')
+        if comments is not None:
+            queryset = queryset.filter(comments__icontains=comments)
+        if lab is not None and int(lab) > 0:
+            queryset = queryset.filter(owner__lab=lab)
+
+        return queryset
 
 
 class NeuroglancerGroupAvailableData(views.APIView):

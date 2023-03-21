@@ -13,6 +13,7 @@ class Lab(models.Model):
         db_table = 'auth_lab'
         verbose_name = 'Laboratory'
         verbose_name_plural = 'Labs'
+        ordering = ['lab_name']
         
     def __str__(self):
         return f"{self.lab_name}"
