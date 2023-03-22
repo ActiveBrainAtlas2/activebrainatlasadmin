@@ -1,4 +1,5 @@
 #!/bin/bash
+# SAMPLE http://localhost:8000/contour_to_segmentation/679/c0a43fe4afb221ac9f88349ab080f4ea64fc9112
 #SBATCH -e /opt/slurm/output/slurm_%j.err
 #SBATCH -o /opt/slurm/output/slurm_%j.out
 #SBATCH -b now

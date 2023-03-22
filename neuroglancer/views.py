@@ -281,8 +281,8 @@ class ContoursToVolume(views.APIView):
     """Method to run slurm to create a 3D volume
     """
     
-    def get(self, request, url_id, volume_id):
-        command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(url_id),volume_id]
+    def get(self, request, neuroglancer_state_id, volume_id):
+        command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
         print(command)
         out = check_output(command)
         start_id = out.find(b'job')+4
@@ -572,7 +572,7 @@ class NeuroglancerViewSet(viewsets.ModelViewSet):
     """
     serializer_class = NeuroglancerStateSerializer
     pagination_class = SmallResultsSetPagination
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         """

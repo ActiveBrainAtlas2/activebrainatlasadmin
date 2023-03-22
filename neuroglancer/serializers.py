@@ -92,7 +92,7 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
         """This method gets called when a user clicks New in Neuroglancer
         """
         obj = NeuroglancerState(
-            url=validated_data['url'],
+            neuroglancer_state=validated_data['neuroglancer_state'],
             user_date=validated_data['user_date'],
             comments=validated_data['comments'],
         )
@@ -107,7 +107,7 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
         it only took around 0.25 seconds on a home computer.
         """
         
-        obj.url = validated_data.get('url', obj.url)
+        obj.neuroglancer_state = validated_data.get('neuroglancer_state', obj.neuroglancer_state)
         
         obj.user_date = validated_data.get('user_date', obj.user_date)
         obj.comments = validated_data.get('comments', obj.comments)
@@ -132,7 +132,7 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
             obj.save()
         except APIException:
             logger.error('Could not save Neuroglancer model')
-        obj.url = None
+        obj.neuroglancer_state = None
         return
 
 

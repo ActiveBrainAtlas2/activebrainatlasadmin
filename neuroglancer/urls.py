@@ -42,8 +42,9 @@ marked_cell_related_urls = [
     path('cell_types',views.GetCellTypes.as_view(),name = 'cell_types'),
 ]
 
-general_annotations = ['annotations', views.GetMarkedCellList.as_view(),
-                     'annotation', views.GetMarkedCellList.as_view()]
+general_annotations = [
+    path('annotations', views.GetMarkedCellList.as_view()),
+]
 
 mouselight_urls = [
         path('mlneurons/<str:atlas_name>/<str:neuron_parts_boolstr>/soma/<str:brain_region1>',
@@ -70,4 +71,5 @@ mouselight_urls = [
 
 ]
 
-urlpatterns = general_urls+transformation_relate_urls+volume_related_urls+com_related_urls+marked_cell_related_urls + mouselight_urls
+urlpatterns = general_annotations + general_urls + transformation_relate_urls + volume_related_urls + \
+    com_related_urls + marked_cell_related_urls + mouselight_urls
