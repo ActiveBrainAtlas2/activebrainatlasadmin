@@ -26,6 +26,7 @@ urlpatterns = [
     path('session', SessionVarView.as_view(), name='session-var'),
     path('', include('authentication.urls')),
     path('', include('brain.urls')),
+    path('', include('mouselight.urls')),
     path('', include('neuroglancer.urls')),
 ]
 

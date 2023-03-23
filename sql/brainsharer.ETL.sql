@@ -10,14 +10,31 @@
 
 
 -- insert the Django admin and user stuff first
--- auth user
 INSERT INTO brainsharer.django_content_type SELECT * FROM active_atlas_production.django_content_type;
-INSERT INTO brainsharer.auth_user SELECT * FROM active_atlas_production.auth_user;
+INSERT INTO brainsharer.auth_lab SELECT * FROM brainsharer_aws.auth_lab;
+
+-- UCSD users
+INSERT INTO brainsharer.auth_user 
+(password , last_login , is_superuser , username , first_name , last_name , 
+email , is_staff , is_active, date_joined, FK_lab_id)
+SELECT password , last_login , is_superuser , username , first_name , last_name , 
+email , is_staff , is_active, date_joined, 2 as FK_lab_id
+FROM active_atlas_production.auth_user au;
+
+-- princeton users
+INSERT INTO brainsharer.auth_user 
+(password , last_login , is_superuser , username , first_name , last_name , 
+email , is_staff , is_active, date_joined, FK_lab_id)
+SELECT password , last_login , is_superuser , username , first_name , last_name , 
+email , is_staff , is_active, date_joined, 1 as FK_lab_id 
+FROM brainsharer_aws.auth_user au2
+where au2.username NOT IN (select au3.username from active_atlas_production.auth_user au3);
+
+
 INSERT INTO brainsharer.auth_group SELECT * FROM active_atlas_production.auth_group;
 INSERT INTO brainsharer.auth_permission SELECT * FROM active_atlas_production.auth_permission;
 INSERT INTO brainsharer.auth_group_permissions SELECT * FROM active_atlas_production.auth_group_permissions;
 
-INSERT INTO brainsharer.auth_lab SELECT * FROM brainsharer_aws.auth_lab;
 INSERT INTO brainsharer.auth_user_groups SELECT * FROM active_atlas_production.auth_user_groups;
 INSERT INTO brainsharer.auth_user_labs SELECT * FROM brainsharer_aws.auth_user_labs;
 INSERT INTO brainsharer.auth_user_user_permissions SELECT * FROM active_atlas_production.auth_user_user_permissions;
@@ -161,7 +178,9 @@ INNER JOIN active_atlas_production.animal a on inj.prep_id = a.prep_id;
 
 
 INSERT INTO brainsharer.mouselight_neuron SELECT * FROM brainsharer_aws.mouselight_neuron;
+DELETE FROM brainsharer_aws.neuroglancer_state WHERE id IN (1,26,34,37,38,56,57);
 
+-- UCSD data
 INSERT INTO brainsharer.neuroglancer_state 
 (id, neuroglancer_state,
 created,updated,user_date,comments,FK_user_id,readonly,active)
@@ -169,6 +188,19 @@ SELECT id,url AS neuroglancer_state,
 created, updated, user_date, comments, person_id AS FK_user_id,readonly,active
 FROM active_atlas_production.neuroglancer_urls 
 WHERE active=1;
+-- princeton data
+INSERT INTO brainsharer.neuroglancer_state 
+(neuroglancer_state, created, updated, user_date,
+comments, FK_user_id,readonly,active)
+select 
+ns.neuroglancer_state, ns.created, ns.updated, ns.user_date, 
+ns.comments, 
+(select id from brainsharer.auth_user au2 where au2.username = 'sj0470') as FK_user_id,
+ns.readonly , ns.active 
+from brainsharer_aws.neuroglancer_state ns
+inner join brainsharer.auth_user au on ns.FK_owner_id = au.id 
+order by ns.id;
+
 
 INSERT INTO brainsharer.scan_run SELECT * FROM active_atlas_production.scan_run;
 

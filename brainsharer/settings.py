@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'authentication',
     'brain',
+    'mouselight',
     'neuroglancer',
     'rest_framework',
     'corsheaders',
