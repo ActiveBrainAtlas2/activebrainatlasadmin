@@ -21,7 +21,7 @@ class LabViewSet(viewsets.ModelViewSet):
     """
     queryset = Lab.objects.all()
     serializer_class = LabSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
 
 
 class RegisterView(generics.CreateAPIView):

@@ -4,20 +4,25 @@ is the 'V' in the MVC framework for the Neuroglancer app
 portion of the portal.
 """
 
+from subprocess import check_output
+import os
+from time import sleep
 import decimal
 from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
-from django.db.models import Q
 from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import LimitOffsetPagination
+
+import logging
+from brainsharer.pagination import DataTablePagination
 
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
 from neuroglancer.annotation_layer import random_string, create_point_annotation
 from neuroglancer.annotation_manager import DEBUG
-from neuroglancer.atlas import align_atlas, get_scales, make_ontology_graph_CCFv3, make_ontology_graph_pma
+from neuroglancer.atlas import align_atlas, get_scales
 from neuroglancer.create_state_views import create_layer, create_neuroglancer_model, prepare_bottom_attributes, prepare_top_attributes
 from neuroglancer.models import UNMARKED, AnnotationSession, MarkedCell, NeuroglancerView, PolygonSequence, \
     NeuroglancerState, BrainRegion, StructureCom, CellType
@@ -26,12 +31,9 @@ from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
     PolygonSerializer, RotationSerializer, NeuroglancerStateSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations, \
     nobackground_archive_and_insert_annotations
-import logging
+
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-from subprocess import check_output
-import os
-from time import sleep
 
 
 def apply_scales_to_annotation_rows(rows, prep_id):
@@ -338,13 +340,6 @@ class GetCellTypes(views.APIView):
 
 ##### Below are classes/methods for displaying data on the brainsharer public frontend
 
-class LargeResultsSetPagination(PageNumberPagination):
-    page_size = 500
-
-class SmallResultsSetPagination(PageNumberPagination):
-    page_size = 50
-
-
 class NeuroglancerAvailableData(viewsets.ModelViewSet):
     """
     API endpoint that allows the available neuroglancer data on the server
@@ -352,7 +347,6 @@ class NeuroglancerAvailableData(viewsets.ModelViewSet):
     """
     queryset = NeuroglancerView.objects.all()
     serializer_class = NeuroglancerViewSerializer
-    pagination_class = SmallResultsSetPagination
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -381,8 +375,8 @@ class NeuroglancerViewSet(viewsets.ModelViewSet):
     It was more convienent to do them there than here.
     """
     serializer_class = NeuroglancerStateSerializer
-    pagination_class = SmallResultsSetPagination
     permission_classes = [permissions.AllowAny]
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         """

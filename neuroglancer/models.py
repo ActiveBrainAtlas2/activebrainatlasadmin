@@ -65,6 +65,18 @@ class NeuroglancerState(models.Model):
         return animal
 
     @property
+    def lab(self):
+        '''
+        The primary lab of the user
+        :param obj: animal model
+        '''
+        lab = "NA"
+        if self.owner is not None and self.owner.lab is not None:
+            lab = self.owner.lab
+        return lab
+
+
+    @property
     def point_frame(self):
         df = None
         if self.neuroglancer_state is not None:

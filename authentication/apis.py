@@ -77,6 +77,10 @@ class GithubLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
         return response
 
 class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
+    """This class is used when a user logins with the Google link
+    the url is: /google
+    """
+    
     class InputSerializer(serializers.Serializer):
         code = serializers.CharField(required=False)
         error = serializers.CharField(required=False)

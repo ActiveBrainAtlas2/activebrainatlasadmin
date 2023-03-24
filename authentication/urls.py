@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from authentication.apis import GithubLoginApi, GoogleLoginApi
 app_name = 'authentication'
 
-router = routers.DefaultRouter()
+router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'labs', views.LabViewSet, basename='labs')
 
 
