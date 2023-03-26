@@ -62,7 +62,7 @@ class NeuroglancerStateAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '100'})},
     }
-    list_display = ('animal', 'open_neuroglancer', 'open_multiuser', 'owner', 'created')
+    list_display = ('animal', 'open_neuroglancer', 'public', 'open_multiuser', 'owner', 'created')
     ordering = ['-readonly', '-updated']
     readonly_fields = ['animal', 'pretty_url', 'created', 'user_date', 'updated']
     exclude = ['neuroglancer_state']
