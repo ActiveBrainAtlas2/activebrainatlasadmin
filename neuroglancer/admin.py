@@ -66,7 +66,7 @@ class NeuroglancerStateAdmin(admin.ModelAdmin):
     ordering = ['-readonly', '-updated']
     readonly_fields = ['animal', 'pretty_url', 'created', 'user_date', 'updated']
     exclude = ['neuroglancer_state']
-    list_filter = ['updated', 'created', 'readonly', UrlFilter, ]
+    list_filter = ['updated', 'created', 'readonly', UrlFilter, 'public']
     search_fields = ['comments']
 
     def __init__(self, model, admin_site):
