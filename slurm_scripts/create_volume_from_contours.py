@@ -9,12 +9,12 @@ from cloudvolume import CloudVolume
 PIPELINE_ROOT = Path('./').absolute()
 sys.path.append(PIPELINE_ROOT.as_posix())
 
-from library.controller.neuroglancer_state_controller import NeuroglancerStateController
-from library.controller.scan_run_controller import ScanRunController
-from neuroglancer.annotation_layer import AnnotationLayer
-from library.atlas_utilities.volume_maker import VolumeMaker
-from library.atlas_utilities.ng_segment_maker import NgConverter
-from pipeline.settings import host, password, schema, user
+from abakit.library.controller.neuroglancer_state_controller import NeuroglancerStateController
+from abakit.library.controller.scan_run_controller import ScanRunController
+from abakit.library.annotation.annotation_layer import AnnotationLayer
+from abakit.library.atlas.volume_maker import VolumeMaker
+from abakit.library.atlas.ng_segment_maker import NgConverter
+from abakit.settings import host, password, schema, user
 
 def contours_to_volume(url_id, volume_id):
     controller = NeuroglancerStateController(host=host, password=password, schema=schema, user=user)
