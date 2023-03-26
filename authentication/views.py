@@ -40,9 +40,10 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class SessionVarView(generics.ListAPIView):
+class SessionVarViewDEPRECATED(generics.ListAPIView):
     '''
-    This will be deprecated. 
+    This has been deprecated and replaced by using cookies 
+    which the angular front end and the neuroglancer program both can use. 
     This gets the session var from Neuroglancer to check
     if the user is logged in. Note, this works fine on the
     production server, but since Neuroglancer and Django

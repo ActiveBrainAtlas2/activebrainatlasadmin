@@ -82,8 +82,8 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
     The url *probably* can't be in the NeuroglancerState when it is returned
     to neuroglancer as it crashes neuroglancer.
     """
-    animal = serializers.CharField()
-    lab = serializers.CharField()
+    animal = serializers.CharField(required=False)
+    lab = serializers.CharField(required=False)
 
     class Meta:
         model = NeuroglancerState
@@ -115,7 +115,7 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
         obj.comments = validated_data.get('comments', obj.comments)
         if 'owner' in validated_data:
             owner = validated_data['owner']
-            self.save_neuroglancer_state(obj, owner)
+            obj = self.save_neuroglancer_state(obj, owner)
         return obj
 
     def save_neuroglancer_state(self, obj, owner):
@@ -126,7 +126,6 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
         
         """
         try:
-            # authUser = User.objects.get(pk=owner)
             obj.owner = owner
         except User.DoesNotExist:
             logger.error('Owner was not in validated data')
@@ -134,8 +133,8 @@ class NeuroglancerStateSerializer(serializers.ModelSerializer):
             obj.save()
         except APIException:
             logger.error('Could not save Neuroglancer model')
-        obj.neuroglancer_state = None
-        return
+        # obj.neuroglancer_state = None
+        return obj
 
 
 class NeuroglancerGroupViewSerializer(serializers.ModelSerializer):
