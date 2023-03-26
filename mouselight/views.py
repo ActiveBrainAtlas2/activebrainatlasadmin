@@ -60,7 +60,7 @@ class MouseLightNeuron(views.APIView):
         
         print(atlas_name,brain_region1,filter_type1,
             operator_type1,thresh1,brain_region2,
-            filter_type2,operator_type2,thresh2)
+            filter_type2,operator_type2,thresh2, neuron_parts_boolstr)
         
         if atlas_name == 'ccfv3_25um':
             ontology_graph = make_ontology_graph_CCFv3()
@@ -132,7 +132,7 @@ class AnatomicalRegions(views.APIView):
     """
     Fetch the complete list of anatomical brain regions
     url is of the the form
-    /anatomicalregions/atlasName
+    /anatomical_regions/atlasName
     """
     def get(self, request, atlas_name):
         if atlas_name == 'ccfv3_25um':
