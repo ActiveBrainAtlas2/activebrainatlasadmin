@@ -9,12 +9,22 @@ from cloudvolume import CloudVolume
 PIPELINE_ROOT = Path('./').absolute()
 sys.path.append(PIPELINE_ROOT.as_posix())
 
-from abakit.library.controller.neuroglancer_state_controller import NeuroglancerStateController
-from abakit.library.controller.scan_run_controller import ScanRunController
-from abakit.library.annotation.annotation_layer import AnnotationLayer
-from abakit.library.atlas.volume_maker import VolumeMaker
-from abakit.library.atlas.ng_segment_maker import NgConverter
-from abakit.settings import host, password, schema, user
+from abakit.controller.neuroglancer_state_controller import NeuroglancerStateController
+from abakit.controller.scan_run_controller import ScanRunController
+from abakit.annotation.annotation_layer import AnnotationLayer
+from abakit.atlas.volume_maker import VolumeMaker
+from abakit.atlas.ng_segment_maker import NgConverter
+try:
+    from brainsharer.local_settings import DATABASES
+except ImportError:
+    print('Could not import settings')
+    sys.exit
+
+host = DATABASES['default']['HOST']
+password = DATABASES['default']['PASSWORD']
+schema = DATABASES['default']['NAME']
+user = DATABASES['default']['USER']
+
 
 def contours_to_volume(url_id, volume_id):
     controller = NeuroglancerStateController(host=host, password=password, schema=schema, user=user)
@@ -32,7 +42,7 @@ def contours_to_volume(url_id, volume_id):
     
     animal = urlModel.get_animal()
     folder_name = make_volumes(volume, animal)
-    segmentation_save_folder = f"precomputed://https://activebrainatlas.ucsd.edu/data/structures/{folder_name}"
+    segmentation_save_folder = f"precomputed://https://brainsharer.org/structures/{folder_name}"
     return segmentation_save_folder
 
 def downsample_contours(contours, downsample_factor):
@@ -55,7 +65,7 @@ def make_volumes(volume, animal='DK55', downsample_factor=20):
     volume = (vmaker.volumes[structure]).astype(np.uint8)
     offset = list(vmaker.origins[structure])
     folder_name = f'{animal}_{structure}'
-    path = '/net/birdstore/Active_Atlas_Data/data_root/pipeline_data/structures'
+    path = '/var/www/brainsharer/structures'
     output_dir = os.path.join(path, folder_name)
     scale = get_scale(animal, downsample_factor)
     maker = NgConverter(volume=volume, scales=scale, offset=offset)

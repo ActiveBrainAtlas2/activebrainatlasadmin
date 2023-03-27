@@ -16,7 +16,6 @@ from rest_framework.decorators import api_view
 from rest_framework.pagination import LimitOffsetPagination
 
 import logging
-from brainsharer.pagination import DataTablePagination
 
 from neuroglancer.annotation_controller import create_polygons
 from neuroglancer.annotation_base import AnnotationBase
@@ -281,22 +280,37 @@ class ContoursToVolume(views.APIView):
     """Method to run slurm to create a 3D volume
     """
     
-    def get(self, request, neuroglancer_state_id, volume_id):
-        command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
-        print(command)
+    def get_slurm(self, request, neuroglancer_state_id, volume_id):
+        #command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
+        command = [os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
         out = check_output(command)
-        start_id = out.find(b'job')+4
-        job_id = int(out[start_id:-1])
-        output_file = f'/opt/slurm/output/slurm_{job_id}.out'
-        error_file = f'/opt/slurm/output/slurm_{job_id}.err'
+        print(out)
+        #start_id = out.find(b'job')+4
+        #job_id = int(out[start_id:-1])
+        job_id = out.find(b'job')+4
+        output_file = f'/var/www/brainsharer/structures/slurm/slurm_{job_id}.out'
+        error_file = f'/var/www/brainsharer/structures/slurm/slurm_{job_id}.err'
         while not os.path.exists(output_file):
             sleep(1)
             print(f'waiting for job {job_id} to finish')
+            break
         print('finished')
         text_file = open(output_file, "r")
         data = text_file.read()
         text_file.close()
         url = data.split('\n')[-1]
+        folder_name = url.split('/')[-1]
+        return JsonResponse({'url': url, 'name': folder_name})
+    
+    def get(self, request, neuroglancer_state_id, volume_id):
+        """Simpler version that does not use slurm
+        """
+
+        command = [os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
+        out = check_output(command)
+        print(out)
+        data = str(out)
+        url = data.split('\\n')[-1]
         folder_name = url.split('/')[-1]
         return JsonResponse({'url': url, 'name': folder_name})
 
