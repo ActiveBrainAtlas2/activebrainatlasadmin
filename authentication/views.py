@@ -21,7 +21,7 @@ class LabViewSet(viewsets.ModelViewSet):
     """
     queryset = Lab.objects.all()
     serializer_class = LabSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 
 class RegisterView(generics.CreateAPIView):
@@ -29,7 +29,7 @@ class RegisterView(generics.CreateAPIView):
     Description of RegisterView
     This is when a person registers to become a user on the registration page. 
     This must be allowed to accept posts so
-    we AllowAny
+    we allow unauthenticated access
 
     Inheritance:
         generics.CreateAPIView:

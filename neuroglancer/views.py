@@ -375,7 +375,7 @@ class NeuroglancerViewSet(viewsets.ModelViewSet):
     It was more convienent to do them there than here.
     """
     serializer_class = NeuroglancerStateSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
