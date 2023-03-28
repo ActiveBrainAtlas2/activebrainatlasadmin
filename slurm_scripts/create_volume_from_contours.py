@@ -15,10 +15,13 @@ from abakit.annotation.annotation_layer import AnnotationLayer
 from abakit.atlas.volume_maker import VolumeMaker
 from abakit.atlas.ng_segment_maker import NgConverter
 try:
-    from brainsharer.local_settings import DATABASES
+    from brainsharer.settings import DATABASES
 except ImportError:
-    print('Could not import settings')
-    sys.exit
+    try:
+        from brainsharer.local_settings import DATABASES
+    except ImportError:
+        print('Could not import settings')
+        sys.exit
 
 host = DATABASES['default']['HOST']
 password = DATABASES['default']['PASSWORD']
