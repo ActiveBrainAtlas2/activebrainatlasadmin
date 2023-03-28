@@ -58,7 +58,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_plotly_dash.middleware.BaseMiddleware',
     'django_plotly_dash.middleware.ExternalRedirectionMiddleware',
+    'authentication.cookiemiddleware.CookieMiddleware'
 ]
+
 
 ROOT_URLCONF = 'brainsharer.urls'
 

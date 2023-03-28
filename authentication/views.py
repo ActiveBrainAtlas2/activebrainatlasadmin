@@ -1,7 +1,12 @@
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.conf import settings
+
+from django.contrib.auth.forms import AuthenticationForm
+from django.urls import reverse
+import authentication
+from django.contrib import messages
 
 from rest_framework import generics, viewsets
 from rest_framework import permissions
@@ -11,6 +16,25 @@ from authentication.models import Lab, User
 from authentication.serializers import LabSerializer, RegisterSerializer, \
     UserSerializer, ValidateUserSerializer
 
+
+def account_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request.POST)
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authentication(username=username,password=password)
+        if user:
+            if user.is_active:
+                login(request,user)
+                return redirect(reverse('your_success_url'))
+        else:
+            messages.error(request,'username or password not correct')
+            return redirect(reverse('your_login_url'))
+        
+                
+    else:
+        form = AuthenticationForm()
+    return render(request,'your_template_name.html',{'form':form})
 
 
 class LabViewSet(viewsets.ModelViewSet):
