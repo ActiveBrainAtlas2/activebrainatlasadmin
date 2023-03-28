@@ -6,7 +6,8 @@ from rest_framework import routers
 app_name = 'neuroglancer'
 
 router = routers.DefaultRouter(trailing_slash=False)
-router.register(r'neuroglancer', views.NeuroglancerViewSet, basename='neuroglancer')
+router.register(r'neuroglancer', views.NeuroglancerViewSet, basename='neuroglancer') # private portal data
+router.register(r'neuroglancers', views.NeuroglancerPublicViewSet, basename='neuroglancers') # public data
 router.register(r'states', views.NeuroglancerAvailableData, basename='states')
 
 general_urls = [
@@ -37,14 +38,11 @@ com_related_urls = [
     path('get_com_list', views.GetComList.as_view()),
 ]
 marked_cell_related_urls = [
-    path('get_marked_cell/<str:session_id>', views.GetMarkedCell.as_view()),
+    path('annotations', views.GetMarkedCellList.as_view()),
     path('get_marked_cell_list', views.GetMarkedCellList.as_view()),
+    path('get_marked_cell/<str:session_id>', views.GetMarkedCell.as_view()),
     path('cell_types',views.GetCellTypes.as_view(),name = 'cell_types'),
 ]
 
-general_annotations = [
-    path('annotations', views.GetMarkedCellList.as_view()),
-]
-
-urlpatterns = general_annotations + general_urls + transformation_relate_urls + volume_related_urls + \
+urlpatterns = general_urls + transformation_relate_urls + volume_related_urls + \
     com_related_urls + marked_cell_related_urls

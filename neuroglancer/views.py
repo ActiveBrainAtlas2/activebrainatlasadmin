@@ -382,21 +382,22 @@ class NeuroglancerAvailableData(viewsets.ModelViewSet):
         return queryset
 
 
-class NeuroglancerViewSet(viewsets.ModelViewSet):
+class NeuroglancerPublicViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows the neuroglancer states to be viewed or edited.
+    API endpoint that allows the neuroglancer states to be viewed by the public.
     Note, the update, and insert methods are over ridden in the serializer.
     It was more convienent to do them there than here.
     """
-    serializer_class = NeuroglancerStateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = LimitOffsetPagination
+    serializer_class = NeuroglancerStateSerializer
 
     def get_queryset(self):
         """
         Optionally restricts the returned purchases to a given animal,
         by filtering against a `animal` query parameter in the URL.
         """
+
         queryset = NeuroglancerState.objects.filter(public=True).order_by('comments')
         comments = self.request.query_params.get('comments')
         lab = self.request.query_params.get('lab')
@@ -406,6 +407,13 @@ class NeuroglancerViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(owner__lab=lab)
 
         return queryset
+
+class NeuroglancerViewSet(viewsets.ModelViewSet):
+    """
+    A viewset for viewing and editing user instances.
+    """
+    serializer_class = NeuroglancerStateSerializer
+    queryset = NeuroglancerState.objects.all()
 
 
 class NeuroglancerGroupAvailableData(views.APIView):
