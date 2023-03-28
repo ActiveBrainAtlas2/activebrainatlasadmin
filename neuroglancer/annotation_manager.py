@@ -78,7 +78,7 @@ class AnnotationManager(AnnotationBase):
 
         assert 'name' in state_layer
         self.label = str(state_layer['name']).strip()
-        self.current_layer = AnnotationLayer(state_layer)
+        self.current_layer = AnnotationLayer(state_layer) # This takes a long time
 
 
     def insert_annotations(self):

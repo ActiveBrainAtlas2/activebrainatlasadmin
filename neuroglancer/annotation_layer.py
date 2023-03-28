@@ -29,7 +29,7 @@ class AnnotationLayer:
             self.tool = annotation_layer['tool']
         self.source = annotation_layer['source']
         self._type = 'annotation'
-        self.parse_annotations()
+        self.parse_annotations() # this method takes a long time for volumes
 
     def __str__(self):
         return "str method: annotation_layer is %s, b is %s" % (self.annotation_layer)
@@ -100,10 +100,11 @@ class AnnotationLayer:
         return polygon
 
     def parse_volume(self, volume_json):
-        '''
-        Parse the neuroglancer json of a volume annotation
+        """Parse the neuroglancer json of a volume annotation. This method takes a LONG TIME for big volumes
+        
         :param volume_json: dictionary of neuroglancer polygon annotation json state
-        '''
+        """
+        
         volume = Volume(
             volume_json['id'], volume_json['childAnnotationIds'], volume_json['source'])
         if 'description' in volume_json:
@@ -390,9 +391,10 @@ class Polygon(Annotation):
 
 
 class Volume(Annotation):
-    '''
-    Volume Annotation
-    '''
+    """Volume Annotation
+    This class takes a LONG TIME!!!
+    """
+    
 
     def __init__(self, id, child_ids, source):
         """Initialize the volume annotation
@@ -411,9 +413,12 @@ class Volume(Annotation):
 
     def get_volume_name_and_contours(self, downsample_factor=1):
         """Get the name of volume and dictionary of contours
+        This method is the main bottleneck!!!!!!!!!!!!!!!, the loop below, put a timer in and see.
+
         Returns:
             str,dict: The name of the volume in question and the dictionary containing the contour points
         """
+        
         assert hasattr(self, 'description')
         volume_contours = {}
         for childi in self.childs:

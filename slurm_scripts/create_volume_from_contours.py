@@ -17,6 +17,7 @@ from abakit.atlas.ng_segment_maker import NgConverter
 try:
     from brainsharer.settings import DATABASES
 except ImportError:
+    print('No brainsharer.settings')
     try:
         from brainsharer.local_settings import DATABASES
     except ImportError:
