@@ -3,11 +3,11 @@ import numpy as np
 import sys
 import argparse
 import json
-from pathlib import Path
 from cloudvolume import CloudVolume
+import urllib
 
-PIPELINE_ROOT = Path('./').absolute()
-sys.path.append(PIPELINE_ROOT.as_posix())
+PIPELINE_ROOT = '/opt/brainsharer'
+sys.path.append(PIPELINE_ROOT)
 
 from abakit.controller.neuroglancer_state_controller import NeuroglancerStateController
 from abakit.controller.scan_run_controller import ScanRunController
@@ -17,17 +17,19 @@ from abakit.atlas.ng_segment_maker import NgConverter
 try:
     from brainsharer.settings import DATABASES
 except ImportError:
-    print('No brainsharer.settings')
+    print('Could not import settings')
     try:
         from brainsharer.local_settings import DATABASES
     except ImportError:
-        print('Could not import settings')
+        print('Could not import local settings')
         sys.exit
 
 host = DATABASES['default']['HOST']
 password = DATABASES['default']['PASSWORD']
+password = urllib.parse.quote_plus(password) # escape special characters
 schema = DATABASES['default']['NAME']
 user = DATABASES['default']['USER']
+
 
 
 def contours_to_volume(url_id, volume_id):
@@ -46,7 +48,7 @@ def contours_to_volume(url_id, volume_id):
     
     animal = urlModel.get_animal()
     folder_name = make_volumes(volume, animal)
-    segmentation_save_folder = f"precomputed://https://brainsharer.org/structures/{folder_name}"
+    segmentation_save_folder = f"precomputed://https://www.brainsharer.org/structures/{folder_name}"
     return segmentation_save_folder
 
 def downsample_contours(contours, downsample_factor):

@@ -281,13 +281,11 @@ class ContoursToVolume(views.APIView):
     """
     
     def get_slurm(self, request, neuroglancer_state_id, volume_id):
-        #command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
-        command = [os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
+        command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
         out = check_output(command)
         print(out)
-        #start_id = out.find(b'job')+4
-        #job_id = int(out[start_id:-1])
-        job_id = out.find(b'job')+4
+        start_id = out.find(b'job')+4
+        job_id = int(out[start_id:-1])
         output_file = f'/var/www/brainsharer/structures/slurm/slurm_{job_id}.out'
         error_file = f'/var/www/brainsharer/structures/slurm/slurm_{job_id}.err'
         while not os.path.exists(output_file):
