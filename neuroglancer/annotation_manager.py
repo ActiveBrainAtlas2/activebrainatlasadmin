@@ -41,7 +41,7 @@ from neuroglancer.atlas import get_scales
 from neuroglancer.models import CellType, UNMARKED
 from neuroglancer.annotation_layer import AnnotationLayer, Annotation
 from neuroglancer.annotation_base import AnnotationBase
-DEBUG = False # setting this to true will provide more logging BUT, it will not send jobs to the background process!
+DEBUG = True # setting this to true will provide more logging BUT, it will not send jobs to the background process!
 from timeit import default_timer as timer
 
 class AnnotationManager(AnnotationBase):

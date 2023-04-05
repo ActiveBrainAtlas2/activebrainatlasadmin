@@ -6,8 +6,9 @@ They also cannot accept objects as arguments.
 ``sudo systemctl restart supervisord.service``
 """
 from neuroglancer.models import AnnotationPointArchive, AnnotationSession, NeuroglancerState
-from neuroglancer.annotation_manager import AnnotationManager
+from neuroglancer.annotation_manager import AnnotationManager, DEBUG
 from authentication.models import User
+from timeit import default_timer as timer
 
 
 def restore_annotations(archiveSet):
@@ -68,10 +69,20 @@ def nobackground_archive_and_insert_annotations(layeri, neuroglancer_state_id):
 
     neuroglancerState = NeuroglancerState.objects.get(pk=neuroglancer_state_id)
     manager = AnnotationManager(neuroglancerState)
+    start_time = timer()
     manager.set_current_layer(layeri) # This takes a LONG time for polygons/volumes!
+    if DEBUG:
+        end_time = timer()
+        total_elapsed_time = round((end_time - start_time),2)
+        print(f'Setting current layer took {total_elapsed_time} seconds.')
 
     assert manager.animal is not None
     assert manager.annotator is not None
 
+    start_time = timer()
     manager.insert_annotations()
+    if DEBUG:
+        end_time = timer()
+        total_elapsed_time = round((end_time - start_time),2)
+        print(f'Inserting all annotations took {total_elapsed_time} seconds.')
 

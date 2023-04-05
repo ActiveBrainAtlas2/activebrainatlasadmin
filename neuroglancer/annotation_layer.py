@@ -3,6 +3,8 @@ import random
 import numpy as np
 from django.http.response import Http404
 from neuroglancer.models import UNMARKED
+DEBUG = True
+from timeit import default_timer as timer
 
 default_annotation_layer = dict(
     type='annotation', annotations=[], name='annotation', source='')
@@ -46,15 +48,35 @@ class AnnotationLayer:
                             'com': self.parse_point,
                             'line': self.parse_line,
         }
-
+        start_time = timer()
         for annotationi in self.annotations:
-            function_mapping[annotationi['type']](annotationi)
+            annotations.append(function_mapping[annotationi['type']](annotationi))
+        if DEBUG:
+            end_time = timer()
+            total_elapsed_time = round((end_time - start_time),2)
+            print(f'Appending annotations took {total_elapsed_time} seconds.')
 
+
+        start_time = timer()
         self.annotations = np.array(annotations)
+        if DEBUG:
+            end_time = timer()
+            total_elapsed_time = round((end_time - start_time),2)
+            print(f'Puting annotations in a numpy array took {total_elapsed_time} seconds.')
+        start_time = timer()
         self.group_annotations('polygon')
+        if DEBUG:
+            end_time = timer()
+            total_elapsed_time = round((end_time - start_time),2)
+            print(f'Grouping polygon annotations took {total_elapsed_time} seconds.')
         # self.reorder_polygon_points()
         # self.check_polygon_points()
+        start_time = timer()
         self.group_annotations('volume')
+        if DEBUG:
+            end_time = timer()
+            total_elapsed_time = round((end_time - start_time),2)
+            print(f'Grouping volume annotations took {total_elapsed_time} seconds.')
 
     def parse_point(self, point_json, point_class='Point'):
         """Parse the neuroglancer json of a point annotation
@@ -121,10 +143,12 @@ class AnnotationLayer:
         return search_result
 
     def group_annotations(self, _type):
-        '''
-        The main function to group points into polygons and polygons into volumes
+        """The main function to group points into polygons and polygons into volumes.
+        This method takes a long time.
+        
         :param _type: string to determing if we are grouping points to polygons are polygons to volumes
-        '''
+        """
+
         for annotationi in self.annotations:
             if annotationi._type == _type:
                 annotationi.childs = []
@@ -166,10 +190,11 @@ class AnnotationLayer:
                     first_point, start_points, end_points)
 
     def get_annotation_with_id(self, id):
-        '''
-        returns the annotation object with a set id
+        """Returns the annotation object with a set id
+        
         :param id: UUID string assigned by neuroglancer
-        '''
+        """
+
         search_result = self.search_annotation_with_id(id)
         if sum(search_result) == 0:
             return None
@@ -177,10 +202,10 @@ class AnnotationLayer:
             return self.annotations[search_result][0]
 
     def delete_annotation_with_id(self, id):
-        '''
-        Delete annotation with a set id from the list of annotations
+        """Delete annotation with a set id from the list of annotations
+        
         :param id:UUID string assigned by neuroglancer
-        '''
+        """
 
         search_result = self.search_annotation_with_id(id)
         self.annotations = self.annotations[np.logical_not(search_result)]
@@ -200,9 +225,9 @@ class AnnotationLayer:
         return [i for i in self.annotations if i._type == 'polygons']
 
     def to_json(self):
-        '''
-        convert an annotation to it's json form.  To be implemented
-        '''
+        """Convert an annotation to it's json form.  To be implemented
+        """
+
         point_json = {}
         ...
 
@@ -409,7 +434,6 @@ class Volume(Annotation):
 
     def get_volume_name_and_contours(self, downsample_factor=1):
         """Get the name of volume and dictionary of contours
-        This method is the main bottleneck!!!!!!!!!!!!!!!, the loop below, put a timer in and see.
 
         Returns:
             str,dict: The name of the volume in question and the dictionary containing the contour points

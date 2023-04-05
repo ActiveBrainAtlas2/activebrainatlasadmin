@@ -115,10 +115,11 @@ USE_L10N = True
 #USE_TZ = False
 
 CORS_ORIGIN_ALLOW_ALL = True
-#CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 #USER_ID = 1
 INTERNAL_IPS = ['127.0.0.1']
 SILENCED_SYSTEM_CHECKS = ['mysql.E001']
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
 
 # Static files (CSS, JavaScript, Images)
@@ -134,7 +135,7 @@ DEFAULT_AUTO_FIELD='django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+         'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
