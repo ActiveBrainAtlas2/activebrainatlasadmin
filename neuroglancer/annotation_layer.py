@@ -39,21 +39,17 @@ class AnnotationLayer:
         object mappings in python.  This step groups points into polygons and polygons into volumes 
         """
         annotations = []
+        function_mapping = {'polygon': self.parse_polygon,
+                            'volume': self.parse_volume,
+                            'point': self.parse_point,
+                            'cell': self.parse_point,
+                            'com': self.parse_point,
+                            'line': self.parse_line,
+        }
+
         for annotationi in self.annotations:
-            if annotationi['type'] == 'polygon':
-                annotations.append(self.parse_polygon(annotationi))
-            elif annotationi['type'] == 'volume':
-                annotations.append(self.parse_volume(annotationi))
-            elif annotationi['type'] == 'point':
-                annotations.append(self.parse_point(annotationi))
-            elif annotationi['type'] == 'cell':
-                annotations.append(self.parse_point(
-                    annotationi, point_class='Cell'))
-            elif annotationi['type'] == 'com':
-                annotations.append(self.parse_point(
-                    annotationi, point_class='COM'))
-            elif annotationi['type'] == 'line':
-                annotations.append(self.parse_line(annotationi))
+            function_mapping[annotationi['type']](annotationi)
+
         self.annotations = np.array(annotations)
         self.group_annotations('polygon')
         # self.reorder_polygon_points()
