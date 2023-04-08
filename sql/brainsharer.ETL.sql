@@ -258,3 +258,7 @@ UNION
 SELECT app, name, NOW() AS applied 
 FROM brainsharer_aws.django_migrations;
 
+
+
+ALTER TABLE brainsharer.brain_region MODIFY COLUMN abbreviation varchar(200) NOT NULL COLLATE utf8mb4_bin;
+ 
