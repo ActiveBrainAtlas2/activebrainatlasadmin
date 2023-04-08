@@ -56,13 +56,23 @@ class AnnotationLayer:
             total_elapsed_time = round((end_time - start_time),2)
             print(f'Appending annotations took {total_elapsed_time} seconds.')
 
-
         start_time = timer()
         self.annotations = np.array(annotations)
         if DEBUG:
             end_time = timer()
             total_elapsed_time = round((end_time - start_time),2)
             print(f'Puting annotations in a numpy array took {total_elapsed_time} seconds.')
+
+        self.annotations_to_id_mapping = {}
+        self.annotation_removed = {}
+
+        for annotation in self.annotations:
+            assert not annotation.id in self.annotations_to_id_mapping # annotation id should be unique
+            if annotation._type == "line":
+                assert not hasattr(annotation, "child_ids") # line annotations can not have children
+
+            self.annotations_to_id_mapping[annotation.id] = annotation
+
         start_time = timer()
         self.group_annotations('polygon')
         if DEBUG:
@@ -134,13 +144,11 @@ class AnnotationLayer:
         search in the annnotation in the layer for one with a set id 
         :param id: UUID annotation id set by neuroglancer
         '''
-        search_result = [annotationi.id ==
-                         id for annotationi in self.annotations]
-        if sum(search_result) == 0:
+        if id in self.annotations_to_id_mapping:
+            return self.annotations_to_id_mapping[id]
+        else: 
             print('annotation not found')
-        elif sum(search_result) > 1:
-            print('more than one result found')
-        return search_result
+            return None
 
     def group_annotations(self, _type):
         """The main function to group points into polygons and polygons into volumes.
@@ -150,12 +158,17 @@ class AnnotationLayer:
         """
 
         for annotationi in self.annotations:
+            if annotationi in self.annotation_removed:
+                continue
             if annotationi._type == _type:
                 annotationi.childs = []
                 for childid in annotationi.child_ids:
                     annotationi.childs.append(self.get_annotation_with_id(childid))
-                    self.delete_annotation_with_id(childid)
+                    self.annotation_removed[childid] = True
                 annotationi.childs = np.array(annotationi.childs)
+
+        self.delete_annotations()
+        
 
     def reorder_polygon_points(self):
         '''
@@ -195,11 +208,11 @@ class AnnotationLayer:
         :param id: UUID string assigned by neuroglancer
         """
 
-        search_result = self.search_annotation_with_id(id)
-        if sum(search_result) == 0:
-            return None
+        if id in self.annotations_to_id_mapping and id not in self.annotation_removed:
+            return self.annotations_to_id_mapping[id]
         else:
-            return self.annotations[search_result][0]
+            print("annotation not found")
+            return None
 
     def delete_annotation_with_id(self, id):
         """Delete annotation with a set id from the list of annotations
@@ -209,6 +222,15 @@ class AnnotationLayer:
 
         search_result = self.search_annotation_with_id(id)
         self.annotations = self.annotations[np.logical_not(search_result)]
+
+    def delete_annotations(self):
+        """Delete annotations for annotations attribute that have id in annotation_removed dict 
+        
+        """
+
+        new_annotations = [annotation for annotation in self.annotations if not annotation.id in self.annotation_removed]
+
+        self.annotations = np.array(new_annotations)
 
     def get_volumes(self):
         """return all the volumes int this layer
