@@ -30,6 +30,7 @@ from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 
 
+
 def datetime_format(dtime):
     """A method to return a nicely formatted date and time.
     """

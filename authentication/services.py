@@ -4,11 +4,12 @@ import requests
 from django.db import transaction
 from django.core.management.utils import get_random_secret_key
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.tokens import RefreshToken
 from authentication.utils import get_now
 from authentication.models import User
+from django.contrib.auth import login
 
 GITHUB_ACCESS_TOKEN_OBTAIN_URL = 'https://github.com/login/oauth/access_token'
 GITHUB_USER_INFO_URL = 'https://api.github.com/user'
@@ -86,7 +87,7 @@ def user_get_or_create(*, email: str, **extra_data) -> Tuple[User, bool]:
     return user_create(email=email, **extra_data), True
 
 
-def jwt_login(*, response: HttpResponse, user: User) -> HttpResponse:
+def jwt_login(*, response: HttpResponse, user: User, request: HttpRequest) -> HttpResponse:
     token = get_tokens_for_user(user)
     response.set_cookie('id', user.id)
     response.set_cookie('username', user.username)
@@ -96,6 +97,8 @@ def jwt_login(*, response: HttpResponse, user: User) -> HttpResponse:
     response.set_cookie('access', token['access'])
     response.set_cookie('refresh', token['refresh'])
     user_record_login(user=user)
+    user.backend = 'allauth.account.auth_backends.AuthenticationBackend'
+    login(request, user)
 
     return response
 

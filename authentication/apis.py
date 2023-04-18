@@ -72,7 +72,7 @@ class GithubLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
         # We use get-or-create logic here for the sake of the example.
         user, _ = user_get_or_create(**profile_data)
         response = redirect(settings.BASE_FRONTEND_URL)
-        response = jwt_login(response=response, user=user)
+        response = jwt_login(response=response, user=user, request=request)
 
         return response
 
@@ -116,6 +116,6 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
         # We use get-or-create logic here for the sake of the example.
         user, _ = user_get_or_create(**profile_data)
         response = redirect(settings.BASE_FRONTEND_URL)
-        response = jwt_login(response=response, user=user)
+        response = jwt_login(response=response, user=user, request=request)
 
         return response
