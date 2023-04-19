@@ -25,7 +25,7 @@ import plotly.express as px
 from brain.models import ScanRun
 from brain.admin import AtlasAdminModel, ExportCsvMixin
 from neuroglancer.models import AnnotationSession, BrainRegion, CellType, \
-    MarkedCellWorkflow, MarkedCell, NeuroglancerState, Points, PolygonSequence, StructureCom
+    MarkedCellWorkflow, MarkedCell, NeuroglancerState, NeuroglancerView, Points, PolygonSequence, StructureCom
 from neuroglancer.dash_view import dash_scatter_view
 from neuroglancer.url_filter import UrlFilter
 
@@ -126,6 +126,10 @@ class NeuroglancerStateAdmin(admin.ModelAdmin):
     open_neuroglancer.allow_tags = True
     open_multiuser.short_description = 'Multi-User'
     open_multiuser.allow_tags = True
+
+@admin.register(NeuroglancerView)
+class NeuroglancerViewAdmin(AtlasAdminModel):
+    list_display = ('id', 'group_name', 'lab', 'layer_name', 'url', 'active','created')
 
 
 @admin.register(Points)
