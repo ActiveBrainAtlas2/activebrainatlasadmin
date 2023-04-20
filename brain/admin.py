@@ -9,7 +9,7 @@ import os
 from django.contrib import admin
 from django.forms import TextInput, Textarea, DateInput, NumberInput, Select
 from django.db import models
-from django.db.models import Count
+from django.conf import settings
 import csv
 from django.http import HttpResponse
 from django.contrib.admin.widgets import AdminDateWidget
@@ -658,4 +658,4 @@ class LogEntryAdmin(admin.ModelAdmin):
 admin.site.site_header = 'Brainsharer Admin'
 admin.site.site_title = "Brainsharer"
 admin.site.index_title = "Welcome to Brainsharer Portal"
-admin.site.site_url = "https://github.com/ActiveBrainAtlas2"
+admin.site.site_url = settings.BASE_FRONTEND_URL

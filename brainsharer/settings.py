@@ -156,10 +156,6 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend'
 ]
 
-SITE_ID = 2
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -204,4 +200,15 @@ BASE_BACKEND_URL = 'http://localhost:8000'
 BASE_FRONTEND_URL = 'http://localhost:4200'
 GOOGLE_OAUTH2_CLIENT_ID = '821517150552-71h6bahua9qul09l90veb8g3hii6ed25.apps.googleusercontent.com'
 GITHUB_OAUTH2_CLIENT_ID = '3ad4b114f66ffb3b6ed8'
+SITE_ID = 2
+LOGIN_REDIRECT_URL = BASE_FRONTEND_URL
+LOGOUT_REDIRECT_URL = BASE_FRONTEND_URL
+#EMAIL_HOST = "smtp.gmail.com"
+#***REMOVED*** = ""
+#***REMOVED*** = ""
+#EMAIL_PORT = "465"
+#EMAIL_USE_SSL = True
+
+
+
 
