@@ -16,7 +16,7 @@ from authentication.models import Lab, User
 from authentication.serializers import LabSerializer, RegisterSerializer, \
     UserSerializer, ValidateUserSerializer
 
-
+"""
 def account_login(request):
     if request.method == 'POST':
         form = AuthenticationForm(request.POST)
@@ -35,7 +35,7 @@ def account_login(request):
     else:
         form = AuthenticationForm()
     return render(request,'your_template_name.html',{'form':form})
-
+"""
 
 class LabViewSet(viewsets.ModelViewSet):
     """
@@ -134,19 +134,3 @@ class ValidateUserView(generics.ListAPIView):
             return queryset.filter(email=email)
 
         return User.objects.filter(pk=0)
-
-@login_required(redirect_field_name='next', login_url='/devlogin')
-def dev_login_view(request):
-    '''
-    This is only used when the developer is working locally. This is called
-    from services/service.ts in neuroglancer as: http://localhost:8000/admin/login/?next=/devlogin/?id=2
-    This method turns everything after the 'next' into http://localhost:8080/?id=2 
-    That is the local neuroglancer url. None of this is necessary when you are
-    on the production server
-    :param request: incoming request after the user logs in
-    '''
-    nid = request.GET.get("id", None)
-    if nid is None:
-        return redirect("http://localhost:8000/admin")
-    else:
-        return redirect(f"http://localhost:8080/?id={nid}")

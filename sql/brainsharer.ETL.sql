@@ -259,6 +259,6 @@ SELECT app, name, NOW() AS applied
 FROM brainsharer_aws.django_migrations;
 
 
-
+-- Fixes
 ALTER TABLE brainsharer.brain_region MODIFY COLUMN abbreviation varchar(200) NOT NULL COLLATE utf8mb4_bin;
- 
+update django_site set domain='brainsharer.org', name='brainsharer.org' where id = 2;

@@ -213,7 +213,7 @@ def google_get_user_info(*, access_token: str) -> Dict[str, Any]:
 def set_cookie_with_token(response, name, token):
     params = {
         'expires': datetime.timedelta(seconds=3600),
-        'domain': 'localhost',
+        'domain': 'brainsharer.org',
         'path': '/',
         'secure': False,
         'httponly': False
