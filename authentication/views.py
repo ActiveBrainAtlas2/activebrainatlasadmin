@@ -1,16 +1,11 @@
-from django.shortcuts import redirect, render
-from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.conf import settings
-
-from django.contrib.auth.forms import AuthenticationForm
-from django.urls import reverse
-import authentication
-from django.contrib import messages
+from django.urls import reverse_lazy
+from django.views import generic
 
 from rest_framework import generics, viewsets
 from rest_framework import permissions
 from rest_framework.response import Response
+from authentication.forms import LocalSignUpForm
 
 from authentication.models import Lab, User
 from authentication.serializers import LabSerializer, RegisterSerializer, \
@@ -64,38 +59,6 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class SessionVarViewDEPRECATED(generics.ListAPIView):
-    '''
-    This has been deprecated and replaced by using cookies 
-    which the angular front end and the neuroglancer program both can use. 
-    This gets the session var from Neuroglancer to check
-    if the user is logged in. Note, this works fine on the
-    production server, but since Neuroglancer and Django
-    run on different ports locally, it is a pain to translate
-    between the two. To test Neuroglancer locally:
-        for login, comment out the if statement,
-        when you do this, the user will ALWAYS appear to be not logged in! This
-        is because of the different ports!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    '''
-
-    def get(self, request, *args, **kwargs):
-        user = {'id':0, 'username':''}
-        if request.user.is_authenticated:
-            user = User.objects.get(pk=request.user.id) 
-            # data = {'user_id':user.id, 'username': user.username}
-        
-        if settings.DEBUG:
-            userid = 1
-            browser = str(request.META['HTTP_USER_AGENT']).lower()
-            if 'firefox' in browser:
-                userid = 2
-            user = User.objects.get(pk=userid) 
-            # data = {'user_id':user.id, 'username': user.username}
-        
-        serializer = UserSerializer(user, many=False)
-        return Response(serializer.data)
-
-
 class UserView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -134,3 +97,9 @@ class ValidateUserView(generics.ListAPIView):
             return queryset.filter(email=email)
 
         return User.objects.filter(pk=0)
+
+class LocalSignUpView(generic.CreateView):
+    form_class = LocalSignUpForm
+    success_url = reverse_lazy("login")
+    template_name = "registration/signup.html"
+

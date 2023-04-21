@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'neuroglancer',
     'rest_framework',
     'corsheaders',
-    'oauth_app',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -203,12 +202,16 @@ GITHUB_OAUTH2_CLIENT_ID = '3ad4b114f66ffb3b6ed8'
 SITE_ID = 2
 LOGIN_REDIRECT_URL = BASE_FRONTEND_URL
 LOGOUT_REDIRECT_URL = BASE_FRONTEND_URL
-EMAIL_HOST = "smtp.ucsd.edu"
-#***REMOVED*** = ""
-#***REMOVED*** = ""
-#EMAIL_PORT = "465"
-#EMAIL_USE_SSL = True
 
-
-
+DEFAULT_FROM_EMAIL = "drinehart@physics.ucsd.edu"
+#EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_HOST = "smtp.gmail.com"
+#EMAIL_USE_TLS = True
+#EMAIL_HOST_PORT = 587
+#***REMOVED*** = "***REMOVED***"
+#***REMOVED*** = "***REMOVED***"
+#EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+#EMAIL_FILE_PATH = os.path.join(BASE_DIR,  "sent_emails")
+#print(EMAIL_FILE_PATH)
 
