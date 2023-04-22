@@ -31,3 +31,5 @@ class LabAdmin(admin.ModelAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+from django.contrib.auth.models import Permission
+admin.site.register(Permission)

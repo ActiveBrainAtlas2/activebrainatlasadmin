@@ -15,9 +15,9 @@ INSERT INTO brainsharer.auth_lab SELECT * FROM brainsharer_aws.auth_lab;
 
 -- UCSD users
 INSERT INTO brainsharer.auth_user 
-(password , last_login , is_superuser , username , first_name , last_name , 
+(id, password , last_login , is_superuser , username , first_name , last_name , 
 email , is_staff , is_active, date_joined, FK_lab_id)
-SELECT password , last_login , is_superuser , username , first_name , last_name , 
+SELECT id, password , last_login , is_superuser , username , first_name , last_name , 
 email , is_staff , is_active, date_joined, 2 as FK_lab_id
 FROM active_atlas_production.auth_user au;
 
@@ -262,3 +262,6 @@ FROM brainsharer_aws.django_migrations;
 -- Fixes
 ALTER TABLE brainsharer.brain_region MODIFY COLUMN abbreviation varchar(200) NOT NULL COLLATE utf8mb4_bin;
 update django_site set domain='brainsharer.org', name='brainsharer.org' where id = 2;
+-- run this command
+-- python manage.py remove_stale_contenttypes --include-stale-apps
+

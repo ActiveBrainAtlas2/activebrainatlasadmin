@@ -5,46 +5,9 @@ They also cannot accept objects as arguments.
 **Note: If you modify the tasks.py file, you must restart supervisord on the web server!!!**
 ``sudo systemctl restart supervisord.service``
 """
-from neuroglancer.models import AnnotationPointArchive, AnnotationSession, NeuroglancerState
+from neuroglancer.models import NeuroglancerState
 from neuroglancer.annotation_manager import AnnotationManager, DEBUG
-from authentication.models import User
 from timeit import default_timer as timer
-
-
-def restore_annotations(archiveSet):
-    """Restore a set of annotations associated with an archive.
-
-    #. Get requested archive (set of points in the annotations_points_archive table)
-    #. Mark session inactive that is in the archive
-    #. Create a new active session and add it to either marked_cell, polygon_sequence or structureCOM
-
-    :param archive: ArchiveSet object we want to restore
-    """
-
-    session = archiveSet.annotation_session
-    data_model = session.get_session_model()
-    session.active = False
-    session.save()
-    archiveSet.active = False
-    archiveSet.save()
-    new_session = AnnotationSession.objects.create(
-            animal=session.animal,
-            neuroglancer_model=session.neuroglancer_model,
-            brain_region=session.brain_region,
-            annotator=session.annotator,
-            annotation_type=session.annotation_type, 
-            active=True)
-
-    field_names = [f.name for f in data_model._meta.get_fields() if not f.name == 'id']
-    rows = AnnotationPointArchive.objects.filter(archive=archiveSet)
-    batch = []
-    for row in rows:
-        fields = [getattr(row, field_name) for field_name in field_names]
-        input = dict(zip(field_names, fields))
-        input['annotation_session'] = new_session
-        batch.append(data_model(**input))
-    data_model.objects.bulk_create(batch, 50)
-    
 
 def background_archive_and_insert_annotations(layeri, neuroglancer_state_id):
     """The main function that updates the database with annotations in the current_layer attribute

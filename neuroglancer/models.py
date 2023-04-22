@@ -1,4 +1,3 @@
-import os
 from django.db import models
 from django.conf import settings
 from django.utils.html import escape
@@ -7,7 +6,6 @@ from django.utils.translation import gettext_lazy
 import re
 import json
 import pandas as pd
-import numpy as np
 from django.template.defaultfilters import truncatechars
 from authentication.models import Lab
 from brain.models import AtlasModel, Animal
@@ -429,74 +427,6 @@ class StructureCom(AnnotationAbstract):
     def __str__(self):
         return u'{} {}'.format(self.annotation_session, self.source)
 
-
-class ArchiveSet(AtlasModel):
-    """This class model is for set of archives. It gets used by the AnnotationPointArchive.
-    Not being used at the moment.
-    """
-    
-    id = models.BigAutoField(primary_key=True)
-    annotation_session = models.ForeignKey(AnnotationSession, models.CASCADE, null=False, db_column="FK_session_id",
-                               verbose_name="Annotation session")
-    def __str__(self):
-        return u'{}'.format(self.annotation_session)
-
-    class Meta:
-        managed = False
-        db_table = 'archive_set'
-        verbose_name = 'Annotation Archive'
-        verbose_name_plural = 'Annotation Archives'
-
-
-class AnnotationPointArchive(AnnotationAbstract):
-    """This class is for an archive of annotation points
-    Not being used at the moment.
-    """
-    
-    polygon_index = models.CharField(max_length=40, blank=True, null=True,default=0)
-    point_order = models.IntegerField(blank=False, null=False, default=0)
-    source = models.CharField(max_length=255)
-    cell_type = models.ForeignKey(CellType, models.CASCADE, db_column="FK_cell_type_id",
-                               verbose_name="Cell type", default=None, null=True)
-    archive = models.ForeignKey(ArchiveSet, models.CASCADE, db_column="FK_archive_set_id",
-                               verbose_name="Archive set", default=None)
-
-    class Meta:
-        managed = False
-        db_table = 'annotations_point_archive'
-        verbose_name = 'Annotation Point Archive'
-        verbose_name_plural = 'Annotation Points Archive'
-        constraints = [models.UniqueConstraint(fields=['annotation_session', 'x', 'y', 'z'], name='unique backup')]        
-    
-    def __str__(self):
-        return u'{} {}'.format(self.annotation_session, self.source)
-
-class AnnotationArchive(AnnotationSession):
-    class Meta:
-        proxy = True
-
-    @property
-    def cell_type(self):
-        if self.is_polygon_sequence():
-            return None
-        elif self.is_marked_cell():
-            one_row = AnnotationPointArchive.objects.filter(
-                annotation_session__id=self.id).first()
-            if one_row is None:
-                return None
-            else:
-                return one_row.cell_type
-        elif self.is_structure_com():
-            return None
-
-    @property
-    def source(self):
-        one_row = AnnotationPointArchive.objects.filter(
-            annotation_session__id=self.id).first()
-        if one_row is None:
-            return None
-        else:
-            return one_row.source
 
 
 class BrainShape(AtlasModel):
