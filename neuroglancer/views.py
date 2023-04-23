@@ -282,6 +282,9 @@ class LandmarkList(views.APIView):
 class ContoursToVolume(views.APIView):
     """Method to run slurm to create a 3D volume
     """
+
+    permission_classes = [permissions.AllowAny]
+
     
     def get_slurm(self, request, neuroglancer_state_id, volume_id):
         command = ["sbatch", os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]

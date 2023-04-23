@@ -264,4 +264,6 @@ ALTER TABLE brainsharer.brain_region MODIFY COLUMN abbreviation varchar(200) NOT
 update django_site set domain='brainsharer.org', name='brainsharer.org' where id = 2;
 -- run this command
 -- python manage.py remove_stale_contenttypes --include-stale-apps
+update neuroglancer_state set active = 0;
+update neuroglancer_state set active = 1 where id in (21,809,810,811,812,813,814,815,816, 817);
 
