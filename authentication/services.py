@@ -1,5 +1,6 @@
+import datetime
 from typing import Any, Dict, Tuple
-from datetime import datetime
+from datetime import timedelta
 import requests
 from django.db import transaction
 from django.core.management.utils import get_random_secret_key
@@ -89,13 +90,14 @@ def user_get_or_create(*, email: str, **extra_data) -> Tuple[User, bool]:
 
 def jwt_login(*, response: HttpResponse, user: User, request: HttpRequest) -> HttpResponse:
     token = get_tokens_for_user(user)
-    response.set_cookie('id', user.id)
-    response.set_cookie('username', user.username)
-    response.set_cookie('first_name', user.first_name)
-    response.set_cookie('last_name', user.last_name)
-    response.set_cookie('email', user.email)
-    response.set_cookie('access', token['access'])
-    response.set_cookie('refresh', token['refresh'])
+    
+    set_cookie_with_token(response, 'id', user.id)
+    set_cookie_with_token(response, 'username', user.username)
+    set_cookie_with_token(response, 'first_name', user.first_name)
+    set_cookie_with_token(response, 'last_name', user.last_name)
+    set_cookie_with_token(response, 'email', user.email)
+    set_cookie_with_token(response, 'access', token['access'])
+    set_cookie_with_token(response, 'refresh', token['refresh'])
     user_record_login(user=user)
     user.backend = 'allauth.account.auth_backends.AuthenticationBackend'
     login(request, user)
@@ -211,9 +213,12 @@ def google_get_user_info(*, access_token: str) -> Dict[str, Any]:
     return response.json()
 
 def set_cookie_with_token(response, name, token):
+    max_age = 365*24*60*60
+    expires = datetime.datetime.strftime(datetime.datetime.utcnow() + datetime.timedelta(seconds=max_age), "%a, %d-%b-%Y %H:%M:%S GMT")
     params = {
-        'expires': datetime.timedelta(seconds=3600),
-        'domain': 'brainsharer.org',
+        'expires': expires,
+        'max_age': max_age,
+        'domain': settings.HOST,
         'path': '/',
         'secure': False,
         'httponly': False

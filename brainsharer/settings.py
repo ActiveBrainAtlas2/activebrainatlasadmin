@@ -195,6 +195,7 @@ GRAPH_MODELS = {
 }
 
 NG_URL = "http://localhost:8080"
+HOST = "localhost"
 BASE_BACKEND_URL = 'http://localhost:8000'
 BASE_FRONTEND_URL = 'http://localhost:4200'
 GOOGLE_OAUTH2_CLIENT_ID = '821517150552-71h6bahua9qul09l90veb8g3hii6ed25.apps.googleusercontent.com'

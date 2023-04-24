@@ -23,6 +23,12 @@ class CookieMiddleware:
             response = jwt_login(response=response, user=request.user, request=request)
         elif not request.user.is_authenticated and request.COOKIES.get('access'):
             response.delete_cookie("access")
+            response.delete_cookie("id")
+            response.delete_cookie("username")
+            response.delete_cookie("first_name")
+            response.delete_cookie("last_name")
+            response.delete_cookie("email")
+            response.delete_cookie("refresh")
 
 
         return response

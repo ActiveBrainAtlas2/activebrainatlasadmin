@@ -18,16 +18,21 @@
 
 import os
 import sys
+from pathlib import Path
+ROOT = Path(__file__).parents[2]
+#ROOT = Path.joinpath(ROOT, "src")
+sys.path.append(ROOT.as_posix())
+print(ROOT)
+#sys.exit()
+os.environ['DJANGO_SETTINGS_MODULE'] = 'brainsharer.documentation_settings'
 import django
 import inspect
-sys.path.insert(0, os.path.abspath('../..'))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'activebrainatlas.documentation_settings'
 django.setup()
 
 # -- Project information -----------------------------------------------------
 
-project = 'Activebrainatlas database portal'
-copyright = '2022, Edward O\'Donnell'
+project = 'Brainsharer database portal'
+copyright = 'Kleinfeld UCSD/Princeton Labs'
 author = 'Edward O\'Donnell'
 
 # The short X.Y version

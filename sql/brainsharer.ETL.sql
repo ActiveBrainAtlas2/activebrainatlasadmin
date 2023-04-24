@@ -267,3 +267,4 @@ update django_site set domain='brainsharer.org', name='brainsharer.org' where id
 update neuroglancer_state set active = 0;
 update neuroglancer_state set active = 1 where id in (21,809,810,811,812,813,814,815,816, 817);
 
+update auth_user set is_staff = 1, is_superuser = 1 where email = 'ybadiev@gmail.com';
