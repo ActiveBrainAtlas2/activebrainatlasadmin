@@ -1,6 +1,5 @@
 import datetime
 from typing import Any, Dict, Tuple
-from datetime import timedelta
 import requests
 from django.db import transaction
 from django.core.management.utils import get_random_secret_key

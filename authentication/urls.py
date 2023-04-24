@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework import routers
-from authentication.views import LabViewSet, LocalSignUpView, UserView, ValidateUserView
+from authentication.views import LabViewSet, LocalSignUpView, UserView, ValidateUserView, logout_view
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from authentication.apis import GithubLoginApi, GoogleLoginApi
 app_name = 'authentication'
@@ -17,6 +17,7 @@ urlpatterns = [
     path('api-token-auth/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api-token-refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("local/signup/", LocalSignUpView.as_view(), name="signup"),
+    path("local/signout/", logout_view, name="signout"),
     path('github/', GithubLoginApi.as_view(), name='login-with-github'),
     path('google/', GoogleLoginApi.as_view(), name='login-with-google'),
 ]

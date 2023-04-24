@@ -1,6 +1,8 @@
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views import generic
+from django.contrib.auth import logout
+from django.conf import settings
 
 from rest_framework import generics, viewsets
 from rest_framework import permissions
@@ -103,3 +105,17 @@ class LocalSignUpView(generic.CreateView):
     success_url = reverse_lazy("login")
     template_name = "registration/signup.html"
 
+
+def logout_view(request):
+    logout(request)
+
+    response = HttpResponseRedirect(settings.LOGOUT_REDIRECT_URL)    
+
+    response.delete_cookie("access")
+    response.delete_cookie("id")
+    response.delete_cookie("username")
+    response.delete_cookie("first_name")
+    response.delete_cookie("last_name")
+    response.delete_cookie("email")
+    response.delete_cookie("refresh")
+    return response
