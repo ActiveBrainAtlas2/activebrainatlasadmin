@@ -217,7 +217,6 @@ def set_cookie_with_token(response, name, token):
     params = {
         'expires': expires,
         'max_age': max_age,
-        'domain': settings.HOST,
         'path': '/',
         'secure': False,
         'httponly': False
