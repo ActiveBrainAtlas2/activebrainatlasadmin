@@ -313,7 +313,7 @@ class ContoursToVolume(views.APIView):
         command = [os.path.abspath('./slurm_scripts/contour_to_volume'), str(neuroglancer_state_id),volume_id]
         out = check_output(command)
         print(out)
-        data = str(out)
+        data = str(out).strip("'")
         url = data.split('\\n')[-1]
         folder_name = url.split('/')[-1]
         return JsonResponse({'url': url, 'name': folder_name})
