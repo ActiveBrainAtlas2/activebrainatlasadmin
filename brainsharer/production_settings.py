@@ -1,23 +1,14 @@
 """
-This is a pre cvat settings file for use on a development machine
-Place it at activebrainatlas/activebrainatlas/settings.py
 """
+
 import os
+import datetime
+from brainsharer.local_settings import SECRET_KEY, DATABASES, GOOGLE_OAUTH2_CLIENT_SECRET, \
+    GITHUB_OAUTH2_CLIENT_SECRET
 
-from activebrainatlas.local_settings import SECRET_KEY, DATABASES
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-
+DEBUG = False
+ALLOWED_HOSTS = ['brainsharer.org', 'www.brainsharer.org', 'localhost']
 
 # Application definition
 
@@ -29,30 +20,32 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
-    'dpd_static_support',
-    'background_task',
+    'django.contrib.sites',
+    'authentication',
     'brain',
-    'workflow',
+    'mouselight',
     'neuroglancer',
     'rest_framework',
     'corsheaders',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django_plotly_dash.middleware.BaseMiddleware',
-    'django_plotly_dash.middleware.ExternalRedirectionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'authentication.cookiemiddleware.CookieMiddleware'
 ]
 
-ROOT_URLCONF = 'activebrainatlas.urls'
+ROOT_URLCONF = 'brainsharer.urls'
 
 TEMPLATES = [
     {
@@ -70,10 +63,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'activebrainatlas.wsgi.application'
-ASGI_APPLICATION = 'activebrainatlas.asgi.application'
-
-
+WSGI_APPLICATION = 'brainsharer.wsgi.application'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -93,87 +83,68 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
-#USER_ID = 1
-INTERNAL_IPS = ['127.0.0.1']
-SILENCED_SYSTEM_CHECKS = ['mysql.E001']
-
-# Internationalization
-# https://docs.djangoproject.com/en/3.0/topics/i18n/
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Bangkok'
-#TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-#USE_TZ = False
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
-MEDIA_URL = '/share/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'share')
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
-DEFAULT_AUTO_FIELD='django.db.models.BigAutoField'
-
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+         'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-         'rest_framework.authentication.SessionAuthentication',
-         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
 }
 
-LOGS_ROOT = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOGS_ROOT, exist_ok=True)
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'fileInfo': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_ROOT, "info.log"),
-        },
-        'fileDebug': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(LOGS_ROOT, "debug.log")
-        },
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'fileInfo', 'fileDebug'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(hours=100),
+    'ROTATE_REFRESH_TOKENS': True,
 }
-# dash/plotly stuff
-X_FRAME_OPTIONS = 'SAMEORIGIN'
 
-PLOTLY_COMPONENTS = [
-    'dash_core_components',
-    'dash_html_components',
-    'dash_bootstrap_components',
-    'dash_renderer',
-    'dpd_components',
-    'dpd_static_support',
+AUTH_USER_MODEL = 'authentication.User'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend'
 ]
 
-##### django extensions graph models
-GRAPH_MODELS = {
-  'app_labels': ["brain", "neuroglancer",],
-  'group_models': True,
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
 }
+
+BASE_BACKEND_URL = 'https://www.brainsharer.org'
+BASE_FRONTEND_URL = 'https://www.brainsharer.org'
+CORS_ALLOWED_ORIGINS = ['https://www.brainsharer.org', 'https://brainsharer.org']
+DEFAULT_AUTO_FIELD='django.db.models.BigAutoField'
+DEFAULT_FROM_EMAIL = "drinehart@physics.ucsd.edu"
+EMAIL_HOST = "smtp.ucsd.edu"
+FORCE_SCRIPT_NAME = '/brainsharer/'
+#FOR HOSTING IN SUBDIRECTORY
+GITHUB_OAUTH2_CLIENT_ID = '3ad4b114f66ffb3b6ed8'
+GOOGLE_OAUTH2_CLIENT_ID = '821517150552-71h6bahua9qul09l90veb8g3hii6ed25.apps.googleusercontent.com'
+HOST = "brainsharer.org"
+INTERNAL_IPS = ['127.0.0.1']
+LANGUAGE_CODE = 'en-us'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'share')
+MEDIA_URL = '/share/'
+NEUROGLANCER_PROD_HOST = "https://www.brainsharer.org/ng"
+NG_URL = "https://www.brainsharer.org/ng"
+SILENCED_SYSTEM_CHECKS = ['mysql.E001']
+SITE_ID = 2
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'assets'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = '/static/'
+TIME_ZONE = 'America/Los_Angeles'
+USE_I18N = True
+USE_L10N = True
+USER_ID = 1
+USE_X_FORWARDED_HOST = True

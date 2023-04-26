@@ -4,7 +4,6 @@ is the 'V' in the MVC framework for the Neuroglancer app
 portion of the portal.
 """
 
-import json
 from subprocess import check_output
 import os
 from time import sleep
@@ -12,6 +11,7 @@ import decimal
 from django.db.models import Count
 from rest_framework import viewsets, views, permissions, status
 from django.http import JsonResponse
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.pagination import LimitOffsetPagination
@@ -31,7 +31,7 @@ from neuroglancer.serializers import AnnotationSerializer, ComListSerializer, \
     PolygonSerializer, RotationSerializer, NeuroglancerStateSerializer
 from neuroglancer.tasks import background_archive_and_insert_annotations, \
     nobackground_archive_and_insert_annotations
-from slurm_scripts.create_volume_from_contours import make_volumes
+from neuroglancer.contours.create_contours import make_volumes
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -324,6 +324,7 @@ class ContoursToVolume(views.APIView):
         """
 
         neuroglancerState = NeuroglancerState.objects.get(pk=neuroglancer_state_id)
+        animal = neuroglancerState.animal
         state_json = neuroglancerState.neuroglancer_state
         layers = state_json['layers']
         for layeri in layers:
@@ -335,9 +336,8 @@ class ContoursToVolume(views.APIView):
         if volume is None:
             raise Exception(f'No volume was found with id={volume_id}' )
         
-        animal = neuroglancerState.animal
         folder_name = make_volumes(volume, animal)
-        segmentation_save_folder = f"precomputed://https://www.brainsharer.org/structures/{folder_name}"
+        segmentation_save_folder = f"precomputed://{settings.HTTP_HOST}/structures/{folder_name}"
         return JsonResponse({'url': segmentation_save_folder, 'name': folder_name})
 
 class SaveAnnotation(views.APIView):
