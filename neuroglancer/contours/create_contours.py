@@ -14,6 +14,7 @@ def get_scales(animal, downsample_factor):
     try:
         scan_run = ScanRun.objects.get(prep=animal)
         res = scan_run.resolution
+        zresolution = scan_run.zresolution
     except ScanRun.DoesNotExist:
         res = 0.325
         zresolution = 20
