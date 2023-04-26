@@ -62,12 +62,12 @@ def main():
             break
 
     new_event = create_event()
-    event = service.events().insert(calendarId='***REMOVED***', body=new_event).execute()
+    event = service.events().insert(calendarId='eddy.odonnell@gmail.com', body=new_event).execute()
     print('Event created: %s' % (event.get('htmlLink')))
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     print('Getting the upcoming 10 events')
-    events_result = service.events().list(calendarId='***REMOVED***', timeMin=now,
+    events_result = service.events().list(calendarId='eddy.odonnell@gmail.com', timeMin=now,
                                         maxResults=10, singleEvents=True,
                                         orderBy='startTime').execute()
     events = events_result.get('items', [])

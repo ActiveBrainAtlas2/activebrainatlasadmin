@@ -60,7 +60,7 @@ def main():
             break
 
     new_event = create_event()
-    #event = service.events().insert(calendarId='***REMOVED***', body=new_event).execute()
+    #event = service.events().insert(calendarId='eddy.odonnell@gmail.com', body=new_event).execute()
     #print('Event created: %s' % (event.get('htmlLink')))
 
     # Call the Calendar API
