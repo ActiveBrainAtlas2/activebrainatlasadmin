@@ -31,7 +31,7 @@ djangorestframework==3.13.1
 docutils==0.17.1
 dpd-components==0.1.0
 dpd-static-support==0.0.5
-Flask==2.1.2
+Flask==2.3.2
 Flask-Compress==1.12
 future==0.18.2
 hyperlink==21.0.0
