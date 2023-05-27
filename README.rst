@@ -1,1 +1,1 @@
-### README for the ActiveBrainAtlas Django database portalsafdfdf
+### README for the ActiveBrainAtlas Django database portal
